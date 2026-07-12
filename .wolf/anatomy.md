@@ -1138,3 +1138,7 @@
 ## tests/validation/
 
 - `download_fixtures.py` — Download CC0 music fixtures for end-to-end validation testing. (~1546 tok)
+
+- `scripts/mine_prop_corpus.py` — Read-only corpus miner for any prop family (generalized from mine_arch_corpus.py; --family/--tokens/--exclude-tokens CLI). Scans show folder .xsq/.xsqz, extracts placements/blend roles/beat alignment/section correlation. ~7k tokens.
+- `src/generator/corpus_recipes.py` — Corpus-derived prop-family recipes (snowflake=white Shockwave/beat, arch=white Single Strand/beat) + recipe_for_group/section_qualifies gating for tier-6 PROP placement. ~1k tokens.
+- `tests/unit/test_generator/test_corpus_recipes.py` — Matching, gating, per-beat white output, radial exclusion, multi-layer dedup tests. ~2k tokens.
