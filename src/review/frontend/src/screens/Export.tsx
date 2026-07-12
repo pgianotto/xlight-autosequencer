@@ -21,8 +21,9 @@ interface ExportProps {
 // so new backend stages show up without a frontend change.
 const RENDER_STAGES: { id: string; label: string }[] = [
   { id: 'building_plan', label: 'building plan' },
+  { id: 'lyric_tracks', label: 'lyric tracks' },
   { id: 'placing_effects', label: 'placing effects' },
-  { id: 'writing_xml', label: 'writing xml' },
+  { id: 'writing_xsq', label: 'writing xsq' },
 ];
 
 type StageStatus = 'pending' | 'running' | 'done' | 'failed';
@@ -216,6 +217,9 @@ export function Export({ song, layoutId, layoutXmlPath, onExportComplete, onLayo
             runningStageRef.current = stage;
             setStageStatus((prev) => ({ ...prev, [stage]: 'running' }));
             pushLog({ text: `› ${stage.replace(/_/g, ' ')}: running…`, kind: 'info' });
+            if (typeof data.detail === 'string' && data.detail) {
+              pushLog({ text: `  ${data.detail}`, kind: 'info' });
+            }
             if (typeof data.progress === 'number') {
               setProgressPct(Math.round(data.progress * 100));
               pushLog({
@@ -479,8 +483,9 @@ export function Export({ song, layoutId, layoutXmlPath, onExportComplete, onLayo
               <div className={styles.inspectorSectionHeader}>result</div>
               {[
                 { key: 'effect plan', done: stageStatus['building_plan'] === 'done' },
+                { key: 'lyric tracks', done: stageStatus['lyric_tracks'] === 'done' },
                 { key: 'effects placed', done: stageStatus['placing_effects'] === 'done' },
-                { key: 'xsq written', done: stageStatus['writing_xml'] === 'done' },
+                { key: 'xsq written', done: stageStatus['writing_xsq'] === 'done' },
                 { key: 'output file', done: outputPath != null },
               ].map((row) => (
                 <div key={row.key} className={styles.resultRow}>

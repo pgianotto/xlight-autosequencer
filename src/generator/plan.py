@@ -16,6 +16,8 @@ from src.generator.effect_placer import (
     _compute_active_tiers,
     _place_drum_accents,
     _place_impact_accent,
+    _place_lyric_text,
+    _place_singing_faces,
     compute_duration_target,
     place_effects,
     restrain_palette,
@@ -247,6 +249,16 @@ def build_plan(
         for gname, placements in impact_accents.items():
             assignment.group_effects.setdefault(gname, []).extend(placements)
 
+    # 5b. Singing faces + word-synced lyric text (config.vocal_words).
+    # Song-scoped, not per-section — vocal regions derive from the word marks
+    # alone and ride on plan.vocal_effects, so a 0-section analysis (bug-159:
+    # no assignments at all) still renders them.
+    vocal_effects: dict[str, list] = {}
+    if config.vocal_words:
+        vocal_effects = _place_singing_faces(props, config.vocal_words)
+        for gname, placements in _place_lyric_text(props, config.vocal_words).items():
+            vocal_effects.setdefault(gname, []).extend(placements)
+
     # 5. Value curves — generate for each placement when curves are enabled
     if config.curves_mode != "none":
         for assignment in assignments:
@@ -283,6 +295,7 @@ def build_plan(
         layout_groups=groups,
         models=model_names,
         rotation_plan=rotation_plan,
+        vocal_effects=vocal_effects,
     )
 
 

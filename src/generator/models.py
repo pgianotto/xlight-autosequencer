@@ -143,6 +143,10 @@ class SequencePlan:
     models: list[str] = field(default_factory=list)
     frame_interval_ms: int = FRAME_INTERVAL_MS
     rotation_plan: Optional[Any] = None  # RotationPlan when variant rotation is active
+    # Song-scoped vocal placements (Faces on singing props, lyric Text on a
+    # matrix), keyed by model name. Kept off the section assignments so a
+    # 0-section analysis (bug-159) still renders them.
+    vocal_effects: dict[str, list[EffectPlacement]] = field(default_factory=dict)
 
 
 @dataclass
@@ -219,6 +223,10 @@ class GenerationConfig:
     # microscope tool relies on this for deterministic runs (OpenSpec
     # ``visual-quality-microscope``).
     variation_seed: int = 0
+    # Word-level vocal marks ({label, start_ms, end_ms}) from WhisperX
+    # alignment. When present alongside face-capable props in the layout,
+    # build_plan places Faces effects over the vocal regions (singing faces).
+    vocal_words: Optional[list[dict]] = None
 
     _VALID_CURVES_MODES = frozenset({"all", "brightness", "speed", "color", "none"})
     _VALID_MOOD_INTENTS = frozenset({"auto", "party", "emotional", "dramatic", "playful"})

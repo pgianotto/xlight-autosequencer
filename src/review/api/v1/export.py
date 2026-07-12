@@ -81,6 +81,22 @@ def _run_export(state: "_ExportState", song: dict, session: dict,
             if a.get("theme_id") and "section_index" in a
         }
 
+        # Surface the lyric/vocal track build in the render UI: report what
+        # the session carries before the generator embeds it.
+        lyrics = session.get("lyrics") or []
+        words = session.get("words") or []
+        phonemes = session.get("phonemes") or []
+        state.push({
+            "stage": "lyric_tracks",
+            "progress": 0.25,
+            "detail": (
+                f"{len(lyrics)} lyric lines · {len(words)} words · "
+                f"{len(phonemes)} phonemes"
+                if (lyrics or words) else
+                "no lyrics in session — skipping vocal tracks"
+            ),
+        })
+
         state.push({"stage": "placing_effects", "progress": 0.4})
 
         xsq_bytes = run_generator(
@@ -89,10 +105,12 @@ def _run_export(state: "_ExportState", song: dict, session: dict,
             audio_hash=song["song_id"],
             layout_path=layout_xml_path,
             theme_overrides=theme_overrides,
-            lyrics=session.get("lyrics"),
+            lyrics=lyrics or None,
+            words=words or None,
+            phonemes=phonemes or None,
         )
 
-        state.push({"stage": "writing_xml", "progress": 0.9})
+        state.push({"stage": "writing_xsq", "progress": 0.9})
 
         tmp_dir = tempfile.mkdtemp(prefix="xonset_export_")
         output_path = str(Path(tmp_dir) / (destination_name or "output.xsq"))

@@ -575,9 +575,9 @@ class TestLyricsTimingTrack:
         """End-to-end: write_xsq(..., lyrics=...) emits a Lyrics <Element>
         with one <Effect> per line, in the same shape as Beats/Bars/etc.
 
-        Like every other timing track here, an Effect's endTime is the next
-        mark's startTime (or the song duration for the last mark) — the
-        line's own duration_ms isn't separately serialized.
+        Marks carrying a duration_ms end at start+duration (capped at the
+        next mark's start); these lines' durations reach exactly to the next
+        mark / song end, so they span contiguously.
         """
         lyrics = [
             {"t_ms": 1000, "duration_ms": 2000, "text": "la la placeholder line one"},
@@ -604,3 +604,129 @@ class TestLyricsTimingTrack:
         assert effects[0].get("endTime") == "3000"
         assert effects[1].get("startTime") == "3000"
         assert effects[1].get("endTime") == "10000"  # last mark → song duration
+
+
+class TestWordsPhonemesTimingTracks:
+    """WhisperX word/phoneme marks embed as "Words"/"Phonemes" timing tracks."""
+
+    WORDS = [
+        {"label": "HELLO", "start_ms": 1000, "end_ms": 1400},
+        {"label": "WORLD", "start_ms": 4000, "end_ms": 4500},
+    ]
+    PHONEMES = [
+        {"label": "E", "start_ms": 1000, "end_ms": 1200},
+        {"label": "O", "start_ms": 1200, "end_ms": 1400},
+    ]
+
+    def test_tracks_collected(self):
+        tracks = _collect_timing_tracks(None, None, self.WORDS, self.PHONEMES)
+        assert [m.label for m in tracks["Words"]] == ["HELLO", "WORLD"]
+        assert [m.label for m in tracks["Phonemes"]] == ["E", "O"]
+        assert tracks["Words"][0].time_ms == 1000
+        assert tracks["Words"][0].duration_ms == 400
+
+    def test_absent_marks_produce_no_tracks(self):
+        tracks = _collect_timing_tracks(None, None, None, None)
+        assert "Words" not in tracks
+        assert "Phonemes" not in tracks
+
+    def test_word_effects_do_not_stretch_across_silence(self, tmp_path: Path) -> None:
+        """A word's timing effect ends at its own end_ms, not at the next
+        word's start — otherwise mouths/text hold through instrumental gaps."""
+        out = tmp_path / "test.xsq"
+        write_xsq(_make_plan(), out, words=self.WORDS, phonemes=self.PHONEMES)
+        root = ET.parse(out).getroot()
+
+        effect_els = root.find("ElementEffects").findall("Element")
+        words_el = [e for e in effect_els if e.get("name") == "Words"][0]
+        effects = words_el.find("EffectLayer").findall("Effect")
+        assert effects[0].get("label") == "HELLO"
+        assert effects[0].get("startTime") == "1000"
+        assert effects[0].get("endTime") == "1400"  # not 4000
+        assert effects[1].get("endTime") == "4500"  # not song duration
+
+        display_els = root.find("DisplayElements").findall("Element")
+        names = {e.get("name") for e in display_els if e.get("type") == "timing"}
+        assert {"Words", "Phonemes"} <= names
+
+
+class TestFacesAndTextEffectSerialization:
+    """Faces/Text placements merge the real-xLights defaults with per-placement params."""
+
+    def _plan_with(self, placement: EffectPlacement) -> SequencePlan:
+        plan = _make_plan()
+        plan.sections[0].group_effects[placement.model_or_group] = [placement]
+        return plan
+
+    def test_faces_effect_db_entry(self, tmp_path: Path) -> None:
+        placement = EffectPlacement(
+            effect_name="Faces",
+            xlights_id="Faces",
+            model_or_group="Singing Face",
+            start_ms=1000,
+            end_ms=5000,
+            parameters={
+                "E_CHOICE_Faces_FaceDefinition": "SingingFace",
+                "E_CHOICE_Faces_TimingTrack": "Phonemes",
+            },
+            color_palette=["#FFFFFF"],
+        )
+        out = tmp_path / "test.xsq"
+        write_xsq(self._plan_with(placement), out)
+        root = ET.parse(out).getroot()
+
+        entries = [e.text for e in root.find("EffectDB").findall("Effect")]
+        faces = [s for s in entries if s and "E_CHOICE_Faces_FaceDefinition" in s]
+        assert len(faces) == 1
+        assert "E_CHOICE_Faces_FaceDefinition=SingingFace" in faces[0]
+        assert "E_CHOICE_Faces_TimingTrack=Phonemes" in faces[0]
+        assert "E_CHECKBOX_Faces_SuppressWhenNotSinging=1" in faces[0]
+
+    def test_vocal_effects_survive_zero_sections(self, tmp_path: Path) -> None:
+        """bug-159 guard: plan.vocal_effects render even when a 0-section
+        analysis produced no section assignments at all."""
+        plan = _make_plan()
+        plan.sections = []
+        plan.vocal_effects = {
+            "Singing Face": [EffectPlacement(
+                effect_name="Faces",
+                xlights_id="Faces",
+                model_or_group="Singing Face",
+                start_ms=1000,
+                end_ms=5000,
+                parameters={
+                    "E_CHOICE_Faces_FaceDefinition": "SingingFace",
+                    "E_CHOICE_Faces_TimingTrack": "Phonemes",
+                },
+                color_palette=["#FFFFFF"],
+            )],
+        }
+        out = tmp_path / "test.xsq"
+        write_xsq(plan, out)
+        root = ET.parse(out).getroot()
+
+        model_els = [e for e in root.find("ElementEffects")
+                     if e.get("type") == "model" and e.get("name") == "Singing Face"]
+        assert len(model_els) == 1
+        effects = model_els[0].find("EffectLayer").findall("Effect")
+        assert [e.get("name") for e in effects] == ["Faces"]
+
+    def test_text_effect_db_entry(self, tmp_path: Path) -> None:
+        placement = EffectPlacement(
+            effect_name="Text",
+            xlights_id="Text",
+            model_or_group="Matrix - 1L",
+            start_ms=1000,
+            end_ms=5000,
+            parameters={"E_CHOICE_Text_LyricTrack": "Words"},
+            color_palette=["#FFFFFF"],
+        )
+        out = tmp_path / "test.xsq"
+        write_xsq(self._plan_with(placement), out)
+        root = ET.parse(out).getroot()
+
+        entries = [e.text for e in root.find("EffectDB").findall("Effect")]
+        texts = [s for s in entries if s and "E_CHOICE_Text_LyricTrack" in s]
+        assert len(texts) == 1
+        assert "E_CHOICE_Text_LyricTrack=Words" in texts[0]
+        assert "E_FONTPICKER_Text_Font=" in texts[0]

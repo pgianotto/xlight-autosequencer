@@ -30,6 +30,8 @@ def run(
     layout_path: Optional[Path] = None,
     theme_overrides: Optional[dict[int, str]] = None,
     lyrics: Optional[list[dict]] = None,
+    words: Optional[list[dict]] = None,
+    phonemes: Optional[list[dict]] = None,
 ) -> bytes:
     """Run the generator deterministically and return .xsq bytes.
 
@@ -44,6 +46,11 @@ def run(
                          of the auto-selected one (see GenerationConfig).
         lyrics: Optional synced-lyrics lines (``{t_ms, duration_ms, text}``)
                 embedded as a "Lyrics" timing track in the output .xsq.
+        words: Optional WhisperX word marks (``{label, start_ms, end_ms}``)
+               embedded as a "Words" timing track; also drives Faces/Text
+               placements on face-capable props and matrices.
+        phonemes: Optional Papagayo phoneme marks (same shape) embedded as a
+                  "Phonemes" timing track for the Faces effect.
 
     Returns:
         Raw .xsq XML bytes.
@@ -78,7 +85,7 @@ def run(
 
     try:
         return _run_pipeline(audio_path, layout_path, seed, theme_overrides=theme_overrides,
-                              lyrics=lyrics)
+                              lyrics=lyrics, words=words, phonemes=phonemes)
     except GeneratorError:
         raise
     except Exception as exc:
@@ -91,6 +98,8 @@ def _run_pipeline(
     seed: int,
     theme_overrides: Optional[dict[int, str]] = None,
     lyrics: Optional[list[dict]] = None,
+    words: Optional[list[dict]] = None,
+    phonemes: Optional[list[dict]] = None,
 ) -> bytes:
     """Execute the full generation pipeline and return .xsq bytes."""
     from src.analyzer.orchestrator import run_orchestrator
@@ -129,6 +138,9 @@ def _run_pipeline(
             layout_path=layout_path,
             output_dir=Path(tmp_dir),
             theme_overrides=theme_overrides,
+            # Faces placements reference the "Phonemes" timing track, so
+            # only enable vocal placements when both mark sets exist.
+            vocal_words=words if (words and phonemes) else None,
         )
 
         # Re-seed after config construction (which may trigger path resolution calls)
@@ -140,6 +152,7 @@ def _run_pipeline(
 
         # Write .xsq to a temp file, then read back as bytes
         output_path = Path(tmp_dir) / "output.xsq"
-        write_xsq(plan, output_path, hierarchy=hierarchy, audio_path=audio_path, lyrics=lyrics)
+        write_xsq(plan, output_path, hierarchy=hierarchy, audio_path=audio_path,
+                  lyrics=lyrics, words=words, phonemes=phonemes)
 
         return output_path.read_bytes()

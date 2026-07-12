@@ -42,9 +42,11 @@ Start an export render. Asynchronous — returns immediately with an `export_id`
 ```
 data: {"stage":"building_plan","progress":0.1}
 
+data: {"stage":"lyric_tracks","progress":0.25,"detail":"29 lyric lines · 412 words · 1583 phonemes"}
+
 data: {"stage":"placing_effects","progress":0.4}
 
-data: {"stage":"writing_xml","progress":0.9}
+data: {"stage":"writing_xsq","progress":0.9}
 
 data: {"stage":"done","output_path":"/Users/bob/xlight/exports/baby-shark-2026.xsq","bytes":472381}
 ```

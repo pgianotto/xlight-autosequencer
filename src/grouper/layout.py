@@ -106,6 +106,11 @@ class Prop:
     norm_x: float = 0.0
     norm_y: float = 0.0
     aspect_ratio: float = 1.0
+    # Names of NodeRange <faceInfo> definitions on this model (node-mapped
+    # mouth shapes for dedicated singing props). Image-based Matrix face
+    # definitions are deliberately excluded — matrices/trees with downloaded
+    # face image sets should not receive auto-placed Faces effects.
+    face_definitions: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -153,6 +158,19 @@ def parse_layout(path: str | Path) -> Layout:
                     pass
                 i += 1
             sub_models.append(SubModel(name=sm_name, pixel_indices=tuple(indices)))
+        face_definitions = [
+            fi.get("Name", "")
+            for fi in model.findall("faceInfo")
+            if fi.get("Type") == "NodeRange" and fi.get("Name")
+            # Require actual mouth node data: opening the Faces dialog on a
+            # prop leaves an empty NodeRange shell (all Mouth-* blank) behind,
+            # which must not count as a singing face.
+            and any(
+                v.strip()
+                for k, v in fi.attrib.items()
+                if k.startswith("Mouth-") and not k.endswith("-Color")
+            )
+        ]
         prop = Prop(
             name=name,
             display_as=model.get("DisplayAs", ""),
@@ -167,6 +185,7 @@ def parse_layout(path: str | Path) -> Layout:
             custom_model=model.get("CustomModel", ""),
             x2=float(model.get("X2", "0.0")),
             y2=float(model.get("Y2", "0.0")),
+            face_definitions=face_definitions,
         )
         props.append(prop)
 

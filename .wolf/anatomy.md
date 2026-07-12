@@ -920,6 +920,7 @@
 - `orchestrator.py` — Hierarchy orchestrator: zero-flag pipeline for hierarchical music analysis. (~13310 tok)
 - `parallel.py` — Parallel pipeline executor: PipelineStep, DependencyGraph, ParallelRunner. (~3482 tok)
 - `phonemes.py` — Vocal phoneme analysis: WhisperX transcription + cmudict decomposition. (~4807 tok)
+- `phoneme_align.py` — Session-friendly WhisperX word/phoneme alignment wrapper (in-process first, .venv-vamp sidecar fallback); feeds singing-faces export (~1600 tok)
 - `pipeline.py` — Automated end-to-end analysis pipeline (US7). (~2440 tok)
 - `progress.py` — Multi-track live progress display for parallel pipeline execution (T031). (~1436 tok)
 - `result.py` — Core data classes for the analysis pipeline. (~8644 tok)

@@ -95,6 +95,61 @@ class TestParseLayout:
         assert layout.props[0].name == "SingleArch"
 
 
+class TestFaceDefinitions:
+    """parse_layout captures NodeRange faceInfo names; Matrix (image) faces excluded."""
+
+    def _parse_xml(self, tmp_path: Path, body: str) -> Layout:
+        p = tmp_path / "layout.xml"
+        p.write_text(
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            f"<xlights_rgbeffects>{body}</xlights_rgbeffects>",
+            encoding="utf-8",
+        )
+        return parse_layout(p)
+
+    def test_noderange_face_captured(self, tmp_path):
+        layout = self._parse_xml(tmp_path, (
+            '<model name="Singer" DisplayAs="Custom" parm1="1" parm2="40">'
+            '<faceInfo Name="SingingFace" Type="NodeRange" Mouth-AI="1-5"/>'
+            "</model>"
+        ))
+        assert layout.props[0].face_definitions == ["SingingFace"]
+
+    def test_matrix_face_excluded(self, tmp_path):
+        layout = self._parse_xml(tmp_path, (
+            '<model name="BigMatrix" DisplayAs="Matrix" parm1="20" parm2="30">'
+            '<faceInfo Name="Santa" Type="Matrix"/>'
+            "</model>"
+        ))
+        assert layout.props[0].face_definitions == []
+
+    def test_mixed_faces_keep_noderange_only(self, tmp_path):
+        layout = self._parse_xml(tmp_path, (
+            '<model name="Gnome" DisplayAs="Custom" parm1="1" parm2="40">'
+            '<faceInfo Name="ImageSet" Type="Matrix"/>'
+            '<faceInfo Name="Nodes" Type="NodeRange" Mouth-AI="1-5"/>'
+            "</model>"
+        ))
+        assert layout.props[0].face_definitions == ["Nodes"]
+
+    def test_empty_mouth_shell_excluded(self, tmp_path):
+        # Opening the Faces dialog on a prop leaves a NodeRange faceInfo with
+        # every Mouth-* attribute blank — not a usable singing face.
+        layout = self._parse_xml(tmp_path, (
+            '<model name="Spiral mini-1" DisplayAs="Custom" parm1="1" parm2="40">'
+            '<faceInfo Name="Shadow" Type="NodeRange" Mouth-AI="" Mouth-E="" '
+            'Mouth-AI-Color="#ff0000"/>'
+            "</model>"
+        ))
+        assert layout.props[0].face_definitions == []
+
+    def test_no_faceinfo_defaults_empty(self, tmp_path):
+        layout = self._parse_xml(tmp_path, (
+            '<model name="Arch1" DisplayAs="Arch" parm1="1" parm2="10"/>'
+        ))
+        assert layout.props[0].face_definitions == []
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

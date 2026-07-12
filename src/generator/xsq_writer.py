@@ -201,6 +201,35 @@ _XLIGHTS_EFFECT_DEFAULTS: dict[str, dict[str, str]] = {
         "E_SLIDER_Wave_Speed": "10",
         "T_CHECKBOX_Canvas": "1",
     },
+    # Copied from a real xLights sequence (singing-face NodeRange props).
+    # FaceDefinition and TimingTrack are per-placement parameters set by
+    # effect_placer._place_singing_faces.
+    "Faces": {
+        "E_CHECKBOX_Faces_Fade": "1",
+        "E_CHECKBOX_Faces_Outline": "1",
+        "E_CHECKBOX_Faces_SuppressWhenNotSinging": "1",
+        "E_CHOICE_Faces_EyeBlinkFrequency": "Normal",
+        "E_CHOICE_Faces_Eyes": "Auto",
+        "E_SPINCTRL_Faces_LeadFrames": "120",
+    },
+    # Copied from a real xLights sequence (matrix word text). LyricTrack is a
+    # per-placement parameter set by effect_placer._place_lyric_text.
+    "Text": {
+        "E_CHECKBOX_TextToCenter": "0",
+        "E_CHECKBOX_Text_PixelOffsets": "0",
+        "E_CHOICE_Text_Count": "none",
+        "E_CHOICE_Text_Dir": "none",
+        "E_CHOICE_Text_Effect": "normal",
+        "E_CHOICE_Text_Font": "Use OS Fonts",
+        "E_FILEPICKERCTRL_Text_File": "",
+        "E_FONTPICKER_Text_Font": "bold 'segoe ui black' 8 windows-1252",
+        "E_SLIDER_Text_XEnd": "0",
+        "E_SLIDER_Text_XStart": "0",
+        "E_SLIDER_Text_YEnd": "0",
+        "E_SLIDER_Text_YStart": "0",
+        "E_TEXTCTRL_Text": "",
+        "E_TEXTCTRL_Text_Speed": "10",
+    },
 }
 
 
@@ -212,6 +241,8 @@ def write_xsq(
     scoped_duration_ms: int | None = None,
     audio_offset_ms: int | None = None,
     lyrics: list[dict] | None = None,
+    words: list[dict] | None = None,
+    phonemes: list[dict] | None = None,
 ) -> None:
     """Write a SequencePlan as a valid xLights .xsq XML file.
 
@@ -233,6 +264,10 @@ def write_xsq(
     - lyrics: optional synced-lyrics lines (``{t_ms, duration_ms, text}``,
       from ``story["lyrics"]``) embedded as a "Lyrics" timing track,
       alongside Beats/Bars/Sections/Chords.
+    - words / phonemes: optional WhisperX-aligned marks (``{label,
+      start_ms, end_ms}``) embedded as "Words" and "Phonemes" timing
+      tracks. The Faces effect placements reference "Phonemes"; the matrix
+      lyric Text effect references "Words".
     """
     # Warn if audio is outside the mounted show directory (devcontainer-specific).
     # The XSQ will still be written, but xLights on the host won't find the audio.
@@ -254,6 +289,11 @@ def write_xsq(
     for section in plan.sections:
         for group_name, placements in section.group_effects.items():
             unordered.setdefault(group_name, []).extend(placements)
+
+    # Song-scoped vocal placements (Faces / lyric Text) live on the plan, not
+    # on section assignments, so they survive a 0-section analysis (bug-159).
+    for group_name, placements in plan.vocal_effects.items():
+        unordered.setdefault(group_name, []).extend(placements)
 
     # Sort groups by tier prefix so BASE (01) renders behind HERO (08).
     # Groups without a 2-digit tier prefix sort last.
@@ -348,7 +388,8 @@ def write_xsq(
             displayed_models.add(group_name)
 
     # Add timing track display elements
-    timing_tracks = _collect_timing_tracks(hierarchy, lyrics) if (hierarchy or lyrics) else {}
+    timing_tracks = (_collect_timing_tracks(hierarchy, lyrics, words, phonemes)
+                     if (hierarchy or lyrics or words or phonemes) else {})
     for track_name in timing_tracks:
         elem = ET.SubElement(display_el, "Element")
         elem.set("type", "timing")
@@ -406,7 +447,16 @@ def write_xsq(
         offset = audio_offset_ms if audio_offset_ms is not None else 0
         for i, mark in enumerate(marks):
             raw_start = mark.time_ms
-            raw_end = marks[i + 1].time_ms if i + 1 < len(marks) else int(plan.song_profile.duration_ms)
+            # Marks carrying an explicit duration (lyric lines, words,
+            # phonemes) end at start+duration — a word must not stretch
+            # across the silence to the next word. Duration-less marks
+            # (beats, bars, sections) span to the next mark as before.
+            if mark.duration_ms:
+                raw_end = raw_start + mark.duration_ms
+                if i + 1 < len(marks):
+                    raw_end = min(raw_end, marks[i + 1].time_ms)
+            else:
+                raw_end = marks[i + 1].time_ms if i + 1 < len(marks) else int(plan.song_profile.duration_ms)
             # Apply audio offset shift for section preview (serialization-only)
             start = raw_start - offset
             end = raw_end - offset
@@ -687,8 +737,10 @@ def _remove_overlaps(placements: list[EffectPlacement]) -> list[EffectPlacement]
 def _collect_timing_tracks(
     hierarchy: HierarchyResult | None,
     lyrics: list[dict] | None = None,
+    words: list[dict] | None = None,
+    phonemes: list[dict] | None = None,
 ) -> dict[str, list[TimingMark]]:
-    """Collect timing tracks from hierarchy (+ optional lyrics) for embedding in the .xsq."""
+    """Collect timing tracks from hierarchy (+ optional lyrics/words/phonemes)."""
     tracks: dict[str, list[TimingMark]] = {}
 
     if hierarchy is not None:
@@ -718,6 +770,18 @@ def _collect_timing_tracks(
                        label=line["text"], duration_ms=line["duration_ms"])
             for line in lyrics
         ]
+
+    def _label_marks(marks: list[dict]) -> list[TimingMark]:
+        return [
+            TimingMark(time_ms=m["start_ms"], confidence=None, label=m["label"],
+                       duration_ms=max(1, int(m["end_ms"]) - int(m["start_ms"])))
+            for m in marks
+        ]
+
+    if words:
+        tracks["Words"] = _label_marks(words)
+    if phonemes:
+        tracks["Phonemes"] = _label_marks(phonemes)
 
     return tracks
 

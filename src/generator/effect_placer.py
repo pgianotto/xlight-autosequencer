@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import Any
+from typing import Any, Optional
 
 from src.analyzer.result import HierarchyResult, TimingMark, TimingTrack
 from src.effects.library import EffectLibrary
@@ -2308,3 +2308,159 @@ def _place_impact_accent(
         result.setdefault(group.name, []).append(placement)
 
     return result
+
+
+# Singing faces (spec: singing-faces-on-export). Words closer together than
+# this gap belong to the same vocal region; larger gaps split regions so no
+# Faces effect sits over long instrumental passages.
+_FACES_VOCAL_GAP_MS = 5000
+# Names of the timing tracks emitted by xsq_writer._collect_timing_tracks.
+_FACES_TIMING_TRACK = "Phonemes"
+_LYRIC_TEXT_TIMING_TRACK = "Words"
+
+
+def _place_singing_faces(
+    props: list[Any],
+    vocal_words: Optional[list[dict]],
+) -> dict[str, list[EffectPlacement]]:
+    """Place xLights Faces effects on dedicated singing props over vocal regions.
+
+    Targets only props with a NodeRange face definition
+    (``Prop.face_definitions``) — node-mapped mouth shapes on singer cutouts.
+    Matrices/trees with image-based (Matrix-type) face sets are excluded by
+    the layout parser. One placement per contiguous vocal region (word marks
+    merged across gaps < ``_FACES_VOCAL_GAP_MS``), each pointed at the
+    "Phonemes" timing track; xLights renders the matching mouth per phoneme
+    label. Effect settings are copied from a real xLights sequence — the
+    ``SuppressWhenNotSinging`` flag keeps faces dark between lines within a
+    region.
+
+    Deliberately independent of hierarchy sections (bug-159: a 0-section
+    analysis must not zero out face placements): regions derive from the
+    word marks alone. Returns ``{}`` when there are no words or no
+    face-capable props.
+    """
+    result: dict[str, list[EffectPlacement]] = {}
+    face_props = [p for p in props if getattr(p, "face_definitions", None)]
+    if not face_props:
+        return result
+
+    regions = _vocal_regions(vocal_words)
+    if not regions:
+        return result
+
+    for prop in face_props:
+        face_name = _best_face_definition(prop.name, prop.face_definitions)
+        placements: list[EffectPlacement] = []
+        for start, end in regions:
+            placements.append(EffectPlacement(
+                effect_name="Faces",
+                xlights_id="Faces",
+                model_or_group=prop.name,
+                start_ms=start,
+                end_ms=end,
+                parameters={
+                    "E_CHOICE_Faces_FaceDefinition": face_name,
+                    "E_CHOICE_Faces_TimingTrack": _FACES_TIMING_TRACK,
+                },
+                color_palette=["#FFFFFF"],
+            ))
+        result[prop.name] = placements
+
+    logger.info(
+        "singing_faces: %d face prop(s) x %d vocal region(s) placed",
+        len(face_props), len(regions),
+    )
+    return result
+
+
+def _best_face_definition(prop_name: str, face_definitions: list[str]) -> str:
+    """Pick the face definition that best matches the prop's name.
+
+    A model can carry several NodeRange definitions (e.g. "Singing Tree Male"
+    holds both "Female Face" and "Male Face"); blindly taking the first would
+    give the male tree the female mouth mapping. Score by shared name tokens
+    and fall back to the first definition when nothing matches.
+    """
+    if len(face_definitions) == 1:
+        return face_definitions[0]
+    prop_tokens = set(prop_name.lower().split())
+    best = max(
+        face_definitions,
+        key=lambda d: len(prop_tokens & set(d.lower().split())),
+    )
+    return best
+
+
+def _place_lyric_text(
+    props: list[Any],
+    vocal_words: Optional[list[dict]],
+) -> dict[str, list[EffectPlacement]]:
+    """Place a word-synced Text effect on the largest matrix prop.
+
+    Uses the xLights Text effect's ``Lyric Track`` mode
+    (``E_CHOICE_Text_LyricTrack``) pointed at the "Words" timing track, so
+    the matrix displays each sung word as it lands. One placement per
+    contiguous vocal region, on layer 0 — the first (top) render layer of
+    the matrix's own model element. Returns ``{}`` when there are no words
+    or no Matrix props in the layout.
+    """
+    result: dict[str, list[EffectPlacement]] = {}
+    matrix_props = [p for p in props if getattr(p, "display_as", "") == "Matrix"]
+    if not matrix_props:
+        return result
+
+    regions = _vocal_regions(vocal_words)
+    if not regions:
+        return result
+
+    # Prefer a matrix the user named for lyrics (e.g. "Lyrics Matrix");
+    # otherwise take the highest-resolution one.
+    named = [p for p in matrix_props if "lyric" in p.name.lower()]
+    pool = named or matrix_props
+    target = max(pool, key=lambda p: (getattr(p, "pixel_count", 0), p.name))
+    placements: list[EffectPlacement] = []
+    for start, end in regions:
+        placements.append(EffectPlacement(
+            effect_name="Text",
+            xlights_id="Text",
+            model_or_group=target.name,
+            start_ms=start,
+            end_ms=end,
+            parameters={
+                "E_CHOICE_Text_LyricTrack": _LYRIC_TEXT_TIMING_TRACK,
+            },
+            color_palette=["#FFFFFF"],
+        ))
+    result[target.name] = placements
+
+    logger.info(
+        "lyric_text: Text/LyricTrack placed on matrix '%s' over %d vocal region(s)",
+        target.name, len(regions),
+    )
+    return result
+
+
+def _vocal_regions(vocal_words: Optional[list[dict]]) -> list[tuple[int, int]]:
+    """Merge word marks into contiguous vocal regions.
+
+    Words separated by less than ``_FACES_VOCAL_GAP_MS`` share a region;
+    larger silences split regions. Returns ``[]`` for empty input.
+    """
+    if not vocal_words:
+        return []
+    spans = sorted(
+        (int(w["start_ms"]), int(w["end_ms"]))
+        for w in vocal_words
+        if int(w["end_ms"]) > int(w["start_ms"])
+    )
+    if not spans:
+        return []
+    regions: list[tuple[int, int]] = [spans[0]]
+    for start, end in spans[1:]:
+        prev_start, prev_end = regions[-1]
+        if start - prev_end < _FACES_VOCAL_GAP_MS:
+            regions[-1] = (prev_start, max(prev_end, end))
+        else:
+            regions.append((start, end))
+    return regions

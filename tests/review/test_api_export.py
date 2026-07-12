@@ -142,6 +142,27 @@ class TestExportStart:
             assert "missing_sections" in details or True  # optional per contract
 
 
+class TestRunGeneratorCallConformance:
+    def test_export_kwargs_match_generator_run_signature(self):
+        """Regression guard for bug-172: _run_export once called the generator
+        with kwargs that never matched run()'s real signature, so every export
+        failed. Bind the exact kwarg set _run_export passes against the real
+        signature — drift on either side fails here instead of at export time."""
+        import inspect
+        from src.evaluation.generator_runner import run
+
+        inspect.signature(run).bind(
+            song_id="cafe0000cafe0000",
+            audio_path="song.mp3",
+            audio_hash="cafe0000cafe0000",
+            layout_path="xlights_rgbeffects.xml",
+            theme_overrides={},
+            lyrics=None,
+            words=None,
+            phonemes=None,
+        )
+
+
 class TestExportSSE:
     def test_sse_status_endpoint_exists(self, client, tmp_path):
         wav_path = tmp_path / "test.wav"

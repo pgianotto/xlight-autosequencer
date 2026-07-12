@@ -451,6 +451,28 @@ def _analyze_in_background(state: "_RunState", source_path: str, song_id: str,
         # ── Synced lyric lines (display track, not a boundary-detection signal) ─
         lyrics_list = list((story or {}).get("lyrics") or [])
 
+        # ── Word/phoneme alignment (singing faces + matrix lyric text) ──────
+        # WhisperX force-aligns the synced lyric text (or transcribes freely
+        # when no lyrics were found) and decomposes words into Papagayo mouth
+        # shapes. Persisted in the session so Export can embed Words/Phonemes
+        # timing tracks and place Faces/Text effects. Degrades to empty lists
+        # when whisperx is unavailable — export then behaves as before.
+        words_list: list[dict] = []
+        phonemes_list: list[dict] = []
+        state.push({"detector": "phonemes (whisperx)", "library": "story",
+                    "status": "running", "progress": 0.0})
+        try:
+            from src.analyzer.phoneme_align import align_words_and_phonemes
+            words_list, phonemes_list = align_words_and_phonemes(
+                str(src), lyrics_list or None,
+            )
+            state.push({"detector": "phonemes (whisperx)", "library": "story",
+                        "status": "done", "confidence": None,
+                        "marks": len(phonemes_list)})
+        except Exception as exc:
+            state.push({"detector": "phonemes (whisperx)", "library": "story",
+                        "status": "failed", "error": str(exc)})
+
         # ── Value curves (BBC energy per stem + spectral flux) ───────────────
         # Downsample to ≤2000 points each to keep the response size manageable.
         # Adjust fps proportionally so (len(values) / fps) still equals the
@@ -513,6 +535,15 @@ def _analyze_in_background(state: "_RunState", source_path: str, song_id: str,
                            "kind": "lyrics",
                            "error": None})
 
+        # Word/phoneme alignment detector (empty is a normal outcome when
+        # whisperx isn't installed or the song has no vocals).
+        detectors.append({"name": "phonemes (whisperx)", "library": "story",
+                           "status": "done",
+                           "confidence": None,
+                           "marks": len(phonemes_list),
+                           "kind": "marks",
+                           "error": None})
+
         pipeline_version = f"full-{hierarchy.schema_version}"
 
         story_global = (story or {}).get("global", {})
@@ -532,6 +563,8 @@ def _analyze_in_background(state: "_RunState", source_path: str, song_id: str,
             "chord_changes": chord_changes_list,
             "key_changes": key_changes_list,
             "lyrics": lyrics_list,
+            "words": words_list,
+            "phonemes": phonemes_list,
             "value_curves": curves_out,
             "peaks": peaks,
             "detectors": detectors,
@@ -553,6 +586,8 @@ def _analyze_in_background(state: "_RunState", source_path: str, song_id: str,
                     "assignments": assignments,
                     "ghost_boundaries": [],
                     "lyrics": lyrics_list,
+                    "words": words_list,
+                    "phonemes": phonemes_list,
                 })
             except Exception:
                 pass
@@ -686,10 +721,14 @@ def commit_analyze(song_id: str):
     # Apply assignment_mapping: carry over themes from old assignments where specified
     session = load_session(song_id)
     old_assignments = session.get("assignments", []) if session else []
-    # Carry the lyrics track through re-persistence — it's produced once by
-    # the story builder and isn't recomputed on this commit path.
+    # Carry the lyrics/words/phonemes tracks through re-persistence — they're
+    # produced once during analysis and aren't recomputed on this commit path.
     lyrics_list = (result.get("lyrics") if result else None) or \
         (session.get("lyrics") if session else None) or []
+    words_list = (result.get("words") if result else None) or \
+        (session.get("words") if session else None) or []
+    phonemes_list = (result.get("phonemes") if result else None) or \
+        (session.get("phonemes") if session else None) or []
 
     final_assignments = list(pending_assignments)  # start from suggested defaults
     for entry in assignment_mapping:
@@ -715,6 +754,8 @@ def commit_analyze(song_id: str):
             "assignments": final_assignments,
             "ghost_boundaries": [],
             "lyrics": lyrics_list,
+            "words": words_list,
+            "phonemes": phonemes_list,
         })
     except Exception as exc:
         return jsonify({"error": {"code": "internal_error", "message": str(exc)}}), 500

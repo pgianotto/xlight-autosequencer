@@ -52,6 +52,8 @@ def test_save_session_preserves_extra_fields(state_dir):
         "assignments": ASSIGNMENTS,
         "ghost_boundaries": [],
         "lyrics": [{"t_ms": 1000, "duration_ms": 2000, "text": "la la la"}],
+        "words": [{"label": "LA", "start_ms": 1000, "end_ms": 1400}],
+        "phonemes": [{"label": "L", "start_ms": 1000, "end_ms": 1200}],
     })
 
     updated = [dict(a, theme_id="calm") for a in ASSIGNMENTS]
@@ -60,4 +62,6 @@ def test_save_session_preserves_extra_fields(state_dir):
     loaded = asgn_storage.load_session(SONG_ID)
     assert loaded["assignments"][0]["theme_id"] == "calm"
     assert loaded["lyrics"] == [{"t_ms": 1000, "duration_ms": 2000, "text": "la la la"}]
+    assert loaded["words"] == [{"label": "LA", "start_ms": 1000, "end_ms": 1400}]
+    assert loaded["phonemes"] == [{"label": "L", "start_ms": 1000, "end_ms": 1200}]
     assert loaded["detected_sections"] == SECTIONS
