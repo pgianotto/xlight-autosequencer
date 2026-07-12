@@ -108,3 +108,7 @@ microscope-out-*/
 
 # Render-panel harness outputs (regenerated locally)
 render-out/
+
+# Arch sequencing corpus mined from external show folders (regenerated locally,
+# see scripts/mine_arch_corpus.py)
+docs/arch_sequencing_corpus/
