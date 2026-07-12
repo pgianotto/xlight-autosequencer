@@ -258,6 +258,10 @@ _DRUM_VARIANT_MAP: dict[str, str] = {
 }
 _DRUM_ACCENT_DEFAULT_VARIANT = "Shockwave Full Fast"
 _DRUM_ACCENT_ALTERNATING = ("Shockwave Full Fast", "On Bold")
+
+# xLights effects that render only the first palette color — checking more
+# colors on these is invalid in the sequencer and the extras never show.
+_FIRST_COLOR_ONLY_EFFECTS: frozenset[str] = frozenset({"On", "Shockwave"})
 _DRUM_BIAS_THRESHOLD = 0.80  # >80% same label → use alternating kick/snare fallback
 
 # 042B: Whole-house impact accent at section peaks
@@ -2279,8 +2283,26 @@ def _place_drum_accents(
     # Tier-6 groups for radial props often don't form (when only 1-2 exist with
     # different name prefixes), so we scan individual props instead of groups.
     # Each qualifying prop becomes its own placement target (model name, not group name).
+    #
+    # Exception: props whose tier-6 PROP group received placements this section
+    # are skipped — in xLights a model-level effect covers the group's render on
+    # that model, so per-model accents would hide the group effect (e.g. the
+    # corpus snowflake Shockwave). The per-model scan is a fallback for layouts
+    # where no tier-6 group formed around these props, not an additive layer.
+    covered_by_prop_group: set[str] = {
+        member
+        for g in groups
+        if g.tier == 6 and assignment.group_effects.get(g.name)
+        for member in g.members
+    }
     small_radial_model_names: list[str] = []
     for model_name, prop in props_by_name.items():
+        if model_name in covered_by_prop_group:
+            logger.debug(
+                "drum_accents: prop '%s' covered by a placed tier-6 group, skipping",
+                model_name,
+            )
+            continue
         display_as = getattr(prop, "display_as", "")
         is_radial = prop_type_for_display_as(display_as) == "radial"
 
@@ -2372,6 +2394,10 @@ def _place_drum_accents(
             params = dict(variant.parameter_overrides) if variant is not None else {}
             effect_base = variant.base_effect if variant is not None else "Shockwave"
 
+            accent_palette = list(assignment.theme.palette[:2])
+            if effect_base in _FIRST_COLOR_ONLY_EFFECTS:
+                accent_palette = accent_palette[:1]
+
             start_ms = frame_align(hit.time_ms)
             end_ms = frame_align(hit.time_ms + _DRUM_ACCENT_DURATION_MS)
             placement = EffectPlacement(
@@ -2381,7 +2407,7 @@ def _place_drum_accents(
                 start_ms=start_ms,
                 end_ms=end_ms,
                 parameters=params,
-                color_palette=list(assignment.theme.palette[:2]),
+                color_palette=accent_palette,
                 layer=1,
             )
             result.setdefault(model_name, []).append(placement)
