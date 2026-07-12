@@ -99,17 +99,23 @@ _SNOWFLAKE_GROUP = PowerGroup(
 _ARCH_GROUP = PowerGroup(
     name="06_PROP_Arch", tier=6, members=["Arch 1", "Arch 2"],
 )
+_MEGATREE_GROUP = PowerGroup(
+    name="06_PROP_Mega_Tree", tier=6, members=["Mega Tree 1", "Mega Tree 2"],
+)
 
 _BEATS = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
+
+_DEFAULT_LIBRARY_NAMES = ("Color Wash", "Shockwave", "Ripple", "Single Strand", "Spirals")
 
 
 def _place(section: SectionEnergy, group: PowerGroup,
            variation_seed: int = 0,
            layers: list[EffectLayer] | None = None,
-           hierarchy: HierarchyResult | None = None):
+           hierarchy: HierarchyResult | None = None,
+           library_names: tuple[str, ...] = _DEFAULT_LIBRARY_NAMES):
     layers = layers or [EffectLayer(variant="Color Wash")]
-    library = _make_library("Color Wash", "Shockwave", "Ripple", "Single Strand")
-    variant_library = _make_variant_library("Color Wash", "Shockwave", "Ripple", "Single Strand")
+    library = _make_library(*library_names)
+    variant_library = _make_variant_library(*library_names)
     assignment = _make_assignment(section, layers, variation_seed=variation_seed)
     return place_effects(
         assignment, [group], library,
@@ -154,6 +160,19 @@ class TestRecipeMatching:
 
     def test_non_tier6_excluded(self) -> None:
         g = PowerGroup(name="07_COMP_Arches", tier=7, members=["Arch 1", "Arch 2"])
+        assert recipe_for_group(g) is None
+
+    def test_megatree_group_name_matches(self) -> None:
+        assert recipe_for_group(_MEGATREE_GROUP).family == "megatree"
+
+    def test_megatree_member_majority_matches(self) -> None:
+        g = PowerGroup(name="06_PROP_Trees", tier=6,
+                       members=["Mega Tree 1", "Mega Tree 2", "Palm Tree"])
+        assert recipe_for_group(g).family == "megatree"
+
+    def test_mega_topper_does_not_match_megatree(self) -> None:
+        g = PowerGroup(name="06_PROP_Mega_Topper", tier=6,
+                       members=["Mega Topper 1", "Mega Topper 2"])
         assert recipe_for_group(g) is None
 
 
@@ -255,6 +274,76 @@ class TestCorpusRecipePlacement:
             hierarchy=_make_hierarchy(None),
         )
         assert result.get("06_PROP_Snowflake"), "group must still receive placements"
+
+    def test_megatree_chorus_gets_white_shockwave_per_beat(self) -> None:
+        result = _place(_make_section(label="chorus"), _MEGATREE_GROUP)
+        placements = result["06_PROP_Mega_Tree"]
+        assert len(placements) == len(_BEATS)
+        assert all(p.effect_name == "Shockwave" for p in placements)
+        assert all(p.color_palette == ["#FFFFFF"] for p in placements)
+
+    def test_megatree_alternate_is_spirals_with_mined_preset(self) -> None:
+        result = _place(_make_section(label="chorus"), _MEGATREE_GROUP, variation_seed=3)
+        placements = result["06_PROP_Mega_Tree"]
+        assert placements
+        for p in placements:
+            assert p.effect_name == "Spirals"
+            assert p.parameters["E_SLIDER_Spirals_Count"] == "1"
+            assert p.parameters["E_CHECKBOX_Spirals_Grow"] == "0"
+            assert "E_SLIDER_Shockwave_End_Radius" not in p.parameters
+
+
+# ── Off backdrop (layer beneath the bursts) ──────────────────────────────────
+
+
+_LIBRARY_WITH_OFF = _DEFAULT_LIBRARY_NAMES + ("Off",)
+
+
+class TestOffBackdrop:
+    def test_snowflake_recipe_adds_section_spanning_off_on_layer_1(self) -> None:
+        section = _make_section(label="chorus")
+        result = _place(section, _SNOWFLAKE_GROUP, library_names=_LIBRARY_WITH_OFF)
+        placements = result["06_PROP_Snowflake"]
+        offs = [p for p in placements if p.effect_name == "Off"]
+        assert len(offs) == 1
+        assert offs[0].layer == 1
+        assert offs[0].start_ms == section.start_ms
+        assert offs[0].end_ms == section.end_ms
+        # The bursts stay on the top layer, one per beat, unchanged.
+        bursts = [p for p in placements if p.effect_name == "Shockwave"]
+        assert len(bursts) == len(_BEATS)
+        assert all(p.layer == 0 for p in bursts)
+
+    def test_arch_recipe_adds_off_backdrop(self) -> None:
+        result = _place(_make_section(label="chorus"), _ARCH_GROUP,
+                        library_names=_LIBRARY_WITH_OFF)
+        offs = [p for p in result["06_PROP_Arch"] if p.effect_name == "Off"]
+        assert len(offs) == 1
+        assert offs[0].layer == 1
+
+    def test_megatree_recipe_has_no_off_backdrop(self) -> None:
+        # Off backdrop is not part of the mined megatree idiom.
+        result = _place(_make_section(label="chorus"), _MEGATREE_GROUP,
+                        library_names=_LIBRARY_WITH_OFF)
+        offs = [p for p in result["06_PROP_Mega_Tree"] if p.effect_name == "Off"]
+        assert offs == []
+
+    def test_off_missing_from_library_skips_backdrop(self) -> None:
+        # A catalog without "Off" must not break the recipe placement.
+        result = _place(_make_section(label="chorus"), _SNOWFLAKE_GROUP)
+        placements = result["06_PROP_Snowflake"]
+        assert len(placements) == len(_BEATS)
+        assert all(p.effect_name == "Shockwave" for p in placements)
+
+    def test_multi_layer_theme_adds_single_off_backdrop(self) -> None:
+        layers = [
+            EffectLayer(variant="Color Wash"),
+            EffectLayer(variant="Ripple"),
+        ]
+        result = _place(_make_section(label="chorus"), _SNOWFLAKE_GROUP,
+                        layers=layers, library_names=_LIBRARY_WITH_OFF)
+        offs = [p for p in result["06_PROP_Snowflake"] if p.effect_name == "Off"]
+        assert len(offs) == 1
 
     def test_multi_layer_theme_places_recipe_once(self) -> None:
         # 3-layer theme: layers 0 and 1 both map to tier 6 — the recipe must

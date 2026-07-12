@@ -1757,10 +1757,11 @@ def _place_corpus_recipe(
     median_interval = marks[len(marks) // 2].time_ms - marks[len(marks) // 2 - 1].time_ms
     placements: list[EffectPlacement] = []
     palette = list(recipe.palette)
-    # The mined parameter preset belongs to the primary effect; the alternate
-    # has a different parameter space and keeps library defaults.
-    params: dict[str, Any] = (
-        dict(recipe.parameter_overrides) if effect_name == recipe.effect_name else {}
+    # Each effect gets its own mined preset; their parameter spaces differ.
+    params: dict[str, Any] = dict(
+        recipe.parameter_overrides
+        if effect_name == recipe.effect_name
+        else recipe.alt_parameter_overrides
     )
     for i, mark in enumerate(marks):
         start = mark.time_ms
@@ -1774,7 +1775,23 @@ def _place_corpus_recipe(
             effect_def, group.name, start, end,
             params, palette, layer.blend_mode, "beat", instance_index=i,
         ))
-    return placements or None
+    if not placements:
+        return None
+
+    # Corpus idiom for snowflakes/arches: a section-spanning Off on the layer
+    # beneath the bursts keeps the group black between bursts instead of
+    # picking up whole-house bleed (the reference packages tile qualifying
+    # sections with 12-15s Off blocks on the group's second layer).
+    if recipe.off_backdrop:
+        off_def = effect_library.effects.get("Off")
+        if off_def is not None:
+            backdrop = _make_placement(
+                off_def, group.name, section.start_ms, section.end_ms,
+                {}, ["#000000"], layer.blend_mode, "section",
+            )
+            backdrop.layer = 1
+            placements.append(backdrop)
+    return placements
 
 
 def _place_per_beat(

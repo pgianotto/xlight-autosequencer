@@ -1,4 +1,4 @@
-"""Corpus-derived prop-family placement recipes for tier-6 PROP groups.
+r"""Corpus-derived prop-family placement recipes for tier-6 PROP groups.
 
 Mined from the 12 professionally hand-built reference packages (.xsqz) in
 ``F:\ShowFolderAI`` — see ``docs/snowflake_sequencing_corpus/`` and
@@ -12,6 +12,15 @@ Mined from the 12 professionally hand-built reference packages (.xsqz) in
 - **Arches** — solid-white Single Strand chase, one segment per beat,
   chorus/outro-confined, optionally recolored by a mask layer (not replicated
   here in v1).
+- **Mega trees** — Shockwave bursts (36% of tree-proper placements, same
+  center-out preset as snowflakes) alternating with sustained single-spiral
+  Spirals spins (18%), solid white dominant. See
+  ``docs/megatree_sequencing_corpus/``.
+
+Snowflake and arch groups additionally carry a section-spanning **Off
+backdrop** on the xLights layer beneath the bursts (``off_backdrop``): the
+reference packages tile qualifying sections with 12-15s Off blocks on layer
+index 1-2 of the group element so the props stay black between bursts.
 
 A recipe only fires on qualifying sections (chorus-like label or high energy);
 everywhere else the normal rotation/pool placement applies, so verses keep
@@ -45,10 +54,17 @@ class PropFamilyRecipe:
     palette: tuple[str, ...] = ("#FFFFFF",)
     qualifying_labels: tuple[str, ...] = ("chorus", "drop", "hook", "climax", "build_peak")
     min_energy: int = 65
-    # xLights parameter preset mined from the corpus placements, applied to
-    # the primary effect only (the alternate keeps library defaults — its
-    # parameter space differs).
+    # xLights parameter presets mined from the corpus placements. The primary
+    # preset applies to effect_name; the alt preset applies to alt_effect_name
+    # (empty → the alternate keeps library defaults).
     parameter_overrides: tuple[tuple[str, str], ...] = ()
+    alt_parameter_overrides: tuple[tuple[str, str], ...] = ()
+    # The reference packages place a section-spanning Off effect on the layer
+    # beneath the beat bursts (xLights layer 2) on the group element, so the
+    # props render black between bursts instead of picking up whole-house
+    # bleed. Mined: snowflake Off placements are 43/58 on layer index 1;
+    # arch 69/75 on layer index 1-2, spans of 12-15s tiling the sections.
+    off_backdrop: bool = False
 
 
 # Mined presets — near-unanimous across all 12 reference packages:
@@ -82,6 +98,22 @@ _SHOCKWAVE_BURST: tuple[tuple[str, str], ...] = (
 )
 
 
+# Megatree Spirals preset — mined from 720 Spirals placements on Mega Tree
+# elements: single spiral (Count=1 at 96%), no grow/shrink (96-97%), blend
+# off (87%); rotation/movement/thickness vary per song, so representative
+# mid-corpus values are used.
+_SPIRALS_MEGATREE: tuple[tuple[str, str], ...] = (
+    ("E_SLIDER_Spirals_Count", "1"),
+    ("E_SLIDER_Spirals_Rotation", "140"),
+    ("E_SLIDER_Spirals_Thickness", "30"),
+    ("E_TEXTCTRL_Spirals_Movement", "4"),
+    ("E_CHECKBOX_Spirals_3D", "1"),
+    ("E_CHECKBOX_Spirals_Blend", "0"),
+    ("E_CHECKBOX_Spirals_Grow", "0"),
+    ("E_CHECKBOX_Spirals_Shrink", "0"),
+)
+
+
 CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
     PropFamilyRecipe(
         family="snowflake",
@@ -89,12 +121,29 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         effect_name="Shockwave",
         alt_effect_name="Ripple",
         parameter_overrides=_SHOCKWAVE_BURST,
+        off_backdrop=True,
     ),
     PropFamilyRecipe(
         family="arch",
         match_tokens=("arch",),
         effect_name="Single Strand",
         parameter_overrides=_CHASE_FROM_HEAD,
+        off_backdrop=True,
+    ),
+    # Mega tree — mined from the same 12 packages (docs/megatree_sequencing_
+    # corpus/): tree-proper placements are Shockwave 36% (same center-out
+    # burst preset as snowflakes, >96% Blend_Edges/Cycles=1/Start_Width=5),
+    # Spirals 18% (sustained ~2-beat spins), 93%+ solid single-color white.
+    # Off backdrop is NOT part of the megatree idiom (55/7.7k placements).
+    # Tokens match "06_PROP_Mega_Tree" and member names like "Mega Tree 2";
+    # "Mega Topper" props deliberately do not match — different prop family.
+    PropFamilyRecipe(
+        family="megatree",
+        match_tokens=("megatree", "mega_tree", "mega tree"),
+        effect_name="Shockwave",
+        alt_effect_name="Spirals",
+        parameter_overrides=_SHOCKWAVE_BURST,
+        alt_parameter_overrides=_SPIRALS_MEGATREE,
     ),
 )
 
