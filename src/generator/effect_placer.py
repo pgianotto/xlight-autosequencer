@@ -7,6 +7,11 @@ from typing import Any, Optional
 
 from src.analyzer.result import HierarchyResult, TimingMark, TimingTrack
 from src.effects.library import EffectLibrary
+from src.generator.corpus_recipes import (
+    PropFamilyRecipe,
+    recipe_for_group,
+    section_qualifies,
+)
 from src.generator.rotation import RotationPlan
 from src.effects.models import VALID_DURATION_TYPES, EffectDefinition
 from src.generator.chord_colors import (
@@ -682,6 +687,10 @@ def place_effects(
 
     result: dict[str, list[EffectPlacement]] = {}
 
+    # Tier-6 groups already placed via a corpus recipe this call — prevents
+    # duplicate per-beat stacks when multiple theme layers target tier 6.
+    corpus_recipe_done: set[str] = set()
+
     for layer_idx, layer in enumerate(layers):
         # Resolve variant → effect_def
         layer_variant = variant_library.get(layer.variant) if variant_library is not None else None
@@ -718,6 +727,24 @@ def place_effects(
             # Tier 5-8: use rotation plan when available
             if tier in (5, 6, 7, 8) and groups_for_tier and rotation_plan is not None:
                 for group in groups_for_tier:
+                    # Corpus-mined prop-family idiom (snowflakes, arches)
+                    # overrides rotation on qualifying sections.
+                    recipe = recipe_for_group(group)
+                    if (
+                        tier == 6
+                        and recipe is not None
+                        and group.name not in corpus_recipe_done
+                        and section_qualifies(recipe, section)
+                    ):
+                        recipe_placements = _place_corpus_recipe(
+                            group, recipe, layer, section, hierarchy,
+                            effect_library, assignment.variation_seed,
+                        )
+                        if recipe_placements:
+                            corpus_recipe_done.add(group.name)
+                            result.setdefault(group.name, []).extend(recipe_placements)
+                            continue
+
                     entry = rotation_plan.lookup(section_index, group.name)
                     if entry is None:
                         continue
@@ -812,6 +839,24 @@ def place_effects(
                 if focused_vocabulary and working_set and working_set.effects:
                     # T011: Draw from WorkingSet — coherent with rest of sequence
                     for gi, group in enumerate(groups_for_tier):
+                        # Corpus-mined prop-family idiom (snowflakes, arches)
+                        # overrides the working set on qualifying sections.
+                        recipe = recipe_for_group(group)
+                        if (
+                            tier == 6
+                            and recipe is not None
+                            and group.name not in corpus_recipe_done
+                            and section_qualifies(recipe, section)
+                        ):
+                            recipe_placements = _place_corpus_recipe(
+                                group, recipe, layer, section, hierarchy,
+                                effect_library, assignment.variation_seed,
+                            )
+                            if recipe_placements:
+                                corpus_recipe_done.add(group.name)
+                                result.setdefault(group.name, []).extend(recipe_placements)
+                                continue
+
                         ws_rng = random.Random(section_index * 10000 + gi * 100 + tier)
                         ws_entry = select_from_working_set(working_set, ws_rng)
                         ws_def = effect_library.effects.get(ws_entry.effect_name)
@@ -863,6 +908,24 @@ def place_effects(
                 else:
                     # Original: cycle through prop-effect pool (T023: per-group prop_type filter)
                     for gi, group in enumerate(groups_for_tier):
+                        # Corpus-mined prop-family idiom (snowflakes, arches)
+                        # overrides the pool on qualifying sections.
+                        recipe = recipe_for_group(group)
+                        if (
+                            tier == 6
+                            and recipe is not None
+                            and group.name not in corpus_recipe_done
+                            and section_qualifies(recipe, section)
+                        ):
+                            recipe_placements = _place_corpus_recipe(
+                                group, recipe, layer, section, hierarchy,
+                                effect_library, assignment.variation_seed,
+                            )
+                            if recipe_placements:
+                                corpus_recipe_done.add(group.name)
+                                result.setdefault(group.name, []).extend(recipe_placements)
+                                continue
+
                         group_prop_type = getattr(group, "prop_type", None)
 
                         # Radial sub-groups: chase the layer's effect across
@@ -1649,6 +1712,65 @@ def _place_per_bar(
 # design.md for the rationale.
 _BEAT_PUNCH_CONFIDENCE_THRESHOLD = 0.7
 _BEAT_PUNCH_DURATION_MS = 250
+
+
+def _place_corpus_recipe(
+    group: PowerGroup,
+    recipe: PropFamilyRecipe,
+    layer: EffectLayer,
+    section: SectionEnergy,
+    hierarchy: HierarchyResult,
+    effect_library: EffectLibrary,
+    variation_seed: int,
+) -> list[EffectPlacement] | None:
+    """Place a corpus-mined prop-family idiom: solid-palette segments spanning
+    consecutive beats, back-to-back across the section (the mined shows place
+    one full-beat segment per beat with no gaps — no density filter, no
+    confidence-based punch shortening, no chord-color blending).
+
+    Returns None when preconditions are missing (unknown effect, no beats
+    track, too few beats in section) so the caller falls back to normal
+    placement — never an empty list, which would silently suppress placement
+    (bug-159 lesson).
+    """
+    # Alternate primary/alt effect between qualifying sections. variation_seed
+    # is the global section index; qualifying (chorus-like) sections typically
+    # occupy every other slot, so raw parity would lock one effect in for the
+    # whole song — halving first alternates per occurrence instead.
+    effect_name = recipe.effect_name
+    if recipe.alt_effect_name is not None and (variation_seed // 2) % 2 == 1:
+        effect_name = recipe.alt_effect_name
+    effect_def = effect_library.effects.get(effect_name)
+    if effect_def is None:
+        return None
+    beats_track = getattr(hierarchy, "beats", None)
+    if beats_track is None or not beats_track.marks:
+        return None
+    marks = _marks_in_range(beats_track.marks, section.start_ms, section.end_ms)
+    if len(marks) < 2:
+        return None
+
+    median_interval = marks[len(marks) // 2].time_ms - marks[len(marks) // 2 - 1].time_ms
+    placements: list[EffectPlacement] = []
+    palette = list(recipe.palette)
+    # The mined parameter preset belongs to the primary effect; the alternate
+    # has a different parameter space and keeps library defaults.
+    params: dict[str, Any] = (
+        dict(recipe.parameter_overrides) if effect_name == recipe.effect_name else {}
+    )
+    for i, mark in enumerate(marks):
+        start = mark.time_ms
+        if i + 1 < len(marks):
+            end = marks[i + 1].time_ms
+        else:
+            end = min(start + max(median_interval, FRAME_INTERVAL_MS), section.end_ms)
+        if end <= start:
+            continue
+        placements.append(_make_placement(
+            effect_def, group.name, start, end,
+            params, palette, layer.blend_mode, "beat", instance_index=i,
+        ))
+    return placements or None
 
 
 def _place_per_beat(

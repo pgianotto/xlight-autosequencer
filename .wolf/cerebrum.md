@@ -13,6 +13,7 @@
 - **Keep changes scoped.** Do exactly what was asked — nothing more, nothing less. No "while I was in here" refactors, no speculative abstractions, no preemptive cleanup.
 - **Branches required.** Never work directly on `main`/`master`. Every new task gets a new branch (`fix/`, `feat/`, `refactor/`, `chore/`). See Branch Discipline in OPENWOLF.md.
 - **No hacks.** No `# HACK`, no `# TODO: fix properly later`, no workaround comments, no try/except-pass, no hard-coded special cases to mask bad data. If the right fix is too large for scope, say so — don't ship a band-aid.
+- (2026-07-12) Mined corpus extracts (docs/*_sequencing_corpus/) must NEVER be pushed to GitHub — they derive from purchased reference sequences. History was purged with git filter-repo + force-push on 2026-07-12; docs/*_sequencing_corpus/ is gitignored on main; local copies are scrubbed of author identifiers (Ref->Ref) and absolute paths. Apply the same treatment to any future prop-family extraction.
 - (2026-07-12) Always ask the user which xlights_rgbeffects.xml (layout) file to use BEFORE generating any sequence — multiple show folders exist (ShowFolder3D, ShowFolderAI, per-package layouts) and assuming one risks targeting nonexistent models.
 
 ## Key Learnings
@@ -31,6 +32,9 @@
 - **xLights Text effect can render a timing track** (2026-07-12): `E_CHOICE_Text_LyricTrack=<track name>` makes the Text effect display that track's labels as they fire — no per-word Text placements needed for word-synced lyrics on a matrix.
 - **Windows dev host interpreters** (2026-07-12): pytest runs under the SYSTEM Python 3.13 (`python -m pytest`); the project `.venv` (3.12) holds flask/whisperx/torch/nltk/syncedlyrics but NOT pytest. There is no `.venv-vamp` on this host — whisperx imports fine in-process from `.venv`. `src/analyzer/phoneme_align.py` tries in-process first, then the `.venv-vamp` sidecar (checks both `bin/python` and `Scripts/python.exe`).
 - **madmom on Python 3.11** (2026-06-02, bug-161): madmom 0.16.1 `processors.py` does `from collections import MutableSequence` (removed in 3.10 → `collections.abc`). Fixed with a shim mirroring the existing numpy-alias shim, in BOTH `vamp_runner.py` (module top) and `capabilities.py` (probe string + in-process branch — both needed or the probe reports madmom unavailable). Verified: `madmom_beats` now runs and matches baseline. Two leftover gotchas: (1) `madmom_downbeats` then failed with a SEPARATE numpy ragged-array `ValueError: inhomogeneous shape` — fixed in bug-162 via `_patch_downbeats_asarray()` in `madmom_beat.py` (module-scoped `np.asarray` proxy on `madmom.features.downbeats` that falls back to `dtype=object`, restoring pre-numpy-1.24 semantics madmom 0.16.1 relies on). (2) madmom needs `pkg_resources`, so `.venv-vamp` must keep `setuptools<81` + `packaging<25` (newer setuptools drops pkg_resources; the `packaging.markers` ModuleNotFoundError only appears in isolated test scripts that put repo root on sys.path[0], not the real gate subprocess).
+
+- **Sequencing-technique corpus source** (2026-07-12): the ONLY reference corpus for mining hand-built sequencing techniques is the 12 `Ref-*` professional packages (.xsqz/.zip) in `F:\ShowFolderAI` — NOT `E:\2023\ShowFolder3D` (user's own mixed-quality sequences) and NOT loose `.xsq` files in ShowFolderAI (those are AI-generated outputs and would contaminate the corpus with our own patterns). Miner: `scripts/mine_prop_corpus.py <folder> --family <fam> --tokens <t1,t2> --only ref-`. Ref-corpus snowflake idiom: white Shockwave 66% / SingleStrand 28%, 93% white-base, 0.5-1 beat cadence, chorus-heavy.
+- **variation_seed is the global section index** (2026-07-12): `select_themes` assigns `variation_seed = base + section_index`, so in verse/chorus songs, choruses always share parity. Any "alternate on repeat" logic keyed on seed parity must halve first (`(seed // 2) % 2`) or it locks one branch in for the whole song (bug-182).
 
 ## Do-Not-Repeat
 
@@ -59,3 +63,4 @@
 <!-- Significant technical decisions with rationale. Why X was chosen over Y. -->
 
 - [2026-04-19] Added adversarial review discipline to OpenWolf (OPENWOLF.md sections + `/review-diff` command). Chosen over editing built-in `review`/`security-review` skills because those live outside the repo and can't be versioned; chosen over tightening `/speckit.analyze` because the pain is post-implementation (diffs, regressions) not pre-implementation (spec quality).
+

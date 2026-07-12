@@ -2976,6 +2976,23 @@
       ],
       "occurrences": 1,
       "last_seen": "2026-07-12"
+    },
+    {
+      "id": "bug-182",
+      "timestamp": "2026-07-12",
+      "error_message": "Corpus recipe alternate effect (Ripple) fired on every chorus — Shockwave (the corpus-dominant primary) never appeared in verse/chorus songs",
+      "file": "src/generator/effect_placer.py",
+      "root_cause": "variation_seed is the global section index; in alternating verse/chorus structures choruses are always odd-indexed, so raw seed parity locked the alternate effect in for the whole song",
+      "fix": "Halve variation_seed before taking parity ((seed // 2) % 2) so qualifying sections that occupy every other slot alternate per occurrence",
+      "tags": [
+        "generator",
+        "corpus-recipes",
+        "variation_seed",
+        "tier-6"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-12"
     }
   ]
 }
