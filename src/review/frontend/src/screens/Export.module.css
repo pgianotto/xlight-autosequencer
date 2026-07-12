@@ -99,3 +99,114 @@
   margin-top: 16px;
   text-decoration: none;
 }
+
+/* ---- Render progress panels (visual language mirrors Analyze) ---- */
+
+.progressGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line, #222);
+  margin: 16px 0;
+  max-width: 960px;
+  min-height: 200px;
+}
+
+.stagePanel {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line, #222);
+  overflow: hidden;
+}
+
+.consolePanel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panelHeader {
+  padding: 10px 14px;
+  background: var(--bg1, #111116);
+  border-bottom: 1px solid var(--line, #222);
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  color: var(--ink3, #555);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.stageList {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.stageRow {
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--line, #222);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stageRunning {
+  background: color-mix(in srgb, var(--accent, #4ade80) 5%, transparent);
+}
+
+.stagePending {
+  opacity: 0.55;
+}
+
+.stageGlyph {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  width: 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.glyphDone { color: var(--ok, #4ade80); }
+.glyphRunning { color: #d97757; }
+.glyphPending { color: var(--ink3, #555); }
+.glyphFailed { color: var(--err, #d43a2f); }
+
+.stageName {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--ink, #f5f5f0);
+  flex: 1;
+}
+
+.stagePct {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  color: var(--ink3, #555);
+  font-variant-numeric: tabular-nums;
+}
+
+.consoleBody {
+  flex: 1;
+  min-height: 0;
+  background: #050507;
+  padding: 8px 14px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: #a8a8b0;
+  overflow-y: auto;
+  line-height: 1.55;
+}
+
+.logLine { white-space: pre-wrap; }
+.logOk { color: var(--ok, #4ade80); }
+.logErr { color: var(--err, #d43a2f); }
+.logProgress { color: var(--ink3, #555); }
+
+.cursor {
+  color: #d97757;
+  animation: exportCursorBlink 0.8s step-end infinite;
+}
+
+@keyframes exportCursorBlink {
+  50% { opacity: 0; }
+}

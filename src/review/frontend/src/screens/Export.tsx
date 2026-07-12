@@ -16,10 +16,35 @@ interface ExportProps {
   onLayoutImported?: (layoutId: string, xmlPath: string) => void;
 }
 
+// Known render stages, in pipeline order (src/review/api/v1/export.py).
+// Stages the backend emits that aren't listed here are appended on the fly,
+// so new backend stages show up without a frontend change.
+const RENDER_STAGES: { id: string; label: string }[] = [
+  { id: 'building_plan', label: 'building plan' },
+  { id: 'placing_effects', label: 'placing effects' },
+  { id: 'writing_xml', label: 'writing xml' },
+];
+
+type StageStatus = 'pending' | 'running' | 'done' | 'failed';
+
+interface RenderLogLine {
+  text: string;
+  kind: 'info' | 'ok' | 'err' | 'progress';
+}
+
 export function Export({ song, layoutId, layoutXmlPath, onExportComplete, onLayoutImported }: ExportProps) {
   const [exporting, setExporting] = useState(false);
   const [outputPath, setOutputPath] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Render-progress panels (stage list + stream log), populated from the
+  // export SSE. stageOrder holds known stages plus any new ones the backend
+  // emits; stageStatus tracks each stage's lifecycle.
+  const [stageOrder, setStageOrder] = useState<{ id: string; label: string }[]>(RENDER_STAGES);
+  const [stageStatus, setStageStatus] = useState<Record<string, StageStatus>>({});
+  const [renderLog, setRenderLog] = useState<RenderLogLine[]>([]);
+  const renderLogRef = useRef<HTMLDivElement>(null);
+  const renderStartRef = useRef<number | null>(null);
+  const runningStageRef = useRef<string | null>(null);
   const [importingLayout, setImportingLayout] = useState(false);
   const [layoutError, setLayoutError] = useState<string | null>(null);
   const layoutInputRef = useRef<HTMLInputElement>(null);
@@ -81,9 +106,29 @@ export function Export({ song, layoutId, layoutXmlPath, onExportComplete, onLayo
     if (file) handleLayoutFile(file);
   }
 
+  // Auto-scroll the stream log
+  useEffect(() => {
+    if (renderLogRef.current) {
+      renderLogRef.current.scrollTop = renderLogRef.current.scrollHeight;
+    }
+  }, [renderLog.length]);
+
+  function pushLog(line: RenderLogLine) {
+    setRenderLog((prev) => [...prev, line]);
+  }
+
+  function elapsedSec(): string {
+    const start = renderStartRef.current;
+    return start != null ? `${Math.round((Date.now() - start) / 1000)}s` : '0s';
+  }
+
   async function handleRender() {
     setError(null);
     setExporting(true);
+    setStageOrder(RENDER_STAGES);
+    setStageStatus({});
+    setRenderLog([{ text: `› render: ${song.title}`, kind: 'info' }]);
+    renderStartRef.current = Date.now();
     try {
       const res = await fetch(`/api/v1/songs/${song.song_id}/export`, {
         method: 'POST',
@@ -93,20 +138,61 @@ export function Export({ song, layoutId, layoutXmlPath, onExportComplete, onLayo
       const body = await res.json();
       if (!res.ok) {
         setError(body?.error?.message ?? 'Export failed');
+        setExporting(false);
         return;
       }
-      // Poll SSE for completion
+      // Stream stage progress
       const es = new EventSource(`/api/v1/songs/${song.song_id}/export/status`);
       es.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
-          if (data.stage === 'done') {
+          const stage: string | undefined = data.stage;
+          if (!stage) return;
+
+          if (stage === 'done') {
+            const running = runningStageRef.current;
+            if (running) {
+              setStageStatus((prev) => ({ ...prev, [running]: 'done' }));
+              pushLog({ text: `✓ ${running.replace(/_/g, ' ')}`, kind: 'ok' });
+              runningStageRef.current = null;
+            }
+            pushLog({ text: `✓ done · ${elapsedSec()}`, kind: 'ok' });
+            pushLog({ text: `  → ${data.output_path}`, kind: 'ok' });
             setOutputPath(data.output_path);
             onExportComplete?.(data.output_path);
+            setExporting(false);
             es.close();
-          } else if (data.stage === 'failed') {
+          } else if (stage === 'failed') {
+            const running = runningStageRef.current;
+            if (running) {
+              setStageStatus((prev) => ({ ...prev, [running]: 'failed' }));
+              runningStageRef.current = null;
+            }
+            pushLog({ text: `✗ ${data.error ?? 'Export failed'}`, kind: 'err' });
             setError(data.error ?? 'Export failed');
+            setExporting(false);
             es.close();
+          } else {
+            // A pipeline stage started: previous running stage is done.
+            setStageOrder((prev) =>
+              prev.some((s) => s.id === stage)
+                ? prev
+                : [...prev, { id: stage, label: stage.replace(/_/g, ' ') }],
+            );
+            const prevRunning = runningStageRef.current;
+            if (prevRunning && prevRunning !== stage) {
+              setStageStatus((prev) => ({ ...prev, [prevRunning]: 'done' }));
+              pushLog({ text: `✓ ${prevRunning.replace(/_/g, ' ')}`, kind: 'ok' });
+            }
+            runningStageRef.current = stage;
+            setStageStatus((prev) => ({ ...prev, [stage]: 'running' }));
+            pushLog({ text: `› ${stage.replace(/_/g, ' ')}: running…`, kind: 'info' });
+            if (typeof data.progress === 'number') {
+              pushLog({
+                text: `  ${Math.round(data.progress * 100)}% · ${elapsedSec()}`,
+                kind: 'progress',
+              });
+            }
           }
         } catch {}
       };
@@ -116,7 +202,6 @@ export function Export({ song, layoutId, layoutXmlPath, onExportComplete, onLayo
       };
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export failed');
-    } finally {
       setExporting(false);
     }
   }
@@ -214,7 +299,76 @@ export function Export({ song, layoutId, layoutXmlPath, onExportComplete, onLayo
 
       {error && <p className={styles.error}>{error}</p>}
 
-      {outputPath ? (
+      {!outputPath && (
+        <button
+          className={styles.renderBtn}
+          onClick={handleRender}
+          disabled={exporting}
+        >
+          {exporting ? 'Rendering…' : 'Render Sequence'}
+        </button>
+      )}
+
+      {renderLog.length > 0 && (
+        <div data-testid="render-progress" className={styles.progressGrid}>
+          <div className={styles.stagePanel}>
+            <div className={styles.panelHeader}>
+              stages · {Object.values(stageStatus).filter((s) => s === 'done').length} / {stageOrder.length} done
+            </div>
+            <div className={styles.stageList}>
+              {stageOrder.map((stage) => {
+                const status: StageStatus = stageStatus[stage.id] ?? 'pending';
+                const glyph =
+                  status === 'done' ? '✓'
+                  : status === 'running' ? '●'
+                  : status === 'failed' ? '✗'
+                  : '○';
+                const glyphClass =
+                  status === 'done' ? styles.glyphDone
+                  : status === 'running' ? styles.glyphRunning
+                  : status === 'failed' ? styles.glyphFailed
+                  : styles.glyphPending;
+                return (
+                  <div
+                    key={stage.id}
+                    data-testid={`render-stage-${stage.id}`}
+                    data-status={status}
+                    className={[
+                      styles.stageRow,
+                      status === 'running' ? styles.stageRunning : '',
+                      status === 'pending' ? styles.stagePending : '',
+                    ].join(' ')}
+                  >
+                    <span className={`${styles.stageGlyph} ${glyphClass}`}>{glyph}</span>
+                    <span className={styles.stageName}>{stage.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className={styles.consolePanel}>
+            <div className={styles.panelHeader}>stream · {renderLog.length} lines</div>
+            <div ref={renderLogRef} className={styles.consoleBody}>
+              {renderLog.map((line, i) => (
+                <div
+                  key={i}
+                  className={[
+                    styles.logLine,
+                    line.kind === 'ok' ? styles.logOk : '',
+                    line.kind === 'err' ? styles.logErr : '',
+                    line.kind === 'progress' ? styles.logProgress : '',
+                  ].join(' ')}
+                >
+                  {line.text}
+                </div>
+              ))}
+              {exporting && <span className={styles.cursor}>▍</span>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {outputPath && (
         <div className={styles.success}>
           <p>Export complete!</p>
           <code className={styles.path}>{outputPath}</code>
@@ -226,14 +380,6 @@ export function Export({ song, layoutId, layoutXmlPath, onExportComplete, onLayo
             Download .xsq
           </a>
         </div>
-      ) : (
-        <button
-          className={styles.renderBtn}
-          onClick={handleRender}
-          disabled={exporting}
-        >
-          {exporting ? 'Rendering…' : 'Render Sequence'}
-        </button>
       )}
     </div>
   );
