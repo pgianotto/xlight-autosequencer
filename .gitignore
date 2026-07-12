@@ -108,3 +108,5 @@ microscope-out-*/
 
 # Render-panel harness outputs (regenerated locally)
 render-out/
+
+docs/arch_sequencing_corpus/_generated/
