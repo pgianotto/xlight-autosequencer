@@ -329,6 +329,35 @@ export function Analyze({ song, forceOnMount = false, onAnalysisComplete, onComp
           setError(body?.error?.message ?? `Analysis failed (${res.status})`);
           return;
         }
+        const startBody = await res.json().catch(() => ({}));
+        const runId: string | null = startBody?.run_id ?? null;
+
+        // Persist the finished run. The backend keeps the song in 'draft'
+        // (GET /analysis → 409) until /analyze/commit is called, so skipping
+        // this leaves the Timeline stuck on "Loading analysis…" forever.
+        // 'already_committed' counts as success (double-commit from a
+        // duplicate SSE stream, e.g. React StrictMode remount).
+        async function commitRun(): Promise<boolean> {
+          if (!runId) {
+            setError('Analysis finished but no run_id was returned — cannot save');
+            return false;
+          }
+          try {
+            const r = await fetch(`/api/v1/songs/${song.song_id}/analyze/commit`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ run_id: runId, assignment_mapping: [] }),
+            });
+            if (r.ok) return true;
+            const b = await r.json().catch(() => ({}));
+            if (b?.error?.code === 'already_committed') return true;
+            setError(b?.error?.message ?? `Failed to save analysis (${r.status})`);
+            return false;
+          } catch {
+            setError('Failed to save analysis — network error');
+            return false;
+          }
+        }
 
         startTimeRef.current = Date.now();
         elapsedTimerRef.current = setInterval(() => {
@@ -362,13 +391,16 @@ export function Analyze({ song, forceOnMount = false, onAnalysisComplete, onComp
                 { text: `  ${pct}% · ${Math.round((ov.elapsed_ms ?? 0) / 1000)}s`, kind: 'progress' },
               ]);
               if (data.overall.status === 'done') {
-                setAnalysisComplete(true);
-                setFindings((prev) => ({ ...prev, waveformDecoded: true, themesAssigned: true }));
-                // Update the parent so the library rail status chip turns
-                // green without needing a library re-fetch.
-                onAnalysisComplete?.({ ...song, status: 'analyzed' });
                 if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
                 es.close();
+                void commitRun().then((ok) => {
+                  if (!ok) return;
+                  setAnalysisComplete(true);
+                  setFindings((prev) => ({ ...prev, waveformDecoded: true, themesAssigned: true }));
+                  // Update the parent so the library rail status chip turns
+                  // green without needing a library re-fetch.
+                  onAnalysisComplete?.({ ...song, status: 'analyzed' });
+                });
               } else if (data.overall.status === 'failed') {
                 setError(data.overall.error ?? 'Analysis failed');
                 if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
