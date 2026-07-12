@@ -63,14 +63,17 @@ def _default_overrides() -> dict:
     }
 
 
+# Default theme per section kind. Must reference real theme_ids from the
+# catalog (GET /api/v1/themes) — assignment PUTs validate against it, so a
+# stale id here produces defaults the user can never re-select (bug-176).
 _KIND_TO_THEME: dict[str, str] = {
-    "intro": "shimmer-wash",
-    "verse": "driving-pulse",
-    "chorus": "peak-flash",
-    "solo": "solo-chase",
-    "bridge": "bridge-burn",
-    "outro": "shimmer-wash",
-    "unknown": "neutral-glow",
+    "intro": "warm-glow",
+    "verse": "aurora",
+    "chorus": "festive-flash",
+    "solo": "scanning-beam",
+    "bridge": "inferno",
+    "outro": "silent-night",
+    "unknown": "warm-glow",
 }
 
 

@@ -34,12 +34,16 @@ def _import_and_analyze(client) -> str:
         data={"audio": (io.BytesIO(wav), "test.wav")},
         content_type="multipart/form-data",
     ).get_json()["song"]["song_id"]
-    client.post(f"/api/v1/songs/{song_id}/analyze")
-    for _ in range(20):
+    run_id = client.post(f"/api/v1/songs/{song_id}/analyze").get_json()["run_id"]
+    # A run only persists a session (and the song only becomes 'analyzed')
+    # once committed — mirror the client flow: poll commit until the run
+    # result is available (404 'Run result not yet available' while running).
+    for _ in range(100):
         time.sleep(0.1)
-        lib_data = client.get("/api/v1/library").get_json()
-        song = next((s for s in lib_data["songs"] if s["song_id"] == song_id), None)
-        if song and song.get("status") == "analyzed":
+        resp = client.post(
+            f"/api/v1/songs/{song_id}/analyze/commit", json={"run_id": run_id},
+        )
+        if resp.status_code == 200:
             break
     return song_id
 
@@ -87,7 +91,7 @@ class TestPutAssignment:
         song_id = _import_and_analyze(client)
         resp = client.put(
             f"/api/v1/songs/{song_id}/assignments/0",
-            json={"theme_id": "peak-flash"},
+            json={"theme_id": "festive-flash"},
         )
         assert resp.status_code == 200
 
@@ -95,7 +99,7 @@ class TestPutAssignment:
         song_id = _import_and_analyze(client)
         data = client.put(
             f"/api/v1/songs/{song_id}/assignments/0",
-            json={"theme_id": "peak-flash"},
+            json={"theme_id": "festive-flash"},
         ).get_json()
         assert data["assignment"]["user_confirmed"] is True
 
@@ -105,12 +109,12 @@ class TestPutAssignment:
         # First set custom override
         client.put(
             f"/api/v1/songs/{song_id}/assignments/0",
-            json={"theme_id": "peak-flash", "overrides": {"brightness": 0.3}},
+            json={"theme_id": "festive-flash", "overrides": {"brightness": 0.3}},
         )
         # Now change theme — overrides should reset
         data = client.put(
             f"/api/v1/songs/{song_id}/assignments/0",
-            json={"theme_id": "shimmer-wash"},
+            json={"theme_id": "warm-glow"},
         ).get_json()
         assert data["assignment"]["overrides"]["brightness"] == 1.0
 
@@ -118,7 +122,7 @@ class TestPutAssignment:
         song_id = _import_and_analyze(client)
         resp = client.put(
             f"/api/v1/songs/{song_id}/assignments/999",
-            json={"theme_id": "peak-flash"},
+            json={"theme_id": "festive-flash"},
         )
         assert resp.status_code == 404
 
@@ -140,7 +144,7 @@ class TestPutAssignmentOverrides:
         # First assign a theme so the section has a known state
         client.put(
             f"/api/v1/songs/{song_id}/assignments/0",
-            json={"theme_id": "shimmer-wash"},
+            json={"theme_id": "warm-glow"},
         )
         # Now send partial override — only brightness
         data = client.put(
@@ -157,7 +161,7 @@ class TestPutAssignmentOverrides:
         song_id = _import_and_analyze(client)
         client.put(
             f"/api/v1/songs/{song_id}/assignments/0",
-            json={"theme_id": "shimmer-wash"},
+            json={"theme_id": "warm-glow"},
         )
         data = client.put(
             f"/api/v1/songs/{song_id}/assignments/0",
@@ -175,12 +179,12 @@ class TestPutAssignmentOverrides:
         # Set custom overrides on initial theme
         client.put(
             f"/api/v1/songs/{song_id}/assignments/0",
-            json={"theme_id": "shimmer-wash", "overrides": {"brightness": 0.2}},
+            json={"theme_id": "warm-glow", "overrides": {"brightness": 0.2}},
         )
         # Change theme — overrides reset to defaults
         client.put(
             f"/api/v1/songs/{song_id}/assignments/0",
-            json={"theme_id": "peak-flash"},
+            json={"theme_id": "festive-flash"},
         )
         # Now patch a single field — others should be at defaults, not the old 0.2
         data = client.put(
@@ -197,12 +201,12 @@ class TestPutAssignmentOverrides:
         song_id = _import_and_analyze(client)
         client.put(
             f"/api/v1/songs/{song_id}/assignments/0",
-            json={"theme_id": "shimmer-wash", "overrides": {"brightness": 0.1}},
+            json={"theme_id": "warm-glow", "overrides": {"brightness": 0.1}},
         )
         # Change theme and also set brightness in the same request
         data = client.put(
             f"/api/v1/songs/{song_id}/assignments/0",
-            json={"theme_id": "peak-flash", "overrides": {"brightness": 0.7}},
+            json={"theme_id": "festive-flash", "overrides": {"brightness": 0.7}},
         ).get_json()
         ov = data["assignment"]["overrides"]
         # brightness was reset then patched to 0.7 (not leftover 0.1)

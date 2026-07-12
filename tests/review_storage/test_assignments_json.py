@@ -40,3 +40,24 @@ def test_atomic_write(state_dir):
     asgn_storage.save_session(SONG_ID, SECTIONS, ASSIGNMENTS)
     loaded = asgn_storage.load_session(SONG_ID)
     assert len(loaded["sections"]) == 2
+
+
+def test_save_session_preserves_extra_fields(state_dir):
+    """Regression: editing assignments must not discard fields the
+    analyze-commit path persisted (lyrics, detected_sections, ...) — losing
+    them dropped the Lyrics timing track from exported .xsq files."""
+    asgn_storage.save_full_session(SONG_ID, {
+        "sections": SECTIONS,
+        "detected_sections": SECTIONS,
+        "assignments": ASSIGNMENTS,
+        "ghost_boundaries": [],
+        "lyrics": [{"t_ms": 1000, "duration_ms": 2000, "text": "la la la"}],
+    })
+
+    updated = [dict(a, theme_id="calm") for a in ASSIGNMENTS]
+    asgn_storage.save_session(SONG_ID, SECTIONS, updated)
+
+    loaded = asgn_storage.load_session(SONG_ID)
+    assert loaded["assignments"][0]["theme_id"] == "calm"
+    assert loaded["lyrics"] == [{"t_ms": 1000, "duration_ms": 2000, "text": "la la la"}]
+    assert loaded["detected_sections"] == SECTIONS

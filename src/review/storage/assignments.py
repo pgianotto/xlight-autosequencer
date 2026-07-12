@@ -26,8 +26,19 @@ def save_session(
         )
     p = song_session_path(song_id)
     p.parent.mkdir(parents=True, exist_ok=True)
+    # Merge over the existing payload: the analyze-commit path persists extra
+    # fields (lyrics, detected_sections, ghost_boundaries) via
+    # save_full_session, and rewriting only sections/assignments here silently
+    # discarded them — e.g. the exported .xsq lost its Lyrics timing track the
+    # moment any theme assignment was edited.
+    existing = load_session(song_id) or {}
     data = json.dumps(
-        {"schema_version": SCHEMA_VERSION, "sections": sections, "assignments": assignments},
+        {
+            **existing,
+            "schema_version": SCHEMA_VERSION,
+            "sections": sections,
+            "assignments": assignments,
+        },
         indent=2,
         ensure_ascii=False,
     )

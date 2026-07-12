@@ -31,8 +31,18 @@ interface SectionStripProps {
   detectedSections?: RawSection[];
 }
 
-// Accent colors per theme_id
+// Accent colors per theme_id. The first block covers the current default
+// assignments (_KIND_TO_THEME in src/review/api/v1/analysis.py); the legacy
+// ids below it keep sessions saved before the defaults were fixed rendering
+// with their original accents.
 const THEME_ACCENTS: Record<string, string> = {
+  'warm-glow': '#f5a623',
+  'aurora': '#4ade80',
+  'festive-flash': '#facc15',
+  'scanning-beam': '#38bdf8',
+  'inferno': '#f97316',
+  'silent-night': '#a5b4fc',
+  // legacy ids from pre-fix sessions
   'shimmer-wash': '#4ade80',
   'driving-pulse': '#d97757',
   'peak-flash': '#facc15',

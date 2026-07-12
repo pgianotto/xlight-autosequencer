@@ -2856,6 +2856,47 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-12"
+    },
+    {
+      "id": "bug-176",
+      "timestamp": "2026-07-12",
+      "error_message": "Rendered .xsq has no Lyrics timing track even though the session had 29 synced lyric lines after commit",
+      "file": "src/review/storage/assignments.py",
+      "root_cause": "save_session() rewrote the session file with ONLY {schema_version, sections, assignments}, so the first theme-assignment edit (PUT /assignments) silently discarded the lyrics/detected_sections/ghost_boundaries fields that the analyze-commit path had persisted via save_full_session.",
+      "fix": "save_session now merges over the existing session payload instead of replacing it. Regression test: tests/review_storage/test_assignments_json.py::test_save_session_preserves_extra_fields. Affected songs need one re-analyze (or re-commit) to restore lyrics.",
+      "tags": [
+        "xonset",
+        "session",
+        "lyrics",
+        "export",
+        "data-loss",
+        "read-modify-write"
+      ],
+      "related_bugs": [
+        "bug-173"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-07-12"
+    },
+    {
+      "id": "bug-177",
+      "timestamp": "2026-07-12",
+      "error_message": "PUT /assignments 404 theme_not_found for default theme ids; 4 tests in tests/review/test_api_assignments.py failing",
+      "file": "src/review/api/v1/analysis.py",
+      "root_cause": "_KIND_TO_THEME auto-assigned defaults referencing theme ids (shimmer-wash, peak-flash, driving-pulse, solo-chase, bridge-burn, neutral-glow) that do not exist in the theme catalog \u2014 same stale-theme-whitelist family as f5435dc. Assignment PUTs validate against the real catalog, so tests (and any user re-selecting a default) got 404s. Tests were additionally broken because _import_and_analyze never committed the run (two-step commit flow, see bug-173).",
+      "fix": "_KIND_TO_THEME remapped to real catalog ids (warm-glow/aurora/festive-flash/scanning-beam/inferno/silent-night); SectionStrip THEME_ACCENTS extended (legacy ids kept for old sessions); test helper now commits the run; test theme ids updated.",
+      "tags": [
+        "xonset",
+        "themes",
+        "defaults",
+        "stale-whitelist",
+        "tests"
+      ],
+      "related_bugs": [
+        "bug-173"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-07-12"
     }
   ]
 }

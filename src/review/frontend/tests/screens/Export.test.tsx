@@ -15,6 +15,9 @@ const song = {
 describe('Export screen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: any unstubbed fetch (e.g. the layout-summary GET /api/v1/layout
+    // that fires whenever a layoutId is present) resolves harmlessly.
+    mockFetch.mockResolvedValue({ ok: false, json: async () => ({}) });
   });
 
   it('shows layout-required block when no layout', () => {
