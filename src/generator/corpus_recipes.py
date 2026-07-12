@@ -149,13 +149,18 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
 
 
 def recipe_for_group(group: PowerGroup) -> PropFamilyRecipe | None:
-    """Return the corpus recipe for a tier-6 PROP group, or None.
+    """Return the corpus recipe for a tier-6 PROP or tier-8 HERO group, or None.
+
+    Tier 8 is included because a family's props don't always pair up into a
+    tier-6 group — a layout with a single mega tree promotes it to
+    ``08_HERO_Mega_Tree``, and the corpus effects were overwhelmingly placed
+    on such individual model elements.
 
     Radial sub-groups (``prop_type == "radial"``) are never matched — they
     already have a dedicated chase-across-members placer that the corpus
     recipe must not displace.
     """
-    if group.tier != 6 or group.prop_type == "radial":
+    if group.tier not in (6, 8) or group.prop_type == "radial":
         return None
     name = group.name.lower()
     for recipe in CORPUS_RECIPES:

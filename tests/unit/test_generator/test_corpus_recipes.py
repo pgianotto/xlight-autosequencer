@@ -81,14 +81,15 @@ def _make_hierarchy(beat_times: list[int] | None, duration_ms: int = 8000) -> Hi
 
 
 def _make_assignment(section: SectionEnergy, layers: list[EffectLayer],
-                     variation_seed: int = 0) -> SectionAssignment:
+                     variation_seed: int = 0,
+                     active_tiers: frozenset[int] = frozenset({1, 6})) -> SectionAssignment:
     theme = Theme(
         name="Test Theme", mood="structural", occasion="general", genre="any",
         intent="test", layers=layers, palette=["#ff0000", "#00ff00"],
     )
     return SectionAssignment(
         section=section, theme=theme,
-        active_tiers=frozenset({1, 6}),
+        active_tiers=active_tiers,
         variation_seed=variation_seed,
     )
 
@@ -112,11 +113,13 @@ def _place(section: SectionEnergy, group: PowerGroup,
            variation_seed: int = 0,
            layers: list[EffectLayer] | None = None,
            hierarchy: HierarchyResult | None = None,
-           library_names: tuple[str, ...] = _DEFAULT_LIBRARY_NAMES):
+           library_names: tuple[str, ...] = _DEFAULT_LIBRARY_NAMES,
+           active_tiers: frozenset[int] = frozenset({1, 6})):
     layers = layers or [EffectLayer(variant="Color Wash")]
     library = _make_library(*library_names)
     variant_library = _make_variant_library(*library_names)
-    assignment = _make_assignment(section, layers, variation_seed=variation_seed)
+    assignment = _make_assignment(section, layers, variation_seed=variation_seed,
+                                  active_tiers=active_tiers)
     return place_effects(
         assignment, [group], library,
         hierarchy if hierarchy is not None else _make_hierarchy(_BEATS),
@@ -173,6 +176,21 @@ class TestRecipeMatching:
     def test_mega_topper_does_not_match_megatree(self) -> None:
         g = PowerGroup(name="06_PROP_Mega_Topper", tier=6,
                        members=["Mega Topper 1", "Mega Topper 2"])
+        assert recipe_for_group(g) is None
+
+    def test_hero_megatree_group_matches(self) -> None:
+        # A solo mega tree never forms a tier-6 pair group — it is promoted
+        # to a tier-8 HERO group, which must still receive the recipe.
+        g = PowerGroup(name="08_HERO_Mega_Tree", tier=8, members=["Mega Tree"])
+        assert recipe_for_group(g).family == "megatree"
+
+    def test_hero_with_submodel_members_matches(self) -> None:
+        g = PowerGroup(name="08_HERO_Mega_Tree", tier=8,
+                       members=["Mega Tree/Ring 1", "Mega Tree/Ring 2"])
+        assert recipe_for_group(g).family == "megatree"
+
+    def test_non_recipe_tiers_still_excluded(self) -> None:
+        g = PowerGroup(name="07_COMP_Mega_Tree", tier=7, members=["Mega Tree"])
         assert recipe_for_group(g) is None
 
 
@@ -291,6 +309,52 @@ class TestCorpusRecipePlacement:
             assert p.parameters["E_SLIDER_Spirals_Count"] == "1"
             assert p.parameters["E_CHECKBOX_Spirals_Grow"] == "0"
             assert "E_SLIDER_Shockwave_End_Radius" not in p.parameters
+
+
+# ── tier-8 HERO wiring (solo mega tree) ──────────────────────────────────────
+
+
+_HERO_MEGATREE_GROUP = PowerGroup(
+    name="08_HERO_Mega_Tree", tier=8, members=["Mega Tree"],
+)
+
+
+class TestHeroRecipePlacement:
+    def test_hero_megatree_chorus_gets_white_shockwave_per_beat(self) -> None:
+        result = _place(_make_section(label="chorus"), _HERO_MEGATREE_GROUP,
+                        active_tiers=frozenset({8}))
+        placements = result["08_HERO_Mega_Tree"]
+        assert len(placements) == len(_BEATS)
+        assert all(p.effect_name == "Shockwave" for p in placements)
+        assert all(p.color_palette == ["#FFFFFF"] for p in placements)
+
+    def test_hero_megatree_alternate_is_spirals_with_preset(self) -> None:
+        result = _place(_make_section(label="chorus"), _HERO_MEGATREE_GROUP,
+                        variation_seed=3, active_tiers=frozenset({8}))
+        placements = result["08_HERO_Mega_Tree"]
+        assert placements
+        for p in placements:
+            assert p.effect_name == "Spirals"
+            assert p.parameters["E_SLIDER_Spirals_Count"] == "1"
+
+    def test_hero_megatree_low_energy_verse_keeps_normal_placement(self) -> None:
+        result = _place(_make_section(label="verse", energy=40),
+                        _HERO_MEGATREE_GROUP, active_tiers=frozenset({8}))
+        placements = result.get("08_HERO_Mega_Tree", [])
+        # The hero still gets its normal theme placement, not the recipe stack.
+        assert placements
+        assert not all(
+            p.effect_name == "Shockwave" and p.color_palette == ["#FFFFFF"]
+            for p in placements
+        )
+
+    def test_hero_non_megatree_unaffected(self) -> None:
+        hero = PowerGroup(name="08_HERO_Matrix", tier=8, members=["Matrix"])
+        result = _place(_make_section(label="chorus"), hero,
+                        active_tiers=frozenset({8}))
+        placements = result.get("08_HERO_Matrix", [])
+        assert placements
+        assert not all(p.color_palette == ["#FFFFFF"] for p in placements)
 
 
 # ── Off backdrop (layer beneath the bursts) ──────────────────────────────────

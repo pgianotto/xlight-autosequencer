@@ -731,11 +731,12 @@ def place_effects(
             # Tier 5-8: use rotation plan when available
             if tier in (5, 6, 7, 8) and groups_for_tier and rotation_plan is not None:
                 for group in groups_for_tier:
-                    # Corpus-mined prop-family idiom (snowflakes, arches)
-                    # overrides rotation on qualifying sections.
+                    # Corpus-mined prop-family idiom (snowflakes, arches,
+                    # mega trees) overrides rotation on qualifying sections.
+                    # Tier 8 included: a solo mega tree is a HERO group.
                     recipe = recipe_for_group(group)
                     if (
-                        tier == 6
+                        tier in (6, 8)
                         and recipe is not None
                         and group.name not in corpus_recipe_done
                         and section_qualifies(recipe, section)
@@ -1025,6 +1026,26 @@ def place_effects(
             # (COMP), and Tier 8 (HERO).  _compute_active_tiers guarantees only
             # one partition tier from {2, 4, 6, 7} is present, plus 1 and/or 8.
             for group in groups_for_tier:
+                # Corpus-mined prop-family idiom for HERO props: a solo mega
+                # tree never forms a tier-6 pair group, so it reaches this
+                # default path as 08_HERO_Mega_Tree. Same override semantics
+                # as the tier-6 recipe sites above.
+                recipe = recipe_for_group(group)
+                if (
+                    tier == 8
+                    and recipe is not None
+                    and group.name not in corpus_recipe_done
+                    and section_qualifies(recipe, section)
+                ):
+                    recipe_placements = _place_corpus_recipe(
+                        group, recipe, layer, section, hierarchy,
+                        effect_library, assignment.variation_seed,
+                    )
+                    if recipe_placements:
+                        corpus_recipe_done.add(group.name)
+                        result.setdefault(group.name, []).extend(recipe_placements)
+                        continue
+
                 # Matrix-prop guard for tier-8 HERO (peer of the rotation-pool
                 # filter inside _build_effect_pool, which only runs on tier-6/7).
                 placement_effect_def = effect_def
