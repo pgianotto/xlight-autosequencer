@@ -606,9 +606,11 @@ class TestLyricsTimingTrack:
         assert effects[1].get("endTime") == "10000"  # last mark → song duration
 
 
-class TestWordsPhonemesTimingTracks:
-    """WhisperX word/phoneme marks embed as "Words"/"Phonemes" timing tracks."""
+class TestLyricLayeredTimingTrack:
+    """With word+phoneme marks, "Lyrics" becomes xLights' native 3-layer
+    lyric track: layer 1 phrases, layer 2 words, layer 3 phonemes."""
 
+    LYRICS = [{"t_ms": 1000, "duration_ms": 3500, "text": "hello world"}]
     WORDS = [
         {"label": "HELLO", "start_ms": 1000, "end_ms": 1400},
         {"label": "WORLD", "start_ms": 4000, "end_ms": 4500},
@@ -618,36 +620,63 @@ class TestWordsPhonemesTimingTracks:
         {"label": "O", "start_ms": 1200, "end_ms": 1400},
     ]
 
-    def test_tracks_collected(self):
-        tracks = _collect_timing_tracks(None, None, self.WORDS, self.PHONEMES)
-        assert [m.label for m in tracks["Words"]] == ["HELLO", "WORLD"]
-        assert [m.label for m in tracks["Phonemes"]] == ["E", "O"]
-        assert tracks["Words"][0].time_ms == 1000
-        assert tracks["Words"][0].duration_ms == 400
+    def test_three_layers_in_order(self, tmp_path: Path) -> None:
+        out = tmp_path / "test.xsq"
+        write_xsq(_make_plan(), out, lyrics=self.LYRICS,
+                  words=self.WORDS, phonemes=self.PHONEMES)
+        root = ET.parse(out).getroot()
 
-    def test_absent_marks_produce_no_tracks(self):
-        tracks = _collect_timing_tracks(None, None, None, None)
-        assert "Words" not in tracks
-        assert "Phonemes" not in tracks
+        effect_els = root.find("ElementEffects").findall("Element")
+        lyrics_els = [e for e in effect_els
+                      if e.get("type") == "timing" and e.get("name") == "Lyrics"]
+        assert len(lyrics_els) == 1
+        layers = lyrics_els[0].findall("EffectLayer")
+        assert len(layers) == 3
+        assert [e.get("label") for e in layers[0].findall("Effect")] == ["hello world"]
+        assert [e.get("label") for e in layers[1].findall("Effect")] == ["HELLO", "WORLD"]
+        assert [e.get("label") for e in layers[2].findall("Effect")] == ["E", "O"]
+        # No separate Words/Phonemes elements
+        names = {e.get("name") for e in effect_els if e.get("type") == "timing"}
+        assert "Words" not in names and "Phonemes" not in names
 
     def test_word_effects_do_not_stretch_across_silence(self, tmp_path: Path) -> None:
         """A word's timing effect ends at its own end_ms, not at the next
         word's start — otherwise mouths/text hold through instrumental gaps."""
         out = tmp_path / "test.xsq"
-        write_xsq(_make_plan(), out, words=self.WORDS, phonemes=self.PHONEMES)
+        write_xsq(_make_plan(), out, lyrics=self.LYRICS,
+                  words=self.WORDS, phonemes=self.PHONEMES)
         root = ET.parse(out).getroot()
 
         effect_els = root.find("ElementEffects").findall("Element")
-        words_el = [e for e in effect_els if e.get("name") == "Words"][0]
-        effects = words_el.find("EffectLayer").findall("Effect")
-        assert effects[0].get("label") == "HELLO"
-        assert effects[0].get("startTime") == "1000"
-        assert effects[0].get("endTime") == "1400"  # not 4000
-        assert effects[1].get("endTime") == "4500"  # not song duration
+        lyrics_el = [e for e in effect_els
+                     if e.get("type") == "timing" and e.get("name") == "Lyrics"][0]
+        word_effects = lyrics_el.findall("EffectLayer")[1].findall("Effect")
+        assert word_effects[0].get("startTime") == "1000"
+        assert word_effects[0].get("endTime") == "1400"  # not 4000
+        assert word_effects[1].get("endTime") == "4500"  # not song duration
 
-        display_els = root.find("DisplayElements").findall("Element")
-        names = {e.get("name") for e in display_els if e.get("type") == "timing"}
-        assert {"Words", "Phonemes"} <= names
+    def test_no_words_keeps_single_layer_lyrics(self, tmp_path: Path) -> None:
+        out = tmp_path / "test.xsq"
+        write_xsq(_make_plan(), out, lyrics=self.LYRICS)
+        root = ET.parse(out).getroot()
+        effect_els = root.find("ElementEffects").findall("Element")
+        lyrics_el = [e for e in effect_els
+                     if e.get("type") == "timing" and e.get("name") == "Lyrics"][0]
+        assert len(lyrics_el.findall("EffectLayer")) == 1
+
+    def test_no_lyric_lines_builds_phrase_spans_from_words(self, tmp_path: Path) -> None:
+        """Free-transcription case: no LRC lines, but words/phonemes exist.
+        Layer positions are fixed by xLights convention, so an unlabeled
+        phrase layer is synthesized to keep words on layer 2."""
+        out = tmp_path / "test.xsq"
+        write_xsq(_make_plan(), out, words=self.WORDS, phonemes=self.PHONEMES)
+        root = ET.parse(out).getroot()
+        effect_els = root.find("ElementEffects").findall("Element")
+        lyrics_el = [e for e in effect_els
+                     if e.get("type") == "timing" and e.get("name") == "Lyrics"][0]
+        layers = lyrics_el.findall("EffectLayer")
+        assert len(layers) == 3
+        assert [e.get("label") for e in layers[1].findall("Effect")] == ["HELLO", "WORLD"]
 
 
 class TestFacesAndTextEffectSerialization:
@@ -667,7 +696,7 @@ class TestFacesAndTextEffectSerialization:
             end_ms=5000,
             parameters={
                 "E_CHOICE_Faces_FaceDefinition": "SingingFace",
-                "E_CHOICE_Faces_TimingTrack": "Phonemes",
+                "E_CHOICE_Faces_TimingTrack": "Lyrics",
             },
             color_palette=["#FFFFFF"],
         )
@@ -679,8 +708,8 @@ class TestFacesAndTextEffectSerialization:
         faces = [s for s in entries if s and "E_CHOICE_Faces_FaceDefinition" in s]
         assert len(faces) == 1
         assert "E_CHOICE_Faces_FaceDefinition=SingingFace" in faces[0]
-        assert "E_CHOICE_Faces_TimingTrack=Phonemes" in faces[0]
-        assert "E_CHECKBOX_Faces_SuppressWhenNotSinging=1" in faces[0]
+        assert "E_CHOICE_Faces_TimingTrack=Lyrics" in faces[0]
+        assert "E_CHECKBOX_Faces_Outline=1" in faces[0]
 
     def test_vocal_effects_survive_zero_sections(self, tmp_path: Path) -> None:
         """bug-159 guard: plan.vocal_effects render even when a 0-section
@@ -718,7 +747,7 @@ class TestFacesAndTextEffectSerialization:
             model_or_group="Matrix - 1L",
             start_ms=1000,
             end_ms=5000,
-            parameters={"E_CHOICE_Text_LyricTrack": "Words"},
+            parameters={"E_CHOICE_Text_LyricTrack": "Lyrics - Words"},
             color_palette=["#FFFFFF"],
         )
         out = tmp_path / "test.xsq"
@@ -728,5 +757,5 @@ class TestFacesAndTextEffectSerialization:
         entries = [e.text for e in root.find("EffectDB").findall("Effect")]
         texts = [s for s in entries if s and "E_CHOICE_Text_LyricTrack" in s]
         assert len(texts) == 1
-        assert "E_CHOICE_Text_LyricTrack=Words" in texts[0]
+        assert "E_CHOICE_Text_LyricTrack=Lyrics - Words" in texts[0]
         assert "E_FONTPICKER_Text_Font=" in texts[0]

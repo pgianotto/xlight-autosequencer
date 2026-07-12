@@ -57,7 +57,7 @@ class TestPlaceSingingFaces:
         assert len(placements) == 2
         assert all(p.effect_name == "Faces" for p in placements)
         assert placements[0].parameters["E_CHOICE_Faces_FaceDefinition"] == "SingingFace"
-        assert placements[0].parameters["E_CHOICE_Faces_TimingTrack"] == "Phonemes"
+        assert placements[0].parameters["E_CHOICE_Faces_TimingTrack"] == "Lyrics"
         # Frame-aligned to the first vocal region
         assert placements[0].start_ms == 1000
         assert placements[0].end_ms == 2000
@@ -97,7 +97,7 @@ class TestPlaceLyricText:
         placements = result["Matrix Big"]
         assert len(placements) == 2  # one per vocal region
         assert all(p.effect_name == "Text" for p in placements)
-        assert placements[0].parameters["E_CHOICE_Text_LyricTrack"] == "Words"
+        assert placements[0].parameters["E_CHOICE_Text_LyricTrack"] == "Lyrics - Words"
         assert placements[0].layer == 0
 
     def test_lyric_named_matrix_preferred(self):

@@ -2314,9 +2314,11 @@ def _place_impact_accent(
 # this gap belong to the same vocal region; larger gaps split regions so no
 # Faces effect sits over long instrumental passages.
 _FACES_VOCAL_GAP_MS = 5000
-# Names of the timing tracks emitted by xsq_writer._collect_timing_tracks.
-_FACES_TIMING_TRACK = "Phonemes"
-_LYRIC_TEXT_TIMING_TRACK = "Words"
+# xLights consumes lyrics as one 3-layer timing track named "Lyrics"
+# (phrases/words/phonemes — see xsq_writer._build_lyric_layers). Faces takes
+# the track name; Text takes "<track> - Words" to select the word layer.
+_FACES_TIMING_TRACK = "Lyrics"
+_LYRIC_TEXT_TIMING_TRACK = "Lyrics - Words"
 
 
 def _place_singing_faces(
@@ -2330,10 +2332,9 @@ def _place_singing_faces(
     Matrices/trees with image-based (Matrix-type) face sets are excluded by
     the layout parser. One placement per contiguous vocal region (word marks
     merged across gaps < ``_FACES_VOCAL_GAP_MS``), each pointed at the
-    "Phonemes" timing track; xLights renders the matching mouth per phoneme
-    label. Effect settings are copied from a real xLights sequence — the
-    ``SuppressWhenNotSinging`` flag keeps faces dark between lines within a
-    region.
+    3-layer "Lyrics" timing track; xLights renders the matching mouth per
+    phoneme-layer label. Effect settings are copied verbatim from a
+    user-verified working effect.
 
     Deliberately independent of hierarchy sections (bug-159: a 0-section
     analysis must not zero out face placements): regions derive from the
