@@ -21,6 +21,13 @@ Mined from the 12 professionally hand-built reference packages (.xsqz) in
   colored by a section-spanning On layer with "2 is Unmask" over the motion
   effect (the mega-tree ``color_over_mask`` idiom; 459/467 On placements).
   See ``docs/cane_sequencing_corpus/``.
+- **Horizontal / vertical lines** — white From-Head SingleStrand chase, one
+  segment per beat (70%/66% of 1.6k/1.8k placements, 85-89% From Head),
+  colored by the same On "2 is Unmask" layer (100% of On placements in both
+  families), with white Lightning flickers as the recurring alternate
+  (11%/18%, one unanimous preset). See
+  ``docs/horizontal_sequencing_corpus/`` and
+  ``docs/vertical_sequencing_corpus/``.
 
 Snowflake and arch groups additionally carry a section-spanning **Off
 backdrop** on the xLights layer beneath the bursts (``off_backdrop``): the
@@ -127,6 +134,21 @@ _SPIRALS_CANE: tuple[tuple[str, str], ...] = (
 )
 
 
+# House-line Lightning preset — mined from 507 Lightning placements on
+# horizontal/vertical line elements, every field unanimous (100%): thin
+# unforked bolts flashing upward, used as sub-beat white accents.
+_LIGHTNING_FLICKER: tuple[tuple[str, str], ...] = (
+    ("E_CHOICE_Lightning_Direction", "Up"),
+    ("E_CHECKBOX_ForkedLightning", "0"),
+    ("E_SLIDER_Lightning_WIDTH", "1"),
+    ("E_SLIDER_Lightning_TopX", "0"),
+    ("E_SLIDER_Lightning_TopY", "0"),
+    ("E_SLIDER_Lightning_BOTX", "0"),
+    ("E_SLIDER_Number_Bolts", "10"),
+    ("E_SLIDER_Number_Segments", "5"),
+)
+
+
 # Megatree Spirals preset — mined from 720 Spirals placements on Mega Tree
 # elements: single spiral (Count=1 at 96%), no grow/shrink (96-97%), blend
 # off (87%); rotation/movement/thickness vary per song, so representative
@@ -195,6 +217,33 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         alt_effect_name="Spirals",
         parameter_overrides=_CHASE_FROM_HEAD,
         alt_parameter_overrides=_SPIRALS_CANE,
+        color_over_mask=True,
+    ),
+    # Horizontal / vertical house lines — mined from the same 12 packages
+    # (docs/horizontal_sequencing_corpus/ 1.6k placements over 10 songs,
+    # docs/vertical_sequencing_corpus/ 1.8k over 9). Both families share one
+    # idiom: white per-beat SingleStrand chase (70%/66%, From Head 85-89%,
+    # Number_Chases 1) colored by a section-spanning On layer with
+    # "2 is Unmask" (100% of 243/159 On placements), alternating with white
+    # Lightning flickers (11%/18%, unanimous preset). Off placements are too
+    # few/short to be the tiling-backdrop idiom (52 @ 3.3s median / 24), so
+    # off_backdrop stays False.
+    PropFamilyRecipe(
+        family="horizontal",
+        match_tokens=("horizontal", "horiz"),
+        effect_name="Single Strand",
+        alt_effect_name="Lightning",
+        parameter_overrides=_CHASE_FROM_HEAD,
+        alt_parameter_overrides=_LIGHTNING_FLICKER,
+        color_over_mask=True,
+    ),
+    PropFamilyRecipe(
+        family="vertical",
+        match_tokens=("vertical", "vert"),
+        effect_name="Single Strand",
+        alt_effect_name="Lightning",
+        parameter_overrides=_CHASE_FROM_HEAD,
+        alt_parameter_overrides=_LIGHTNING_FLICKER,
         color_over_mask=True,
     ),
 )

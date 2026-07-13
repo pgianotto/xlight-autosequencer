@@ -2255,7 +2255,7 @@
       "name": "Shockwave",
       "xlights_id": "eff_SHOCKWAVE",
       "category": "pattern",
-      "description": "Expanding shockwave ring from center \u2014 the #2 most-used effect in real sequences",
+      "description": "Expanding shockwave ring from center — the #2 most-used effect in real sequences",
       "intent": "Beat-sync staple for drum hits and musical impacts, extremely popular",
       "parameters": [
         {
@@ -5182,6 +5182,126 @@
       ],
       "layer_role": "modifier",
       "duration_type": "section"
+    },
+    "Lightning": {
+      "name": "Lightning",
+      "xlights_id": "eff_LIGHTNING",
+      "category": "burst",
+      "description": "Jagged lightning bolts flashing across the model",
+      "intent": "Sub-beat white flicker accents on house outline lines and high-impact moments",
+      "parameters": [
+        {
+          "name": "Lightning_Direction",
+          "storage_name": "E_CHOICE_Lightning_Direction",
+          "widget_type": "choice",
+          "value_type": "choice",
+          "default": "Up",
+          "min": null,
+          "max": null,
+          "choices": [
+            "Up",
+            "Down"
+          ],
+          "description": "Direction the bolts travel",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Lightning_Forked",
+          "storage_name": "E_CHECKBOX_ForkedLightning",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": false,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Draw forked (branching) bolts",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Lightning_Width",
+          "storage_name": "E_SLIDER_Lightning_WIDTH",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 1,
+          "min": 1,
+          "max": 10,
+          "choices": null,
+          "description": "Bolt width in pixels",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Lightning_TopX",
+          "storage_name": "E_SLIDER_Lightning_TopX",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 0,
+          "min": -50,
+          "max": 50,
+          "choices": null,
+          "description": "Horizontal offset of the bolt top",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Lightning_TopY",
+          "storage_name": "E_SLIDER_Lightning_TopY",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 0,
+          "min": 0,
+          "max": 100,
+          "choices": null,
+          "description": "Vertical offset of the bolt top",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Lightning_BotX",
+          "storage_name": "E_SLIDER_Lightning_BOTX",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 0,
+          "min": -50,
+          "max": 50,
+          "choices": null,
+          "description": "Horizontal offset of the bolt bottom",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Lightning_Bolts",
+          "storage_name": "E_SLIDER_Number_Bolts",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 10,
+          "min": 1,
+          "max": 50,
+          "choices": null,
+          "description": "Number of bolts drawn",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Lightning_Segments",
+          "storage_name": "E_SLIDER_Number_Segments",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 5,
+          "min": 1,
+          "max": 20,
+          "choices": null,
+          "description": "Jagged segments per bolt",
+          "supports_value_curve": false
+        }
+      ],
+      "prop_suitability": {
+        "matrix": "good",
+        "outline": "ideal",
+        "arch": "good",
+        "vertical": "ideal",
+        "tree": "good",
+        "radial": "poor"
+      },
+      "analysis_mappings": [],
+      "layer_role": "either",
+      "duration_type": "trigger",
+      "duration_behavior": "accent"
     }
   }
 }

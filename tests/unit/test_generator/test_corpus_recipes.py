@@ -106,6 +106,12 @@ _MEGATREE_GROUP = PowerGroup(
 _CANE_GROUP = PowerGroup(
     name="06_PROP_Candy_Cane", tier=6, members=["Cane 1", "Cane 2"],
 )
+_HORIZONTAL_GROUP = PowerGroup(
+    name="06_PROP_Horizontal", tier=6, members=["Horizontal 1", "Horizontal 2"],
+)
+_VERTICAL_GROUP = PowerGroup(
+    name="06_PROP_Vertical", tier=6, members=["Vertical 1", "Vertical 2"],
+)
 
 _BEATS = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
 
@@ -433,6 +439,62 @@ class TestCaneRecipe:
         assert all(p.effect_name != "Single Strand" or
                    "E_NOTEBOOK_SSEFFECT_TYPE" not in p.parameters
                    for p in placements)
+
+
+# ── horizontal / vertical house-line recipes ─────────────────────────────────
+
+
+class TestHouseLineRecipes:
+    def test_horizontal_group_name_matches(self) -> None:
+        assert recipe_for_group(_HORIZONTAL_GROUP).family == "horizontal"
+
+    def test_vertical_group_name_matches(self) -> None:
+        assert recipe_for_group(_VERTICAL_GROUP).family == "vertical"
+
+    def test_horiz_and_vert_short_tokens_match(self) -> None:
+        horiz = PowerGroup(name="06_PROP_Horiz_Lines", tier=6, members=["Horiz 1"])
+        vert = PowerGroup(name="06_PROP_Vert_Lines", tier=6, members=["Vert 1"])
+        assert recipe_for_group(horiz).family == "horizontal"
+        assert recipe_for_group(vert).family == "vertical"
+
+    def test_chorus_gets_white_chase_per_beat(self) -> None:
+        for group in (_HORIZONTAL_GROUP, _VERTICAL_GROUP):
+            result = _place(_make_section(label="chorus"), group)
+            placements = result[group.name]
+            assert len(placements) == len(_BEATS)
+            for p in placements:
+                assert p.effect_name == "Single Strand"
+                assert p.color_palette == ["#FFFFFF"]
+                assert p.parameters["E_CHOICE_Fade_Type"] == "From Head"
+
+    def test_alternate_is_lightning_with_mined_preset(self) -> None:
+        result = _place(_make_section(label="chorus"), _VERTICAL_GROUP,
+                        variation_seed=3,
+                        library_names=_DEFAULT_LIBRARY_NAMES + ("Lightning",))
+        placements = result["06_PROP_Vertical"]
+        assert placements
+        for p in placements:
+            assert p.effect_name == "Lightning"
+            assert p.parameters["E_CHOICE_Lightning_Direction"] == "Up"
+            assert p.parameters["E_SLIDER_Lightning_WIDTH"] == "1"
+            assert "E_CHOICE_Fade_Type" not in p.parameters
+
+    def test_on_color_layer_over_chase_mask(self) -> None:
+        section = _make_section(label="chorus")
+        result = _place(section, _HORIZONTAL_GROUP, library_names=_LIBRARY_WITH_ON)
+        placements = result["06_PROP_Horizontal"]
+        color_layers = [p for p in placements if p.effect_name == "On"]
+        masks = [p for p in placements if p.effect_name == "Single Strand"]
+        assert len(color_layers) == 1
+        assert color_layers[0].parameters["T_CHOICE_LayerMethod"] == "2 is Unmask"
+        assert len(masks) == len(_BEATS)
+        assert all(p.layer == 1 for p in masks)
+
+    def test_no_off_backdrop(self) -> None:
+        result = _place(_make_section(label="chorus"), _HORIZONTAL_GROUP,
+                        library_names=_DEFAULT_LIBRARY_NAMES + ("Off",))
+        offs = [p for p in result["06_PROP_Horizontal"] if p.effect_name == "Off"]
+        assert offs == []
 
 
 # ── placement progress callback ──────────────────────────────────────────────

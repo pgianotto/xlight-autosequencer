@@ -3085,6 +3085,22 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-13"
+    },
+    {
+      "id": "bug-188",
+      "timestamp": "2026-07-13",
+      "error_message": "horizontal/vertical recipe alternate (Lightning) would silently never fire",
+      "file": "src/effects/builtin_effects.json",
+      "root_cause": "_place_corpus_recipe returns None when the effect is missing from the library, and Lightning was not in the builtin catalog, so alternate-seed sections would fall back to the pool with no error",
+      "fix": "Added a Lightning EffectDefinition to builtin_effects.json with the corpus-mined parameter set; lesson: when adding a recipe, verify both effect_name and alt_effect_name exist in the builtin catalog",
+      "tags": [
+        "corpus-recipes",
+        "effects-catalog",
+        "silent-fallback"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-13"
     }
   ]
 }
