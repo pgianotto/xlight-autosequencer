@@ -103,6 +103,13 @@ class PropFamilyRecipe:
     secondary_effect_name: str | None = None
     secondary_parameter_overrides: tuple[tuple[str, str], ...] = ()
     secondary_beats_per_placement: int = 4
+    # Ordered (effect_name, parameter_overrides) pairs cycled per qualifying
+    # occurrence (variation_seed // 2 % len) in place of the two-effect
+    # primary/alt alternation. Families with a wider mined motion vocabulary
+    # (matrices) set this so repeated sections walk through every mined look
+    # instead of ping-ponging between two. Empty () -> effect_name /
+    # alt_effect_name behavior, unchanged.
+    motion_rotation: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = ()
     # Beats per primary-motion segment. Most families place one segment per
     # beat (1); icicles run calmer 2-beat segments (mined medians 0.65-1.98s
     # against 0.44-0.65s beats — 1-4 beat segments, never per-beat bursts).
@@ -187,6 +194,22 @@ _PINWHEEL_MATRIX: tuple[tuple[str, str], ...] = (
     ("E_SLIDER_Pinwheel_Speed", "15"),
     ("E_SLIDER_Pinwheel_Thickness", "30"),
     ("E_SLIDER_Pinwheel_Twist", "0"),
+)
+
+
+# Matrix Ripple preset — mined from 442 Ripple placements on matrix
+# elements, unanimous: imploding circles (Implode 100%, Circle 100%, Old
+# draw style 100%), thin rings (Thickness 12 at 99.5%), slow collapse
+# (Cycles 0.2 at 100%), flat (3D off 99.5%), centered.
+_RIPPLE_MATRIX_IMPLODE: tuple[tuple[str, str], ...] = (
+    ("E_CHOICE_Ripple_Movement", "Implode"),
+    ("E_CHOICE_Ripple_Object_To_Draw", "Circle"),
+    ("E_CHOICE_Ripple_Draw_Style", "Old"),
+    ("E_SLIDER_Ripple_Thickness", "12"),
+    ("E_TEXTCTRL_Ripple_Cycles", "0.2"),
+    ("E_CHECKBOX_Ripple3D", "0"),
+    ("E_SLIDER_Ripple_XC", "0"),
+    ("E_SLIDER_Ripple_YC", "0"),
 )
 
 
@@ -426,6 +449,11 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
     # Spirals spin (2). Text/Pictures/Video content effects in the corpus
     # are deliberately not replicated. "lyric" is excluded so a lyrics
     # matrix keeps its dedicated word-sync treatment.
+    # The motion layer rotates through the four mined matrix looks instead
+    # of ping-ponging Shockwave/Pinwheel: Lightning is 11% of matrix corpus
+    # placements (1.2k, unanimous preset) and Ripple Implode 4% (442,
+    # unanimous), both previously unexposed. effect_name/parameter_overrides
+    # remain the fallback when a rotation effect is missing from the catalog.
     PropFamilyRecipe(
         family="matrix",
         match_tokens=("matrix",),
@@ -434,6 +462,12 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         alt_effect_name="Pinwheel",
         parameter_overrides=_SHOCKWAVE_BURST,
         alt_parameter_overrides=_PINWHEEL_MATRIX,
+        motion_rotation=(
+            ("Shockwave", _SHOCKWAVE_BURST),
+            ("Pinwheel", _PINWHEEL_MATRIX),
+            ("Lightning", _LIGHTNING_FLICKER),
+            ("Ripple", _RIPPLE_MATRIX_IMPLODE),
+        ),
         secondary_effect_name="Spirals",
         secondary_parameter_overrides=_SPIRALS_MATRIX,
         color_over_mask=True,

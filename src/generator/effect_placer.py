@@ -1891,9 +1891,20 @@ def _place_corpus_recipe(
     # Alternate primary/alt effect between qualifying sections. variation_seed
     # is the global section index; qualifying (chorus-like) sections typically
     # occupy every other slot, so raw parity would lock one effect in for the
-    # whole song — halving first alternates per occurrence instead.
+    # whole song — halving first alternates per occurrence instead. Families
+    # with a motion_rotation walk its full cycle the same way; a rotation
+    # effect missing from the catalog falls back to the primary pair.
+    rotation_params: tuple[tuple[str, str], ...] | None = None
     effect_name = recipe.effect_name
-    if recipe.alt_effect_name is not None and (variation_seed // 2) % 2 == 1:
+    if recipe.motion_rotation:
+        idx = (variation_seed // 2) % len(recipe.motion_rotation)
+        rotated_name, rotated_params = recipe.motion_rotation[idx]
+        if effect_library.effects.get(rotated_name) is not None:
+            effect_name = rotated_name
+            rotation_params = rotated_params
+    if rotation_params is None and (
+        recipe.alt_effect_name is not None and (variation_seed // 2) % 2 == 1
+    ):
         effect_name = recipe.alt_effect_name
     effect_def = effect_library.effects.get(effect_name)
     if effect_def is None:
@@ -1909,11 +1920,14 @@ def _place_corpus_recipe(
     placements: list[EffectPlacement] = []
     palette = list(recipe.palette)
     # Each effect gets its own mined preset; their parameter spaces differ.
-    params: dict[str, Any] = dict(
-        recipe.parameter_overrides
-        if effect_name == recipe.effect_name
-        else recipe.alt_parameter_overrides
-    )
+    if rotation_params is not None:
+        params: dict[str, Any] = dict(rotation_params)
+    else:
+        params = dict(
+            recipe.parameter_overrides
+            if effect_name == recipe.effect_name
+            else recipe.alt_parameter_overrides
+        )
     # Two-layer "color over mask" (mega trees): a section-spanning On sits on
     # the top layer with LayerMethod "2 is Unmask", so the motion effect on
     # the layer below only contributes shape/brightness while the On supplies
