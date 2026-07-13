@@ -3221,6 +3221,25 @@
       ],
       "occurrences": 1,
       "last_seen": "2026-07-13"
+    },
+    {
+      "id": "bug-195",
+      "timestamp": "2026-07-13",
+      "error_message": "No icicle effects in generated sequence - icicle props never form a tier-6 group",
+      "file": "src/grouper/grouper.py",
+      "root_cause": "Port-numbered prop names ('01 Icicles 1', '13 Icicles 2') defeat _tier6_prop_type's name stemming: each stems to a distinct singleton type ('01 Icicles' / '13 Icicles'), no >=2-member family forms, so the props get no tier-6 group and the icicle corpus recipe has nothing to match.",
+      "fix": "New _tier6_display_type_fallback: props left out of every name-based tier-6 family whose DisplayAs is family-semantic (Icicles/Arches/Candy Canes) group by display type into 06_PROP_<type>. Additive only - name-familied props never move; broad display types (Custom, Single Line) deliberately excluded.",
+      "tags": [
+        "grouper",
+        "tier6",
+        "icicles",
+        "numbered-props",
+        "display-as",
+        "corpus-recipe"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-13"
     }
   ]
 }
