@@ -1915,7 +1915,10 @@ def _place_corpus_recipe(
     )
     mask_layer_idx = 1 if on_def is not None else 0
 
-    for i, mark in enumerate(marks):
+    # Primary-motion segment length in beats: 1 for the burst families,
+    # longer for calmer ones (icicles run 2-beat segments per the corpus).
+    beat_stride = max(1, recipe.beats_per_placement)
+    for i in range(0, len(marks), beat_stride):
         # Volleyed families (whole-house All group) rest for burst_volley's
         # off-bars — the mined restrained package averages well under one
         # placement per beat, with phrase-length gaps where only the color
@@ -1925,16 +1928,20 @@ def _place_corpus_recipe(
             bars_on, bars_off = recipe.burst_volley
             if ((i // 4) % (bars_on + bars_off)) >= bars_on:
                 continue
-        start = mark.time_ms
-        if i + 1 < len(marks):
-            end = marks[i + 1].time_ms
+        start = marks[i].time_ms
+        if i + beat_stride < len(marks):
+            end = marks[i + beat_stride].time_ms
         else:
-            end = min(start + max(median_interval, FRAME_INTERVAL_MS), section.end_ms)
+            end = min(
+                start + max(beat_stride * median_interval, FRAME_INTERVAL_MS),
+                section.end_ms,
+            )
         if end <= start:
             continue
         p = _make_placement(
             effect_def, group.name, start, end,
-            params, palette, layer.blend_mode, "beat", instance_index=i,
+            params, palette, layer.blend_mode, "beat",
+            instance_index=i // beat_stride,
             preserve_directions=True,
         )
         p.layer = mask_layer_idx
