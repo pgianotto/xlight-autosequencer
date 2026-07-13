@@ -1061,3 +1061,75 @@ class TestAllGroupRecipe:
         assert not any(p.effect_name in ("Color Wash", "Ripple") for p in placements)
         bursts = [p for p in placements if p.effect_name == "Shockwave"]
         assert len(bursts) == 4  # bar 0 of the (1, 2) volley
+
+
+# ── icicle recipe ─────────────────────────────────────────────────────────────
+
+
+_ICICLE_GROUP = PowerGroup(
+    name="06_PROP_Icicles", tier=6, members=["Icicles 1", "Icicles 2"],
+)
+_LIBRARY_ICICLE = ("Color Wash", "Spirals", "Meteors", "On", "Shockwave",
+                   "Ripple", "Single Strand")
+
+
+class TestIcicleRecipe:
+    def test_icicle_group_name_matches(self) -> None:
+        assert recipe_for_group(_ICICLE_GROUP).family == "icicle"
+
+    def test_outline_combo_group_does_not_match(self) -> None:
+        g = PowerGroup(name="06_PROP_Outline_Icicles", tier=6,
+                       members=["House Outline + Icicles"])
+        assert recipe_for_group(g) is None
+
+    def test_member_majority_matches(self) -> None:
+        g = PowerGroup(name="06_PROP_Roof", tier=6,
+                       members=["Icicles 1", "Icicles 2", "Gutter"])
+        assert recipe_for_group(g).family == "icicle"
+
+    def test_chorus_gets_two_beat_spirals_segments(self) -> None:
+        # 8 beats at 500ms -> 4 two-beat segments of 1000ms each.
+        section = _make_section(label="chorus")
+        result = _place(section, _ICICLE_GROUP, library_names=_LIBRARY_ICICLE)
+        placements = result["06_PROP_Icicles"]
+        spirals = sorted(
+            (p for p in placements if p.effect_name == "Spirals"),
+            key=lambda p: p.start_ms,
+        )
+        assert len(spirals) == 4
+        assert [p.start_ms for p in spirals] == [0, 1000, 2000, 3000]
+        assert all(p.end_ms - p.start_ms == 1000 for p in spirals[:-1])
+        params = dict(spirals[0].parameters)
+        assert params["E_CHECKBOX_Spirals_3D"] == "1"
+        assert params["E_SLIDER_Spirals_Thickness"] == "33"
+        assert params["E_TEXTCTRL_Spirals_Movement"] == "1"
+
+    def test_on_layer_cycles_per_bar(self) -> None:
+        section = _make_section(label="chorus")
+        result = _place(section, _ICICLE_GROUP, library_names=_LIBRARY_ICICLE)
+        ons = sorted(
+            (p for p in result["06_PROP_Icicles"] if p.effect_name == "On"),
+            key=lambda p: p.start_ms,
+        )
+        assert len(ons) == 2  # 8 beats = 2 bars
+        assert all(p.parameters["T_CHOICE_LayerMethod"] == "2 is Unmask" for p in ons)
+        assert ons[0].color_palette != ons[1].color_palette
+
+    def test_repeated_section_alternates_to_meteors_down(self) -> None:
+        result = _place(_make_section(label="chorus"), _ICICLE_GROUP,
+                        variation_seed=3, library_names=_LIBRARY_ICICLE)
+        placements = result["06_PROP_Icicles"]
+        meteors = [p for p in placements if p.effect_name == "Meteors"]
+        assert len(meteors) == 4
+        params = dict(meteors[0].parameters)
+        assert params["E_CHOICE_Meteors_Effect"] == "Down"
+        assert params["E_SLIDER_Meteors_Count"] == "28"
+        assert params["E_CHECKBOX_Meteors_UseMusic"] == "0"
+
+    def test_low_energy_verse_keeps_normal_placement(self) -> None:
+        result = _place(_make_section(label="verse", energy=40), _ICICLE_GROUP,
+                        library_names=_LIBRARY_ICICLE)
+        placements = result.get("06_PROP_Icicles", [])
+        assert not any(p.effect_name == "Spirals" and
+                       dict(p.parameters).get("E_SLIDER_Spirals_Thickness") == "33"
+                       for p in placements)

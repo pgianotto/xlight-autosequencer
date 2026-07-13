@@ -139,6 +139,10 @@ class PropFamilyRecipe:
     secondary_effect_name: str | None = None
     secondary_parameter_overrides: tuple[tuple[str, str], ...] = ()
     secondary_beats_per_placement: int = 4
+    # Beats per primary-motion segment. Most families place one segment per
+    # beat (1); icicles run calmer 2-beat segments (mined medians 0.65-1.98s
+    # against 0.44-0.65s beats — 1-4 beat segments, never per-beat bursts).
+    beats_per_placement: int = 1
     # Whole-house restraint (mined from the calmer reference package): the
     # per-beat motion fires in bar-length volleys — (bars_on, bars_off) —
     # instead of wall-to-wall coverage. That package averages ~0.9
@@ -319,6 +323,36 @@ _PINWHEEL_ALL: tuple[tuple[str, str], ...] = (
     ("E_SLIDER_Pinwheel_Twist", "0"),
     ("E_SLIDER_PinwheelXC", "0"),
     ("E_SLIDER_PinwheelYC", "-100"),
+)
+
+
+# Icicle Spirals preset — mined from 432 Spirals placements on icicle
+# elements: 3D on (100%), single spiral (92%), gentle rotation 30, thickness
+# 33, slow movement 1, no grow/shrink/blend (100%). White 1-4 beat segments,
+# recolored by the On unmask layer.
+_SPIRALS_ICICLE: tuple[tuple[str, str], ...] = (
+    ("E_SLIDER_Spirals_Count", "1"),
+    ("E_SLIDER_Spirals_Rotation", "30"),
+    ("E_SLIDER_Spirals_Thickness", "33"),
+    ("E_TEXTCTRL_Spirals_Movement", "1"),
+    ("E_CHECKBOX_Spirals_3D", "1"),
+    ("E_CHECKBOX_Spirals_Blend", "0"),
+    ("E_CHECKBOX_Spirals_Grow", "0"),
+    ("E_CHECKBOX_Spirals_Shrink", "0"),
+)
+
+
+# Icicle Meteors preset — mined from 139 Meteors placements on icicle
+# elements, every field >=96% unanimous: palette-colored meteors falling
+# Down, count 28, length 25, speed 10, no swirl, no music reaction.
+_METEORS_ICICLE: tuple[tuple[str, str], ...] = (
+    ("E_CHOICE_Meteors_Effect", "Down"),
+    ("E_CHOICE_Meteors_Type", "Palette"),
+    ("E_SLIDER_Meteors_Count", "28"),
+    ("E_SLIDER_Meteors_Length", "25"),
+    ("E_SLIDER_Meteors_Speed", "10"),
+    ("E_SLIDER_Meteors_Swirl_Intensity", "0"),
+    ("E_CHECKBOX_Meteors_UseMusic", "0"),
 )
 
 
@@ -527,6 +561,26 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         parameter_overrides=_CHASE_MINITREE,
         alt_parameter_overrides=_SHOCKWAVE_BURST,
         color_over_mask=True,
+    ),
+    # Icicles — mined from the same 12 packages (docs/icicle_sequencing_
+    # corpus/, 1.6k placements over 9 songs). Per-song effect choice varies,
+    # but the structure is one idiom: white motion in 1-4 beat segments
+    # (medians 0.65-1.98s) colored by an On "2 is Unmask" layer cycling one
+    # color per bar (6/9 songs, ~2s blocks) — the same backbone as the All
+    # group. Spirals is the most representative motion (unanimous icicle
+    # preset); Meteors falling Down is the recurring alternate. "outline"
+    # keeps combined house-outline groups out.
+    PropFamilyRecipe(
+        family="icicle",
+        match_tokens=("icicle",),
+        exclude_tokens=("outline",),
+        effect_name="Spirals",
+        alt_effect_name="Meteors",
+        parameter_overrides=_SPIRALS_ICICLE,
+        alt_parameter_overrides=_METEORS_ICICLE,
+        color_over_mask=True,
+        color_cycle_bars=True,
+        beats_per_placement=2,
     ),
     # Whole-house All group — mined from the same 12 packages
     # (docs/all_sequencing_corpus/, 1.9k placements over 12 songs). The
