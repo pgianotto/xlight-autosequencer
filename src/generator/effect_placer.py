@@ -1915,16 +1915,25 @@ def _place_corpus_recipe(
     # Alternate primary/alt effect between qualifying sections. variation_seed
     # is the global section index; qualifying (chorus-like) sections typically
     # occupy every other slot, so raw parity would lock one effect in for the
-    # whole song — halving first alternates per occurrence instead.
-    # A label-keyed alternate (e.g. arch bridges -> Spirals) takes priority
-    # over the seed-based alternate when the section's own label names a
-    # genuinely different mined idiom rather than just a repeat variation.
+    # whole song — halving first alternates per occurrence instead. Families
+    # with a motion_rotation walk its full cycle the same way; a rotation
+    # effect missing from the catalog falls back to the primary pair. A
+    # label-keyed alternate (e.g. arch bridges -> Spirals) takes priority over
+    # both when the section's own label names a genuinely different mined
+    # idiom rather than just a repeat variation.
     section_label = (section.label or "").lower()
+    rotation_params: tuple[tuple[str, str], ...] | None = None
     effect_name = recipe.effect_name
     if recipe.label_alt_effect_name is not None and any(
         keyword in section_label for keyword in recipe.label_alt_labels
     ):
         effect_name = recipe.label_alt_effect_name
+    elif recipe.motion_rotation:
+        idx = (variation_seed // 2) % len(recipe.motion_rotation)
+        rotated_name, rotated_params = recipe.motion_rotation[idx]
+        if effect_library.effects.get(rotated_name) is not None:
+            effect_name = rotated_name
+            rotation_params = rotated_params
     elif recipe.alt_effect_name is not None and (variation_seed // 2) % 2 == 1:
         effect_name = recipe.alt_effect_name
     effect_def = effect_library.effects.get(effect_name)
@@ -1941,8 +1950,10 @@ def _place_corpus_recipe(
     placements: list[EffectPlacement] = []
     palette = list(recipe.palette)
     # Each effect gets its own mined preset; their parameter spaces differ.
-    if effect_name == recipe.effect_name:
-        params: dict[str, Any] = dict(recipe.parameter_overrides)
+    if rotation_params is not None:
+        params: dict[str, Any] = dict(rotation_params)
+    elif effect_name == recipe.effect_name:
+        params = dict(recipe.parameter_overrides)
     elif effect_name == recipe.label_alt_effect_name:
         params = dict(recipe.label_alt_parameter_overrides)
     else:

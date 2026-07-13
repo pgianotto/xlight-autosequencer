@@ -1273,3 +1273,74 @@ class TestStarRecipe:
         )
         assert "08_HERO_Mega_Tree" in result
         assert "08_HERO_Mega_Topper" in result
+
+
+# ── matrix motion rotation ────────────────────────────────────────────────────
+
+
+_MATRIX_GROUP = PowerGroup(
+    name="06_PROP_Matrix", tier=6, members=["Matrix 1", "Matrix 2"],
+    prop_type="matrix",
+)
+_LIBRARY_MATRIX = ("Color Wash", "Shockwave", "Pinwheel", "Lightning",
+                   "Ripple", "Spirals", "On", "Single Strand")
+
+
+class TestMatrixMotionRotation:
+    def _motion_effects(self, seed: int, library=_LIBRARY_MATRIX) -> set[str]:
+        result = _place(_make_section(label="chorus"), _MATRIX_GROUP,
+                        variation_seed=seed, library_names=library)
+        return {
+            p.effect_name for p in result.get("06_PROP_Matrix", [])
+            if p.effect_name not in ("On", "Spirals")
+        }
+
+    def test_rotation_walks_all_four_mined_looks(self) -> None:
+        assert self._motion_effects(0) == {"Shockwave"}
+        assert self._motion_effects(2) == {"Pinwheel"}
+        assert self._motion_effects(4) == {"Lightning"}
+        assert self._motion_effects(6) == {"Ripple"}
+        assert self._motion_effects(8) == {"Shockwave"}  # cycle repeats
+
+    def test_ripple_slot_carries_implode_preset(self) -> None:
+        result = _place(_make_section(label="chorus"), _MATRIX_GROUP,
+                        variation_seed=6, library_names=_LIBRARY_MATRIX)
+        ripples = [p for p in result["06_PROP_Matrix"]
+                   if p.effect_name == "Ripple"]
+        assert ripples
+        params = dict(ripples[0].parameters)
+        assert params["E_CHOICE_Ripple_Movement"] == "Implode"
+        assert params["E_TEXTCTRL_Ripple_Cycles"] == "0.2"
+        assert params["E_SLIDER_Ripple_Thickness"] == "12"
+
+    def test_lightning_slot_carries_flicker_preset(self) -> None:
+        result = _place(_make_section(label="chorus"), _MATRIX_GROUP,
+                        variation_seed=4, library_names=_LIBRARY_MATRIX)
+        bolts = [p for p in result["06_PROP_Matrix"]
+                 if p.effect_name == "Lightning"]
+        assert bolts
+        params = dict(bolts[0].parameters)
+        assert params["E_CHOICE_Lightning_Direction"] == "Up"
+        assert params["E_SLIDER_Number_Bolts"] == "10"
+
+    def test_missing_rotation_effect_falls_back_to_primary_pair(self) -> None:
+        # A catalog without Lightning must not break the Lightning slot —
+        # the primary/alt pair takes over (seed 4 -> halved parity 0 -> primary).
+        library = tuple(n for n in _LIBRARY_MATRIX if n != "Lightning")
+        assert self._motion_effects(4, library=library) == {"Shockwave"}
+
+    def test_sustained_spirals_layer_survives_rotation(self) -> None:
+        result = _place(_make_section(label="chorus"), _MATRIX_GROUP,
+                        variation_seed=4, library_names=_LIBRARY_MATRIX)
+        spirals = [p for p in result["06_PROP_Matrix"]
+                   if p.effect_name == "Spirals"]
+        assert spirals
+        assert dict(spirals[0].parameters)["E_CHECKBOX_Spirals_3D"] == "1"
+
+    def test_families_without_rotation_unchanged(self) -> None:
+        # Snowflakes keep the two-effect alternation: seed 4 halves to
+        # parity 0 -> primary Shockwave (not a third look).
+        result = _place(_make_section(label="chorus"), _SNOWFLAKE_GROUP,
+                        variation_seed=4)
+        placements = result["06_PROP_Snowflake"]
+        assert all(p.effect_name == "Shockwave" for p in placements)
