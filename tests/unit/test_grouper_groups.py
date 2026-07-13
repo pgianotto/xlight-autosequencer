@@ -392,3 +392,82 @@ class TestPropTypeLeadingDirectionStrip:
             "Spinner 23 inch Right",
             "Spinner 23 inch Right-2",
         }
+
+
+# ─── Tier-6 house-line orientation groups ─────────────────────────────────────
+
+def _make_line(name: str, x2: float, y2: float, x: float = 0.0, y: float = 0.0) -> Prop:
+    return Prop(
+        name=name, display_as="Single Line",
+        world_x=x, world_y=y, world_z=0.0,
+        scale_x=1.0, scale_y=1.0,
+        parm1=1, parm2=50,
+        sub_models=[], x2=x2, y2=y2,
+    )
+
+
+class TestLineOrientationGroups:
+    """_tier6_line_orientation groups loose Single Line props by orientation."""
+
+    def test_loose_lines_split_by_orientation(self):
+        props = [
+            _make_line("02 Windows Top 1", x2=100.0, y2=0.0),
+            _make_line("23 Garage Top Middle", x2=80.0, y2=5.0, x=200.0),
+            _make_line("08 Window Vertical 1", x2=0.0, y2=90.0, x=400.0),
+            _make_line("18 Pergola Left", x2=5.0, y2=120.0, x=600.0),
+        ]
+        normalize_coords(props)
+        classify_props(props)
+        groups = generate_groups(props)
+        by_name = {g.name: g for g in groups}
+        assert set(by_name["06_PROP_Horizontal_Lines"].members) == {
+            "02 Windows Top 1", "23 Garage Top Middle",
+        }
+        assert set(by_name["06_PROP_Vertical_Lines"].members) == {
+            "08 Window Vertical 1", "18 Pergola Left",
+        }
+
+    def test_name_familied_lines_are_excluded(self):
+        # FloodLight1/2 form a 06_PROP_FloodLight name family, so they must
+        # not also appear in the orientation groups.
+        props = [
+            _make_line("FloodLight1", x2=100.0, y2=0.0),
+            _make_line("FloodLight2", x2=100.0, y2=0.0, x=200.0),
+            _make_line("10 Matrix Top-2", x2=90.0, y2=0.0, x=400.0),
+            _make_line("22 Garage Top Left", x2=90.0, y2=0.0, x=600.0),
+        ]
+        normalize_coords(props)
+        classify_props(props)
+        groups = generate_groups(props)
+        by_name = {g.name: g for g in groups}
+        assert set(by_name["06_PROP_FloodLight"].members) == {
+            "FloodLight1", "FloodLight2",
+        }
+        assert set(by_name["06_PROP_Horizontal_Lines"].members) == {
+            "10 Matrix Top-2", "22 Garage Top Left",
+        }
+
+    def test_single_member_orientation_group_dropped(self):
+        props = [
+            _make_line("02 Windows Top 1", x2=100.0, y2=0.0),
+            _make_line("03 Windows Top 2", x2=100.0, y2=0.0, x=200.0),
+            _make_line("08 Window Vertical 1", x2=0.0, y2=90.0, x=400.0),
+        ]
+        normalize_coords(props)
+        classify_props(props)
+        groups = generate_groups(props)
+        names = {g.name for g in groups}
+        assert "06_PROP_Horizontal_Lines" in names
+        assert "06_PROP_Vertical_Lines" not in names
+
+    def test_non_single_line_props_ignored(self):
+        props = [
+            make_prop("Arch 1", world_x=0.0),
+            make_prop("Arch 2", world_x=100.0),
+        ]
+        normalize_coords(props)
+        classify_props(props)
+        groups = generate_groups(props)
+        names = {g.name for g in groups}
+        assert "06_PROP_Horizontal_Lines" not in names
+        assert "06_PROP_Vertical_Lines" not in names

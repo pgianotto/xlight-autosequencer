@@ -97,6 +97,7 @@ def generate_groups(
         groups.extend(_tier5_fidelity(props))
     if 6 in active_tiers:
         groups.extend(_tier6_prop_type(props))
+        groups.extend(_tier6_line_orientation(props))
         groups.extend(_tier6_radial_subgroups(props))
     if 7 in active_tiers:
         groups.extend(_tier7_compound(props))
@@ -241,6 +242,41 @@ def _tier6_prop_type(props: list[Prop]) -> list[PowerGroup]:
         for type_name, members in sorted(types.items())
         if len(members) >= 2
     ]
+
+
+def _tier6_line_orientation(props: list[Prop]) -> list[PowerGroup]:
+    """Group loose Single Line props into horizontal/vertical house-line groups.
+
+    House-outline segments are often individually named ("02 Windows Top 1",
+    "18 Pergola Left", "24 Garage Top Right"), so ``_tier6_prop_type`` never
+    families them and they end up in no tier-6 group at all.  Reference
+    layouts sequence these as two orientation groups ("Horizontal Lines" /
+    "Vertical Lines" — see docs/horizontal_sequencing_corpus/), which the
+    corpus recipes match by name token.
+
+    Candidates are Single Line props left out of every name-based tier-6
+    family; they split on the same ``aspect_ratio >= 1.5`` threshold tier 3
+    uses.  Groups with fewer than 2 members are dropped.
+    """
+    familied: set[str] = set()
+    for g in _tier6_prop_type(props):
+        familied.update(g.members)
+    lines = [
+        p for p in props
+        if p.display_as == "Single Line" and p.name not in familied
+    ]
+    verticals = [p.name for p in lines if p.aspect_ratio >= 1.5]
+    horizontals = [p.name for p in lines if p.aspect_ratio < 1.5]
+    groups = []
+    if len(horizontals) >= 2:
+        groups.append(PowerGroup(
+            name="06_PROP_Horizontal_Lines", tier=6, members=horizontals,
+        ))
+    if len(verticals) >= 2:
+        groups.append(PowerGroup(
+            name="06_PROP_Vertical_Lines", tier=6, members=verticals,
+        ))
+    return groups
 
 
 def _tier6_radial_subgroups(props: list[Prop]) -> list[PowerGroup]:
