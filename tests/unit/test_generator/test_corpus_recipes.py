@@ -293,12 +293,15 @@ class TestCorpusRecipePlacement:
         )
         assert result.get("06_PROP_Snowflake"), "group must still receive placements"
 
-    def test_megatree_chorus_gets_white_shockwave_per_beat(self) -> None:
+    def test_megatree_without_on_falls_back_to_single_layer(self) -> None:
+        # The default test library has no "On" definition, so the
+        # color-over-mask composition degrades to the flat form.
         result = _place(_make_section(label="chorus"), _MEGATREE_GROUP)
         placements = result["06_PROP_Mega_Tree"]
         assert len(placements) == len(_BEATS)
         assert all(p.effect_name == "Shockwave" for p in placements)
         assert all(p.color_palette == ["#FFFFFF"] for p in placements)
+        assert all(p.layer == 0 for p in placements)
 
     def test_megatree_alternate_is_spirals_with_mined_preset(self) -> None:
         result = _place(_make_section(label="chorus"), _MEGATREE_GROUP, variation_seed=3)
@@ -309,6 +312,88 @@ class TestCorpusRecipePlacement:
             assert p.parameters["E_SLIDER_Spirals_Count"] == "1"
             assert p.parameters["E_CHECKBOX_Spirals_Grow"] == "0"
             assert "E_SLIDER_Shockwave_End_Radius" not in p.parameters
+
+
+# ── megatree color-over-mask composition ─────────────────────────────────────
+
+
+_LIBRARY_WITH_ON = _DEFAULT_LIBRARY_NAMES + ("On",)
+
+
+class TestMegatreeColorOverMask:
+    def test_on_color_layer_over_mask_layer(self) -> None:
+        section = _make_section(label="chorus")
+        result = _place(section, _MEGATREE_GROUP, library_names=_LIBRARY_WITH_ON)
+        placements = result["06_PROP_Mega_Tree"]
+
+        color_layers = [p for p in placements if p.effect_name == "On"]
+        masks = [p for p in placements if p.effect_name == "Shockwave"]
+        assert len(color_layers) == 1
+        assert len(masks) == len(_BEATS)
+
+        on = color_layers[0]
+        # On sits on the top layer, spans the section, and carries the mined
+        # Unmask blend so the mask below only contributes shape/brightness.
+        assert on.layer == 0
+        assert on.start_ms == section.start_ms
+        assert on.end_ms == section.end_ms
+        assert on.parameters["T_CHOICE_LayerMethod"] == "2 is Unmask"
+        # Color comes from the section theme (one solid color), not white.
+        assert len(on.color_palette) == 1
+
+        # Masks move to layer 1, stay white (shape only).
+        assert all(p.layer == 1 for p in masks)
+        assert all(p.color_palette == ["#FFFFFF"] for p in masks)
+
+    def test_spirals_alternate_also_gets_color_layer(self) -> None:
+        result = _place(_make_section(label="chorus"), _MEGATREE_GROUP,
+                        variation_seed=3, library_names=_LIBRARY_WITH_ON)
+        placements = result["06_PROP_Mega_Tree"]
+        assert [p.effect_name for p in placements].count("On") == 1
+        masks = [p for p in placements if p.effect_name == "Spirals"]
+        assert masks
+        assert all(p.layer == 1 for p in masks)
+
+    def test_snowflake_recipe_not_affected_by_on_in_library(self) -> None:
+        # color_over_mask is megatree-only; snowflakes stay single-layer
+        # bursts (plus their Off backdrop when Off exists).
+        result = _place(_make_section(label="chorus"), _SNOWFLAKE_GROUP,
+                        library_names=_LIBRARY_WITH_ON)
+        placements = result["06_PROP_Snowflake"]
+        assert all(p.effect_name != "On" for p in placements)
+        assert all(p.layer == 0 for p in placements)
+
+
+# ── placement progress callback ──────────────────────────────────────────────
+
+
+class TestPlacementProgressCallback:
+    def test_prop_groups_announced_once_with_human_names(self) -> None:
+        from src.generator.effect_placer import _humanize_group_name
+
+        assert _humanize_group_name("06_PROP_Mega_Tree") == "Mega Tree"
+        assert _humanize_group_name("08_HERO_Mega_Tree") == "Mega Tree"
+        assert _humanize_group_name("06_PROP_Snowflake") == "Snowflake"
+
+        messages: list[str] = []
+        layers = [EffectLayer(variant="Color Wash")]
+        library = _make_library(*_DEFAULT_LIBRARY_NAMES)
+        variant_library = _make_variant_library(*_DEFAULT_LIBRARY_NAMES)
+        assignment = _make_assignment(_make_section(label="chorus"), layers)
+        place_effects(
+            assignment, [_SNOWFLAKE_GROUP, _ARCH_GROUP], library,
+            _make_hierarchy(_BEATS),
+            variant_library=variant_library,
+            progress_cb=messages.append,
+        )
+        assert "placing Snowflake" in messages
+        assert "placing Arch" in messages
+        assert len(messages) == len(set(messages)), "groups must be announced once"
+
+    def test_no_callback_is_silent_default(self) -> None:
+        # Smoke: omitting progress_cb keeps the original behavior.
+        result = _place(_make_section(label="chorus"), _SNOWFLAKE_GROUP)
+        assert result["06_PROP_Snowflake"]
 
 
 # ── tier-8 HERO wiring (solo mega tree) ──────────────────────────────────────

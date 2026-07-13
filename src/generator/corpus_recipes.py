@@ -65,6 +65,14 @@ class PropFamilyRecipe:
     # bleed. Mined: snowflake Off placements are 43/58 on layer index 1;
     # arch 69/75 on layer index 1-2, spans of 12-15s tiling the sections.
     off_backdrop: bool = False
+    # Two-layer "color over mask" composition, the dominant mega-tree idiom:
+    # a section-spanning On on the upper layer with LayerMethod "2 is Unmask"
+    # (517 mined placements), colored from the section theme, over the
+    # recipe's motion effect on the layer directly below acting as the
+    # brightness mask. Mined pairs: On-over-Spirals 269 placements,
+    # On-over-Shockwave 214, On-over-Lightning 101, On-over-Pinwheel 52;
+    # 72% of the tree's lit time runs 2+ layers deep.
+    color_over_mask: bool = False
 
 
 # Mined presets — near-unanimous across all 12 reference packages:
@@ -131,12 +139,16 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         off_backdrop=True,
     ),
     # Mega tree — mined from the same 12 packages (docs/megatree_sequencing_
-    # corpus/): tree-proper placements are Shockwave 36% (same center-out
-    # burst preset as snowflakes, >96% Blend_Edges/Cycles=1/Start_Width=5),
-    # Spirals 18% (sustained ~2-beat spins), 93%+ solid single-color white.
+    # corpus/). Time-weighted, the tree is a layered composition, not a
+    # single effect: Spirals 25% / On 23% / Shader 14% / Shockwave 13% of
+    # lit time, with 72% of that time 2+ layers deep. The dominant blend is
+    # an On color layer unmasked by the motion effect below it
+    # (color_over_mask). Shockwave/Spirals serve as the mask shapes; the
+    # Shockwave preset matches the snowflake burst (>96% field agreement).
     # Off backdrop is NOT part of the megatree idiom (55/7.7k placements).
-    # Tokens match "06_PROP_Mega_Tree" and member names like "Mega Tree 2";
-    # "Mega Topper" props deliberately do not match — different prop family.
+    # Tokens match "06_PROP_Mega_Tree" / "08_HERO_Mega_Tree" and member
+    # names like "Mega Tree 2"; "Mega Topper" props deliberately do not
+    # match — different prop family.
     PropFamilyRecipe(
         family="megatree",
         match_tokens=("megatree", "mega_tree", "mega tree"),
@@ -144,6 +156,7 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         alt_effect_name="Spirals",
         parameter_overrides=_SHOCKWAVE_BURST,
         alt_parameter_overrides=_SPIRALS_MEGATREE,
+        color_over_mask=True,
     ),
 )
 

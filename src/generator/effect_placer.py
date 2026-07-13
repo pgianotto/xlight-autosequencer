@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import Any, Optional
+import re
+from typing import Any, Callable, Optional
 
 from src.analyzer.result import HierarchyResult, TimingMark, TimingTrack
 from src.effects.library import EffectLibrary
@@ -559,6 +560,7 @@ def place_effects(
     hierarchy: HierarchyResult,
     variant_library=None,
     rotation_plan: RotationPlan | None = None,
+    progress_cb: Callable[[str], None] | None = None,
 ) -> dict[str, list[EffectPlacement]]:
     """Place effects from theme layers onto power groups, aligned to timing tracks.
 
@@ -578,6 +580,9 @@ def place_effects(
     """
     section = assignment.section
     theme = assignment.theme
+    # Groups already announced to progress_cb this call (a group can appear
+    # under several theme layers — report it once per section).
+    _announced: set[str] = set()
     section_index = assignment.section_index
     working_set = assignment.working_set
     focused_vocabulary = working_set is not None
@@ -711,6 +716,16 @@ def place_effects(
         )
 
         for tier, groups_for_tier in selected.items():
+            # Progress detail for the export UI: name each prop-level group
+            # once per section as it comes up for placement. Tiers 6-8 carry
+            # the names users recognize (Arches, Snowflakes, Mega Tree);
+            # lower tiers are partitions/canvases with synthetic names.
+            if progress_cb is not None and tier in (6, 7, 8):
+                for g in groups_for_tier:
+                    if g.name not in _announced:
+                        _announced.add(g.name)
+                        progress_cb(f"placing {_humanize_group_name(g.name)}")
+
             # Per-tier palette selection
             if tier in _TIER_BRIGHTNESS:
                 # Tiers 1-2: dim background
@@ -744,6 +759,7 @@ def place_effects(
                         recipe_placements = _place_corpus_recipe(
                             group, recipe, layer, section, hierarchy,
                             effect_library, assignment.variation_seed,
+                            theme_palette=tier_palette,
                         )
                         if recipe_placements:
                             corpus_recipe_done.add(group.name)
@@ -856,6 +872,7 @@ def place_effects(
                             recipe_placements = _place_corpus_recipe(
                                 group, recipe, layer, section, hierarchy,
                                 effect_library, assignment.variation_seed,
+                                theme_palette=tier_palette,
                             )
                             if recipe_placements:
                                 corpus_recipe_done.add(group.name)
@@ -925,6 +942,7 @@ def place_effects(
                             recipe_placements = _place_corpus_recipe(
                                 group, recipe, layer, section, hierarchy,
                                 effect_library, assignment.variation_seed,
+                                theme_palette=tier_palette,
                             )
                             if recipe_placements:
                                 corpus_recipe_done.add(group.name)
@@ -1040,6 +1058,7 @@ def place_effects(
                     recipe_placements = _place_corpus_recipe(
                         group, recipe, layer, section, hierarchy,
                         effect_library, assignment.variation_seed,
+                        theme_palette=tier_palette,
                     )
                     if recipe_placements:
                         corpus_recipe_done.add(group.name)
@@ -1739,6 +1758,14 @@ _BEAT_PUNCH_CONFIDENCE_THRESHOLD = 0.7
 _BEAT_PUNCH_DURATION_MS = 250
 
 
+def _humanize_group_name(name: str) -> str:
+    """'06_PROP_Mega_Tree' → 'Mega Tree' — tier prefix stripped, underscores
+    spaced, for progress display in the export UI."""
+    m = re.match(r"^\d{2}_[A-Z]+_(.+)$", name)
+    label = m.group(1) if m else name
+    return label.replace("_", " ").strip()
+
+
 def _place_corpus_recipe(
     group: PowerGroup,
     recipe: PropFamilyRecipe,
@@ -1747,6 +1774,7 @@ def _place_corpus_recipe(
     hierarchy: HierarchyResult,
     effect_library: EffectLibrary,
     variation_seed: int,
+    theme_palette: list[str] | None = None,
 ) -> list[EffectPlacement] | None:
     """Place a corpus-mined prop-family idiom: solid-palette segments spanning
     consecutive beats, back-to-back across the section (the mined shows place
@@ -1784,6 +1812,16 @@ def _place_corpus_recipe(
         if effect_name == recipe.effect_name
         else recipe.alt_parameter_overrides
     )
+    # Two-layer "color over mask" (mega trees): a section-spanning On sits on
+    # the top layer with LayerMethod "2 is Unmask", so the motion effect on
+    # the layer below only contributes shape/brightness while the On supplies
+    # the color. Falls back to the flat single-layer form when the catalog
+    # has no On definition.
+    on_def = (
+        effect_library.effects.get("On") if recipe.color_over_mask else None
+    )
+    mask_layer_idx = 1 if on_def is not None else 0
+
     for i, mark in enumerate(marks):
         start = mark.time_ms
         if i + 1 < len(marks):
@@ -1792,12 +1830,24 @@ def _place_corpus_recipe(
             end = min(start + max(median_interval, FRAME_INTERVAL_MS), section.end_ms)
         if end <= start:
             continue
-        placements.append(_make_placement(
+        p = _make_placement(
             effect_def, group.name, start, end,
             params, palette, layer.blend_mode, "beat", instance_index=i,
-        ))
+        )
+        p.layer = mask_layer_idx
+        placements.append(p)
     if not placements:
         return None
+
+    if on_def is not None:
+        color = (theme_palette or ["#FFFFFF"])[0]
+        color_layer = _make_placement(
+            on_def, group.name, section.start_ms, section.end_ms,
+            {"T_CHOICE_LayerMethod": "2 is Unmask"}, [color],
+            layer.blend_mode, "section",
+        )
+        color_layer.layer = 0
+        placements.append(color_layer)
 
     # Corpus idiom for snowflakes/arches: a section-spanning Off on the layer
     # beneath the bursts keeps the group black between bursts instead of
@@ -1810,7 +1860,7 @@ def _place_corpus_recipe(
                 off_def, group.name, section.start_ms, section.end_ms,
                 {}, ["#000000"], layer.blend_mode, "section",
             )
-            backdrop.layer = 1
+            backdrop.layer = mask_layer_idx + 1
             placements.append(backdrop)
     return placements
 
