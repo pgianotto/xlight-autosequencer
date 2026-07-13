@@ -1855,6 +1855,37 @@ def _place_corpus_recipe(
         color_layer.layer = 0
         placements.append(color_layer)
 
+    # Optional sustained motion layer beneath the per-beat bursts (matrix
+    # idiom — the reference matrices run 2-3 motion layers under the On
+    # color layer). One white segment per secondary_beats_per_placement
+    # beats so the spin persists between bursts.
+    bottom_layer_idx = mask_layer_idx
+    secondary_def = (
+        effect_library.effects.get(recipe.secondary_effect_name)
+        if recipe.secondary_effect_name is not None
+        else None
+    )
+    if secondary_def is not None:
+        stride = max(1, recipe.secondary_beats_per_placement)
+        secondary_params = dict(recipe.secondary_parameter_overrides)
+        bottom_layer_idx = mask_layer_idx + 1
+        for j in range(0, len(marks), stride):
+            start = marks[j].time_ms
+            end = (
+                marks[j + stride].time_ms
+                if j + stride < len(marks)
+                else section.end_ms
+            )
+            if end <= start:
+                continue
+            p = _make_placement(
+                secondary_def, group.name, start, end,
+                secondary_params, list(recipe.palette), layer.blend_mode,
+                "bar", instance_index=j // stride, preserve_directions=True,
+            )
+            p.layer = bottom_layer_idx
+            placements.append(p)
+
     # Corpus idiom for snowflakes/arches: a section-spanning Off on the layer
     # beneath the bursts keeps the group black between bursts instead of
     # picking up whole-house bleed (the reference packages tile qualifying
@@ -1866,7 +1897,7 @@ def _place_corpus_recipe(
                 off_def, group.name, section.start_ms, section.end_ms,
                 {}, ["#000000"], layer.blend_mode, "section",
             )
-            backdrop.layer = mask_layer_idx + 1
+            backdrop.layer = bottom_layer_idx + 1
             placements.append(backdrop)
     return placements
 

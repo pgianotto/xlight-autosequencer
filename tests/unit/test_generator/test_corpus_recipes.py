@@ -497,6 +497,73 @@ class TestHouseLineRecipes:
         assert offs == []
 
 
+# ── matrix recipe (three-layer stack) ────────────────────────────────────────
+
+
+_MATRIX_GROUP = PowerGroup(
+    name="06_PROP_Matrix", tier=6, members=["Matrix", "Matrix 2"],
+)
+
+
+class TestMatrixRecipe:
+    def test_matrix_group_name_matches(self) -> None:
+        assert recipe_for_group(_MATRIX_GROUP).family == "matrix"
+
+    def test_lyrics_matrix_excluded(self) -> None:
+        group = PowerGroup(
+            name="06_PROP_Lyrics_Matrix", tier=6, members=["Lyrics Matrix"],
+        )
+        recipe = recipe_for_group(group)
+        assert recipe is None or recipe.family != "matrix"
+
+    def test_matrix_chorus_gets_three_layer_stack(self) -> None:
+        section = _make_section(label="chorus")
+        result = _place(section, _MATRIX_GROUP, library_names=_LIBRARY_WITH_ON)
+        placements = result["06_PROP_Matrix"]
+        ons = [p for p in placements if p.effect_name == "On"]
+        bursts = [p for p in placements if p.effect_name == "Shockwave"]
+        spins = [p for p in placements if p.effect_name == "Spirals"]
+        assert len(ons) == 1 and ons[0].layer == 0
+        assert ons[0].parameters["T_CHOICE_LayerMethod"] == "2 is Unmask"
+        assert len(bursts) == len(_BEATS)
+        assert all(p.layer == 1 for p in bursts)
+        # 8 beats at 4 beats per secondary placement -> 2 sustained spins
+        assert len(spins) == 2
+        assert all(p.layer == 2 for p in spins)
+        assert all(p.color_palette == ["#FFFFFF"] for p in spins)
+        assert all(p.parameters["E_CHECKBOX_Spirals_3D"] == "1" for p in spins)
+        # The spins tile the section without gaps
+        assert spins[0].start_ms == 0
+        assert spins[-1].end_ms == section.end_ms
+
+    def test_matrix_alternate_is_pinwheel_with_mined_preset(self) -> None:
+        result = _place(_make_section(label="chorus"), _MATRIX_GROUP,
+                        variation_seed=3,
+                        library_names=_LIBRARY_WITH_ON + ("Pinwheel",))
+        placements = result["06_PROP_Matrix"]
+        pins = [p for p in placements if p.effect_name == "Pinwheel"]
+        assert len(pins) == len(_BEATS)
+        for p in pins:
+            assert p.parameters["E_CHOICE_Pinwheel_Style"] == "New Render Method"
+            assert p.parameters["E_SLIDER_Pinwheel_Arms"] == "2"
+            assert "E_SLIDER_Shockwave_End_Radius" not in p.parameters
+
+    def test_secondary_missing_from_library_still_places_primary(self) -> None:
+        # No "Spirals" in the catalog: the recipe degrades to the two-layer
+        # form instead of failing.
+        result = _place(_make_section(label="chorus"), _MATRIX_GROUP,
+                        library_names=("Color Wash", "Shockwave", "On"))
+        placements = result["06_PROP_Matrix"]
+        assert [p.effect_name for p in placements].count("Shockwave") == len(_BEATS)
+        assert all(p.effect_name != "Spirals" for p in placements)
+
+    def test_other_recipes_have_no_secondary_layer(self) -> None:
+        result = _place(_make_section(label="chorus"), _CANE_GROUP,
+                        library_names=_LIBRARY_WITH_ON)
+        placements = result["06_PROP_Candy_Cane"]
+        assert all(p.layer <= 1 for p in placements)
+
+
 # ── mini-tree recipe ─────────────────────────────────────────────────────────
 
 
@@ -628,11 +695,11 @@ class TestHeroRecipePlacement:
             for p in placements
         )
 
-    def test_hero_non_megatree_unaffected(self) -> None:
-        hero = PowerGroup(name="08_HERO_Matrix", tier=8, members=["Matrix"])
+    def test_hero_non_recipe_prop_unaffected(self) -> None:
+        hero = PowerGroup(name="08_HERO_Wreath", tier=8, members=["Wreath"])
         result = _place(_make_section(label="chorus"), hero,
                         active_tiers=frozenset({8}))
-        placements = result.get("08_HERO_Matrix", [])
+        placements = result.get("08_HERO_Wreath", [])
         assert placements
         assert not all(p.color_palette == ["#FFFFFF"] for p in placements)
 
