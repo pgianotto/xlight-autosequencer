@@ -3034,6 +3034,41 @@
       ],
       "occurrences": 1,
       "last_seen": "2026-07-12"
+    },
+    {
+      "id": "bug-185",
+      "timestamp": "2026-07-13",
+      "error_message": "ReferenceError: __GIT_COMMIT__ is not defined — 11 Chrome.test.tsx failures under vitest",
+      "file": "src/review/frontend/vitest.config.ts",
+      "root_cause": "vite.config.ts injects __GIT_COMMIT__/__BUILD_TIME__ via define at build time, but vitest uses a separate vitest.config.ts that never defined them, so rendering the header stamp crashes in jsdom",
+      "fix": "Added define block with test-stub values to vitest.config.ts",
+      "tags": [
+        "frontend",
+        "vitest",
+        "vite-define",
+        "build-stamp"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-13"
+    },
+    {
+      "id": "bug-186",
+      "timestamp": "2026-07-13",
+      "error_message": "backend_commit null in /api/v1/manifest inside devcontainer",
+      "file": "src/review/api/v1/manifest.py",
+      "root_cause": "git status --porcelain walks the whole working tree and exceeds 5s on the Windows bind mount inside the container; TimeoutExpired in the shared try block discarded the already-resolved commit hash",
+      "fix": "Split into two try blocks — the dirty check is best-effort and on failure only omits the -dirty suffix",
+      "tags": [
+        "review",
+        "manifest",
+        "devcontainer",
+        "bind-mount",
+        "subprocess-timeout"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-13"
     }
   ]
 }
