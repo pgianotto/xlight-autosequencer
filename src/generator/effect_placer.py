@@ -1838,6 +1838,7 @@ def _place_corpus_recipe(
         p = _make_placement(
             effect_def, group.name, start, end,
             params, palette, layer.blend_mode, "beat", instance_index=i,
+            preserve_directions=True,
         )
         p.layer = mask_layer_idx
         placements.append(p)
@@ -2092,8 +2093,14 @@ def _make_placement(
     duration_type: str,
     instance_index: int = 0,
     direction_cycle: dict | None = None,
+    preserve_directions: bool = False,
 ) -> EffectPlacement:
-    """Create a single EffectPlacement with appropriate fades."""
+    """Create a single EffectPlacement with appropriate fades.
+
+    ``preserve_directions=True`` skips the per-instance direction alternation
+    — corpus-recipe placements carry mined direction presets that must not
+    be rewritten.
+    """
     fade_in, fade_out = _calculate_fades(duration_type, end_ms - start_ms)
 
     # Force palette mode for effects that default to Rainbow
@@ -2115,7 +2122,7 @@ def _make_placement(
                 ]
             else:  # "alternate"
                 resolved_params[dc_param] = dc_values[instance_index % len(dc_values)]
-    else:
+    elif not preserve_directions:
         # Fallback: hardcoded direction alternation for effects without variant cycle
         for key, directions in _ALTERNATING_DIRECTIONS.items():
             if key in resolved_params:

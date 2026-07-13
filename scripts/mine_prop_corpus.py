@@ -474,7 +474,7 @@ def best_aligned_timing_track(
 
     This is how we discovered that a song's actual rhythm driver can be a
     hand-tapped track (e.g. "Low Bumps") rather than the generic beat grid —
-    see docs/arch_sequencing_corpus session notes on "Beautiful People".
+    see the arch corpus session notes.
     """
     starts = [p.start_ms for p in placements]
     scores: dict[str, float] = {}

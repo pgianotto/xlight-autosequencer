@@ -497,6 +497,68 @@ class TestHouseLineRecipes:
         assert offs == []
 
 
+# ── mini-tree recipe ─────────────────────────────────────────────────────────
+
+
+_MINITREE_GROUP = PowerGroup(
+    name="06_PROP_Tree", tier=6, members=["Tree 1", "Tree 2", "Tree 3", "Tree 4"],
+)
+
+
+class TestMinitreeRecipe:
+    def test_tree_group_name_matches(self) -> None:
+        assert recipe_for_group(_MINITREE_GROUP).family == "minitree"
+
+    def test_treestar_group_excluded(self) -> None:
+        group = PowerGroup(
+            name="06_PROP_TreeStar", tier=6, members=["TreeStar 1", "TreeStar 2"],
+        )
+        recipe = recipe_for_group(group)
+        assert recipe is None or recipe.family != "minitree"
+
+    def test_megatree_still_wins_over_minitree(self) -> None:
+        group = PowerGroup(
+            name="06_PROP_Mega_Tree", tier=6, members=["Mega Tree 1", "Mega Tree 2"],
+        )
+        assert recipe_for_group(group).family == "megatree"
+
+    def test_singing_tree_member_majority_excluded(self) -> None:
+        group = PowerGroup(
+            name="06_PROP_Misc", tier=6,
+            members=["Singing Tree Male", "Singing Tree Female"],
+        )
+        assert recipe_for_group(group) is None
+
+    def test_minitree_chorus_gets_white_group_chase_per_beat(self) -> None:
+        result = _place(_make_section(label="chorus"), _MINITREE_GROUP)
+        placements = result["06_PROP_Tree"]
+        assert len(placements) == len(_BEATS)
+        for p in placements:
+            assert p.effect_name == "Single Strand"
+            assert p.color_palette == ["#FFFFFF"]
+            assert p.parameters["E_CHOICE_Chase_Type1"] == "Right-Left"
+            assert p.parameters["E_CHECKBOX_Chase_Group_All"] == "1"
+
+    def test_minitree_alternate_is_shockwave_burst(self) -> None:
+        result = _place(_make_section(label="chorus"), _MINITREE_GROUP, variation_seed=3)
+        placements = result["06_PROP_Tree"]
+        assert placements
+        for p in placements:
+            assert p.effect_name == "Shockwave"
+            assert p.parameters["E_SLIDER_Shockwave_End_Radius"] == "100"
+            assert "E_CHOICE_Chase_Type1" not in p.parameters
+
+    def test_minitree_on_color_layer_over_chase_mask(self) -> None:
+        result = _place(_make_section(label="chorus"), _MINITREE_GROUP,
+                        library_names=_LIBRARY_WITH_ON)
+        placements = result["06_PROP_Tree"]
+        ons = [p for p in placements if p.effect_name == "On"]
+        masks = [p for p in placements if p.effect_name == "Single Strand"]
+        assert len(ons) == 1
+        assert ons[0].parameters["T_CHOICE_LayerMethod"] == "2 is Unmask"
+        assert all(p.layer == 1 for p in masks)
+
+
 # ── placement progress callback ──────────────────────────────────────────────
 
 

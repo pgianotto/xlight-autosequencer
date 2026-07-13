@@ -3135,6 +3135,22 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-13"
+    },
+    {
+      "id": "bug-191",
+      "timestamp": "2026-07-13",
+      "error_message": "Corpus recipe chase placements carried the wrong direction (mined preset overwritten)",
+      "file": "src/generator/effect_placer.py",
+      "root_cause": "_make_placement's _ALTERNATING_DIRECTIONS fallback rewrites any present direction param (E_CHOICE_Chase_Type1 etc.) per instance, silently clobbering the corpus recipes' mined direction presets",
+      "fix": "preserve_directions flag on _make_placement, set by _place_corpus_recipe; pool placements keep alternation",
+      "tags": [
+        "generator",
+        "corpus-recipes",
+        "parameter-clobber"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-13"
     }
   ]
 }
