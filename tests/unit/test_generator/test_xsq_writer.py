@@ -725,6 +725,36 @@ class TestSliderTextctrlDedup:
                 "parameter_overrides", {}
             ), variant["name"]
 
+    def test_single_strand_defaults_use_textctrl_chase_params(self) -> None:
+        placement = EffectPlacement(
+            effect_name="Single Strand",
+            xlights_id="SingleStrand",
+            model_or_group="Arch Group",
+            start_ms=0,
+            end_ms=4000,
+            parameters={},
+            color_palette=["#FFFFFF"],
+        )
+        settings = _serialize_effect_params(placement)
+        assert "E_SLIDER_Chase_Rotations" not in settings
+        assert "E_SLIDER_Chase_Offset" not in settings
+        assert "E_TEXTCTRL_Chase_Rotations=1.0" in settings
+        assert "E_TEXTCTRL_Chase_Offset=0.0" in settings
+
+    def test_no_builtin_single_strand_variant_uses_slider_chase_params(self) -> None:
+        import json
+        from pathlib import Path
+
+        data = json.loads(
+            (Path("src/variants/builtins/Single Strand.json")).read_text(
+                encoding="utf-8"
+            )
+        )
+        for variant in data["variants"]:
+            overrides = variant.get("parameter_overrides", {})
+            assert "E_SLIDER_Chase_Rotations" not in overrides, variant["name"]
+            assert "E_SLIDER_Chase_Offset" not in overrides, variant["name"]
+
 
 class TestFacesAndTextEffectSerialization:
     """Faces/Text placements merge the real-xLights defaults with per-placement params."""

@@ -108,9 +108,9 @@ _XLIGHTS_EFFECT_DEFAULTS: dict[str, dict[str, str]] = {
         "E_CHOICE_Chase_Type1": "Left-Right",
         "E_CHOICE_Fade_Type": "None",
         "E_SLIDER_Number_Chases": "1",
-        "E_SLIDER_Chase_Rotations": "10",
+        "E_TEXTCTRL_Chase_Rotations": "1.0",
         "E_SLIDER_Color_Mix1": "10",
-        "E_SLIDER_Chase_Offset": "0",
+        "E_TEXTCTRL_Chase_Offset": "0.0",
         "E_CHECKBOX_Chase_Group_All": "0",
     },
     "Pinwheel": {
