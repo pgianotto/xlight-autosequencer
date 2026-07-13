@@ -976,33 +976,70 @@ class TestAllGroupRecipe:
                        members=["Tree 1", "Tree 2", "Tree 3"])
         assert recipe_for_group(g).family == "all_group"
 
-    def test_chorus_gets_per_beat_shockwave_with_on_color_layer(self) -> None:
+    def test_chorus_gets_volleyed_shockwave_with_cycling_on_layer(self) -> None:
+        # 8 beats = 2 four-beat bars. Volley (1 on, 2 off) → bursts only in
+        # bar 0; the On color layer tiles both bars, one color per bar.
         section = _make_section(label="chorus")
         result = _place_base(section)
         placements = result["01_BASE_All"]
         bursts = [p for p in placements if p.effect_name == "Shockwave"]
-        assert len(bursts) == len(_BEATS)
+        assert len(bursts) == 4
+        assert all(p.start_ms < 2000 for p in bursts)  # bar 1 (beats 4-7) rests
         params = dict(bursts[0].parameters)
         assert params["E_SLIDER_Shockwave_End_Radius"] == "150"
         assert params["E_SLIDER_Shockwave_End_Width"] == "56"
-        ons = [p for p in placements if p.effect_name == "On"]
-        assert len(ons) == 1
-        assert ons[0].parameters["T_CHOICE_LayerMethod"] == "2 is Unmask"
-        assert ons[0].layer == 0
+        ons = sorted(
+            (p for p in placements if p.effect_name == "On"),
+            key=lambda p: p.start_ms,
+        )
+        assert len(ons) == 2
+        assert all(p.parameters["T_CHOICE_LayerMethod"] == "2 is Unmask" for p in ons)
+        assert all(p.layer == 0 for p in ons)
+        # The color backbone tiles the section edge to edge and cycles hue.
+        assert ons[0].start_ms == section.start_ms
+        assert ons[-1].end_ms == section.end_ms
+        assert ons[0].color_palette != ons[1].color_palette
         # The static theme wash must be fully replaced on qualifying sections.
         assert not any(p.effect_name == "Color Wash" for p in placements)
 
     def test_repeated_section_alternates_to_bottom_pinwheel(self) -> None:
         # Same halved-parity alternation as the other recipes: seeds 2-3
-        # select the alternate effect.
+        # select the alternate effect. Volley pacing applies to the
+        # alternate too (bar 0 of 2 active).
         result = _place_base(_make_section(label="chorus"), variation_seed=3)
         placements = result["01_BASE_All"]
         pinwheels = [p for p in placements if p.effect_name == "Pinwheel"]
-        assert len(pinwheels) == len(_BEATS)
+        assert len(pinwheels) == 4
         params = dict(pinwheels[0].parameters)
         assert params["E_SLIDER_Pinwheel_Arms"] == "10"
         assert params["E_SLIDER_PinwheelYC"] == "-100"
         assert params["E_SLIDER_Pinwheel_Thickness"] == "2"
+
+    def test_volley_resumes_on_third_bar(self) -> None:
+        # 16 beats = 4 bars; volley (1, 2) → bars 0 and 3 active.
+        beats = [i * 500 for i in range(16)]
+        result = _place(
+            _make_section(label="chorus", end_ms=16000), _BASE_ALL_GROUP,
+            library_names=_LIBRARY_ALL, active_tiers=frozenset({1}),
+            hierarchy=_make_hierarchy(beats, duration_ms=16000),
+        )
+        bursts = [p for p in result["01_BASE_All"] if p.effect_name == "Shockwave"]
+        assert len(bursts) == 8
+        starts = {p.start_ms for p in bursts}
+        assert starts == {0, 500, 1000, 1500, 6000, 6500, 7000, 7500}
+
+    def test_prop_family_recipes_keep_every_beat_and_single_on(self) -> None:
+        # Volley/cycling are all_group-only — the mini-tree recipe (also
+        # color_over_mask) keeps wall-to-wall beats and one static On.
+        g = PowerGroup(name="06_PROP_Mini_Trees", tier=6,
+                       members=["Tree 1", "Tree 2"])
+        result = _place(_make_section(label="chorus"), g,
+                        library_names=_LIBRARY_ALL + ("Single Strand",))
+        placements = result["06_PROP_Mini_Trees"]
+        chases = [p for p in placements if p.effect_name == "Single Strand"]
+        assert len(chases) == len(_BEATS)
+        ons = [p for p in placements if p.effect_name == "On"]
+        assert len(ons) == 1
 
     def test_low_energy_verse_keeps_wash_and_sparkles(self) -> None:
         result = _place_base(_make_section(label="verse", energy=40))
@@ -1023,4 +1060,4 @@ class TestAllGroupRecipe:
         placements = result["01_BASE_All"]
         assert not any(p.effect_name in ("Color Wash", "Ripple") for p in placements)
         bursts = [p for p in placements if p.effect_name == "Shockwave"]
-        assert len(bursts) == len(_BEATS)
+        assert len(bursts) == 4  # bar 0 of the (1, 2) volley
