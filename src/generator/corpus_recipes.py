@@ -16,6 +16,11 @@ Mined from the 12 professionally hand-built reference packages (.xsqz) in
   center-out preset as snowflakes) alternating with sustained single-spiral
   Spirals spins (18%), solid white dominant. See
   ``docs/megatree_sequencing_corpus/``.
+- **Candy canes** — white SingleStrand chase (45% of 3.0k placements,
+  ~half-beat segments) alternating with flat 2D Spirals (24%, ~one beat),
+  colored by a section-spanning On layer with "2 is Unmask" over the motion
+  effect (the mega-tree ``color_over_mask`` idiom; 459/467 On placements).
+  See ``docs/cane_sequencing_corpus/``.
 
 Snowflake and arch groups additionally carry a section-spanning **Off
 backdrop** on the xLights layer beneath the bursts (``off_backdrop``): the
@@ -106,6 +111,22 @@ _SHOCKWAVE_BURST: tuple[tuple[str, str], ...] = (
 )
 
 
+# Candy-cane Spirals preset — mined from 736 Spirals placements on cane
+# elements: flat 2D (3D=0 at 100%, unlike the mega-tree preset), single
+# spiral (Count=1 at 54%), thickness 33 (67%), slow movement (1 at 56%),
+# gentle rotation (+/-20 at 54%), no grow/shrink/blend (100%).
+_SPIRALS_CANE: tuple[tuple[str, str], ...] = (
+    ("E_SLIDER_Spirals_Count", "1"),
+    ("E_SLIDER_Spirals_Rotation", "20"),
+    ("E_SLIDER_Spirals_Thickness", "33"),
+    ("E_TEXTCTRL_Spirals_Movement", "1"),
+    ("E_CHECKBOX_Spirals_3D", "0"),
+    ("E_CHECKBOX_Spirals_Blend", "0"),
+    ("E_CHECKBOX_Spirals_Grow", "0"),
+    ("E_CHECKBOX_Spirals_Shrink", "0"),
+)
+
+
 # Megatree Spirals preset — mined from 720 Spirals placements on Mega Tree
 # elements: single spiral (Count=1 at 96%), no grow/shrink (96-97%), blend
 # off (87%); rotation/movement/thickness vary per song, so representative
@@ -156,6 +177,24 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         alt_effect_name="Spirals",
         parameter_overrides=_SHOCKWAVE_BURST,
         alt_parameter_overrides=_SPIRALS_MEGATREE,
+        color_over_mask=True,
+    ),
+    # Candy canes — mined from the same 12 packages (docs/cane_sequencing_
+    # corpus/, 3.0k placements on 13-16 cane elements per layout).
+    # SingleStrand chase dominates (45%, median 0.55 beats, white), with
+    # Spirals as the recurring alternate (24%, median 1.03 beats). Like the
+    # mega tree — and unlike snowflakes/arches — the color comes from a
+    # section-spanning On layer with "2 is Unmask" (459/467 On placements)
+    # sitting over the motion effect: On-over-SingleStrand 217 pairs,
+    # On-over-Spirals 180. Off backdrop is NOT part of the idiom
+    # (29/3.0k placements, scattered).
+    PropFamilyRecipe(
+        family="cane",
+        match_tokens=("cane", "candy"),
+        effect_name="Single Strand",
+        alt_effect_name="Spirals",
+        parameter_overrides=_CHASE_FROM_HEAD,
+        alt_parameter_overrides=_SPIRALS_CANE,
         color_over_mask=True,
     ),
 )

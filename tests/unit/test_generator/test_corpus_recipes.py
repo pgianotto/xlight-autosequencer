@@ -103,6 +103,9 @@ _ARCH_GROUP = PowerGroup(
 _MEGATREE_GROUP = PowerGroup(
     name="06_PROP_Mega_Tree", tier=6, members=["Mega Tree 1", "Mega Tree 2"],
 )
+_CANE_GROUP = PowerGroup(
+    name="06_PROP_Candy_Cane", tier=6, members=["Cane 1", "Cane 2"],
+)
 
 _BEATS = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
 
@@ -142,7 +145,7 @@ class TestRecipeMatching:
         assert recipe_for_group(_ARCH_GROUP).family == "arch"
 
     def test_unrelated_group_no_match(self) -> None:
-        g = PowerGroup(name="06_PROP_CandyCane", tier=6, members=["Cane 1", "Cane 2"])
+        g = PowerGroup(name="06_PROP_Wreath", tier=6, members=["Wreath 1", "Wreath 2"])
         assert recipe_for_group(g) is None
 
     def test_member_majority_matches(self) -> None:
@@ -362,6 +365,74 @@ class TestMegatreeColorOverMask:
         placements = result["06_PROP_Snowflake"]
         assert all(p.effect_name != "On" for p in placements)
         assert all(p.layer == 0 for p in placements)
+
+
+# ── candy cane recipe ────────────────────────────────────────────────────────
+
+
+class TestCaneRecipe:
+    def test_cane_group_name_matches(self) -> None:
+        assert recipe_for_group(_CANE_GROUP).family == "cane"
+
+    def test_candy_token_matches(self) -> None:
+        group = PowerGroup(name="06_PROP_Candy", tier=6, members=["Candy 1"])
+        assert recipe_for_group(group).family == "cane"
+
+    def test_member_majority_matches(self) -> None:
+        group = PowerGroup(
+            name="06_PROP_Misc", tier=6,
+            members=["Cane 1", "Cane 2 Lines", "Star"],
+        )
+        assert recipe_for_group(group).family == "cane"
+
+    def test_cane_chorus_gets_white_chase_per_beat(self) -> None:
+        result = _place(_make_section(label="chorus"), _CANE_GROUP)
+        placements = result["06_PROP_Candy_Cane"]
+        assert len(placements) == len(_BEATS)
+        for p in placements:
+            assert p.effect_name == "Single Strand"
+            assert p.color_palette == ["#FFFFFF"]
+            assert p.parameters["E_CHOICE_Fade_Type"] == "From Head"
+
+    def test_cane_alternate_is_flat_spirals_with_mined_preset(self) -> None:
+        result = _place(_make_section(label="chorus"), _CANE_GROUP, variation_seed=3)
+        placements = result["06_PROP_Candy_Cane"]
+        assert placements
+        for p in placements:
+            assert p.effect_name == "Spirals"
+            assert p.parameters["E_CHECKBOX_Spirals_3D"] == "0"
+            assert p.parameters["E_SLIDER_Spirals_Thickness"] == "33"
+            assert "E_CHOICE_Fade_Type" not in p.parameters
+
+    def test_cane_on_color_layer_over_chase_mask(self) -> None:
+        section = _make_section(label="chorus")
+        result = _place(section, _CANE_GROUP, library_names=_LIBRARY_WITH_ON)
+        placements = result["06_PROP_Candy_Cane"]
+        color_layers = [p for p in placements if p.effect_name == "On"]
+        masks = [p for p in placements if p.effect_name == "Single Strand"]
+        assert len(color_layers) == 1
+        on = color_layers[0]
+        assert on.layer == 0
+        assert on.start_ms == section.start_ms
+        assert on.end_ms == section.end_ms
+        assert on.parameters["T_CHOICE_LayerMethod"] == "2 is Unmask"
+        assert len(masks) == len(_BEATS)
+        assert all(p.layer == 1 for p in masks)
+        assert all(p.color_palette == ["#FFFFFF"] for p in masks)
+
+    def test_cane_recipe_has_no_off_backdrop(self) -> None:
+        # Off backdrop is not part of the mined cane idiom (29/3.0k placements).
+        result = _place(_make_section(label="chorus"), _CANE_GROUP,
+                        library_names=_DEFAULT_LIBRARY_NAMES + ("Off",))
+        offs = [p for p in result["06_PROP_Candy_Cane"] if p.effect_name == "Off"]
+        assert offs == []
+
+    def test_cane_low_energy_verse_keeps_normal_placement(self) -> None:
+        result = _place(_make_section(label="verse", energy=40), _CANE_GROUP)
+        placements = result.get("06_PROP_Candy_Cane", [])
+        assert all(p.effect_name != "Single Strand" or
+                   "E_NOTEBOOK_SSEFFECT_TYPE" not in p.parameters
+                   for p in placements)
 
 
 # ── placement progress callback ──────────────────────────────────────────────
