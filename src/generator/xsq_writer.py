@@ -444,7 +444,7 @@ def write_xsq(
             # than across the group's bounding box.  Lower tiers (01–03) render as a unified
             # group.
             tier_num = int(group_name[:2]) if len(group_name) >= 2 and group_name[:2].isdigit() else 0
-            if group_name == "01_BASE_All":
+            if group_name in ("01_BASE_All", "01_BASE_All_FADES"):
                 layer_el.set("settings", "B_CHOICE_BufferStyle=Default")
             elif tier_num >= 4:
                 layer_el.set("settings", "B_CHOICE_BufferStyle=Per Model Default")

@@ -120,7 +120,14 @@ def generate_groups(
 # ─── Tier generators ──────────────────────────────────────────────────────────
 
 def _tier1_canvas(props: list[Prop]) -> list[PowerGroup]:
-    return [PowerGroup(name="01_BASE_All", tier=1, members=[p.name for p in props])]
+    members = [p.name for p in props]
+    return [
+        PowerGroup(name="01_BASE_All", tier=1, members=members),
+        # Whole-house master-dimmer group. Receives no theme placements
+        # (place_effects skips *_FADES groups) — build_plan puts a single
+        # Min-blend On fade on it over trailing silence at the end of a song.
+        PowerGroup(name="01_BASE_All_FADES", tier=1, members=list(members)),
+    ]
 
 
 def _tier2_spatial(props: list[Prop]) -> list[PowerGroup]:

@@ -28,6 +28,7 @@ from src.generator.transitions import TransitionConfig, apply_transitions
 from src.story.builder import load_song_story
 from src.generator.models import (
     AccentPolicy,
+    EffectPlacement,
     GenerationConfig,
     SectionAssignment,
     SectionEnergy,
@@ -300,6 +301,11 @@ def build_plan(
     transition_config = TransitionConfig(mode=config.transition_mode)
     apply_transitions(assignments, transition_config, bpm=profile.estimated_bpm)
 
+    # 6b. End-of-song fade — when the sequence runs past the last musical
+    # section (trailing silence), one white Min-blend On on 01_BASE_All_FADES
+    # ramps the whole display to black by the end of the sequence.
+    _place_end_of_song_fade(assignments, groups, effect_library, hierarchy)
+
     # 7. Assemble plan
     return SequencePlan(
         song_profile=profile,
@@ -309,6 +315,52 @@ def build_plan(
         rotation_plan=rotation_plan,
         vocal_effects=vocal_effects,
     )
+
+
+# Minimum trailing-silence length before the end-of-song fade fires. Shorter
+# tails are analysis rounding, not an actual silent outro.
+_TRAILING_SILENCE_MIN_MS = 1500
+
+
+def _place_end_of_song_fade(
+    assignments: list[SectionAssignment],
+    groups: list[PowerGroup],
+    effect_library: EffectLibrary,
+    hierarchy: HierarchyResult,
+) -> None:
+    """Fade the whole display to black over trailing silence.
+
+    When the sequence duration extends past the end of the last section by at
+    least ``_TRAILING_SILENCE_MIN_MS``, place one white On effect on the
+    ``01_BASE_All_FADES`` group spanning the tail: brightness ramps 100 -> 0
+    (``Eff_On_End=0``) and ``LayerMethod=Min`` clamps every layer rendered
+    beneath it, so the display is black by the end of the sequence no matter
+    what other tiers are doing.
+    """
+    if not assignments:
+        return
+    if not any(g.name == "01_BASE_All_FADES" for g in groups):
+        return
+    song_end = max(a.section.end_ms for a in assignments)
+    if hierarchy.duration_ms - song_end < _TRAILING_SILENCE_MIN_MS:
+        return
+    on_def = effect_library.effects.get("On")
+    if on_def is None:
+        return
+    fade = EffectPlacement(
+        effect_name="On",
+        xlights_id=on_def.xlights_id,
+        model_or_group="01_BASE_All_FADES",
+        start_ms=song_end,
+        end_ms=hierarchy.duration_ms,
+        parameters={
+            "E_TEXTCTRL_Eff_On_End": "0",
+            "T_CHOICE_LayerMethod": "Min",
+            "T_SLIDER_EffectLayerMix": "0",
+        },
+        color_palette=["#FFFFFF"],
+    )
+    assignments[-1].group_effects.setdefault("01_BASE_All_FADES", []).append(fade)
 
 
 def _populate_assignment_decisions(

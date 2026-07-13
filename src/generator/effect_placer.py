@@ -668,6 +668,11 @@ def place_effects(
     for g in groups:
         if g.tier not in effective_tiers:
             continue
+        # *_FADES groups are reserved master-dimmer canvases (e.g.
+        # 01_BASE_All_FADES) — build_plan places their single fade effect
+        # directly; theme layers must never land on them.
+        if g.name.endswith("_FADES"):
+            continue
         tier_groups.setdefault(g.tier, []).append(g)
 
     # Group density: limit the number of active groups per tier for lower-energy
