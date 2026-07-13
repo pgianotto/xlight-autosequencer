@@ -24,6 +24,30 @@ xlight-analyze review
 
 Opens a browser at **http://localhost:5173**.
 
+### Restarting the dashboard in the devcontainer
+
+The dashboard in the `xlight-dev` container is launched manually (there is no
+auto-start in `devcontainer.json`), so after pulling new code it must be
+restarted to pick up changes:
+
+```bash
+# From the host — find and kill the running server
+docker exec xlight-dev sh -c "pkill -f 'xlight-review --dev'"
+
+# Relaunch it (serves http://localhost:5000 on the host)
+docker exec -d -u node xlight-dev sh -c \
+  "cd /workspace && nohup /home/node/.local/bin/xlight-review --dev --host 0.0.0.0 --port 5000 > /tmp/xlight-review.log 2>&1 &"
+
+# Verify
+curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/   # expect 200
+docker exec xlight-dev tail -20 /tmp/xlight-review.log          # server log
+```
+
+`xlight-review` must be invoked by its full path (`/home/node/.local/bin/`) —
+it is not on `PATH` for non-interactive `docker exec` shells. The workspace is
+bind-mounted into the container, so the restarted server runs whatever commit
+is currently checked out on the host.
+
 ---
 
 ## Three Modes
