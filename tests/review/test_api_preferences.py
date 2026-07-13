@@ -116,3 +116,35 @@ def test_put_preferences_last_playhead_update(client):
     r = client.put("/api/v1/preferences", json=payload, content_type="application/json")
     assert r.status_code == 200
     assert r.get_json()["last_playhead_ms_by_song"] == {"aabb1122": 45200}
+
+
+def test_put_preferences_genre_and_occasion_update(client):
+    r = client.put(
+        "/api/v1/preferences",
+        json={"genre": "rock", "occasion": "christmas"},
+        content_type="application/json",
+    )
+    assert r.status_code == 200
+    data = r.get_json()
+    assert data["genre"] == "rock"
+    assert data["occasion"] == "christmas"
+
+
+def test_put_preferences_invalid_genre_returns_400(client):
+    r = client.put(
+        "/api/v1/preferences",
+        json={"genre": "polka"},
+        content_type="application/json",
+    )
+    assert r.status_code == 400
+    assert r.get_json()["error"]["code"] == "invalid_preferences"
+
+
+def test_put_preferences_invalid_occasion_returns_400(client):
+    r = client.put(
+        "/api/v1/preferences",
+        json={"occasion": "arbor-day"},
+        content_type="application/json",
+    )
+    assert r.status_code == 400
+    assert r.get_json()["error"]["code"] == "invalid_preferences"

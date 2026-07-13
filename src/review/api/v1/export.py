@@ -52,7 +52,8 @@ def _export_id() -> str:
 
 
 def _run_export(state: "_ExportState", song: dict, session: dict,
-                layout: dict, destination_name: str, fmt: str) -> None:
+                layout: dict, destination_name: str, fmt: str,
+                genre: str = "pop", occasion: str = "general") -> None:
     """Run the export in a background thread."""
     try:
         state.push({"stage": "building_plan", "progress": 0.1})
@@ -117,6 +118,8 @@ def _run_export(state: "_ExportState", song: dict, session: dict,
             lyrics=lyrics or None,
             words=words or None,
             phonemes=phonemes or None,
+            genre=genre,
+            occasion=occasion,
             progress_cb=_placement_progress,
         )
 
@@ -192,6 +195,13 @@ def start_export(song_id: str):
     default_name = Path(source_path).stem if source_path else song.get("title", song_id)
     destination_name = body.get("destination_name", f"{default_name}.xsq")
 
+    # Dashboard-wide genre/occasion preferences steer auto theme selection
+    # for sections without a user override ("pop"/"general" = generator
+    # defaults when unset).
+    prefs = lib.get("preferences", {}) or {}
+    genre = prefs.get("genre") or "pop"
+    occasion = prefs.get("occasion") or "general"
+
     exp_id = _export_id()
     state = _ExportState(exp_id)
 
@@ -201,7 +211,7 @@ def start_export(song_id: str):
 
     t = threading.Thread(
         target=_run_export,
-        args=(state, song, session, layout, destination_name, fmt),
+        args=(state, song, session, layout, destination_name, fmt, genre, occasion),
         daemon=True,
     )
     t.start()

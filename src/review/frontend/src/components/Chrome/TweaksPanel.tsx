@@ -9,8 +9,11 @@ function persistPrefs(patch: Partial<Preferences>): void {
   });
 }
 
+const GENRES: Preferences['genre'][] = ['any', 'pop', 'rock', 'classical'];
+const OCCASIONS: Preferences['occasion'][] = ['general', 'christmas', 'halloween'];
+
 export function TweaksPanel() {
-  const { mode, density, inspector_open, setMode, setDensity, setPreferences } =
+  const { mode, density, inspector_open, genre, occasion, setMode, setDensity, setPreferences } =
     usePreferencesStore();
 
   // Replace-mode double-confirm state
@@ -25,6 +28,16 @@ export function TweaksPanel() {
   function handleDensity(value: Preferences['density']) {
     setDensity(value);
     persistPrefs({ density: value });
+  }
+
+  function handleGenre(value: Preferences['genre']) {
+    setPreferences({ genre: value });
+    persistPrefs({ genre: value });
+  }
+
+  function handleOccasion(value: Preferences['occasion']) {
+    setPreferences({ occasion: value });
+    persistPrefs({ occasion: value });
   }
 
   function handleInspectorToggle() {
@@ -121,6 +134,36 @@ export function TweaksPanel() {
           >
             Compact
           </button>
+        </div>
+      </div>
+      <div className={styles.row}>
+        <span className={styles.label}>Genre</span>
+        <div className={styles.segmented}>
+          {GENRES.map((g) => (
+            <button
+              key={g}
+              data-active={String(genre === g)}
+              data-testid={`genre-${g}`}
+              onClick={() => handleGenre(g)}
+            >
+              {g === 'any' ? 'Any' : g.charAt(0).toUpperCase() + g.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className={styles.row}>
+        <span className={styles.label}>Occasion</span>
+        <div className={styles.segmented}>
+          {OCCASIONS.map((o) => (
+            <button
+              key={o}
+              data-active={String(occasion === o)}
+              data-testid={`occasion-${o}`}
+              onClick={() => handleOccasion(o)}
+            >
+              {o.charAt(0).toUpperCase() + o.slice(1)}
+            </button>
+          ))}
         </div>
       </div>
       <div className={styles.row}>

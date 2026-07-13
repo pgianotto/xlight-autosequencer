@@ -82,8 +82,25 @@ _KIND_TO_THEME: dict[str, str] = {
 }
 
 
+def _song_seed(song_id: str | None) -> int:
+    """Per-song rotation seed matching ``generator_runner._derive_seed``.
+
+    song_ids are hex (sha256[:16] from import), so the direct int parse
+    matches what export-time generation derives from the same id. The md5
+    fallback covers non-hex ids (test stubs) so defaults still vary.
+    """
+    if not song_id:
+        return 0
+    try:
+        return int(song_id.removeprefix("md5:")[:8], 16)
+    except ValueError:
+        import hashlib
+        return int(hashlib.md5(song_id.encode()).hexdigest()[:8], 16)
+
+
 def _smart_default_theme_ids(
     sections: list[dict], hierarchy: Any, story: dict | None,
+    song_id: str | None = None,
 ) -> list[str] | None:
     """Per-section default theme_ids via the generator's real selector.
 
@@ -103,11 +120,16 @@ def _smart_default_theme_ids(
 
         from .themes import _load_themes, _slugify
 
+        # Dashboard-wide genre/occasion preferences (Tweaks panel picker).
+        lib_prefs = load_library().get("preferences", {}) or {}
+        pref_genre = lib_prefs.get("genre") or "any"
+        pref_occasion = lib_prefs.get("occasion") or "general"
+
         if story is not None and story.get("sections"):
             section_energies = _section_energies_from_story(story)
             prefs = story.get("preferences", {}) or {}
-            genre = prefs.get("genre") or "any"
-            occasion = prefs.get("occasion") or "general"
+            genre = prefs.get("genre") or pref_genre
+            occasion = prefs.get("occasion") or pref_occasion
             scale = None  # story mood tiers already encode key character
         else:
             ef = getattr(hierarchy, "essentia_features", None) or {}
@@ -119,7 +141,7 @@ def _smart_default_theme_ids(
                 loudness_lufs=ef.get("loudness_lufs"),
                 song_duration_ms=hierarchy.duration_ms,
             )
-            genre, occasion, scale = "any", "general", ef.get("scale")
+            genre, occasion, scale = pref_genre, pref_occasion, ef.get("scale")
 
         if len(section_energies) != len(sections):
             return None
@@ -131,6 +153,7 @@ def _smart_default_theme_ids(
         )
         selected = select_themes(
             section_energies, theme_library, genre, occasion, scale=scale,
+            base_variation_seed=_song_seed(song_id),
         )
 
         catalog_ids = {t["theme_id"] for t in _load_themes()}
@@ -157,7 +180,7 @@ def _auto_assign_defaults(
     re-derivation without a hierarchy) the static kind map applies.
     """
     smart_ids = (
-        _smart_default_theme_ids(sections, hierarchy, story)
+        _smart_default_theme_ids(sections, hierarchy, story, song_id=song_id)
         if hierarchy is not None else None
     )
     assignments = []

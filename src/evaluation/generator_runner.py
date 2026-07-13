@@ -32,6 +32,8 @@ def run(
     lyrics: Optional[list[dict]] = None,
     words: Optional[list[dict]] = None,
     phonemes: Optional[list[dict]] = None,
+    genre: str = "pop",
+    occasion: str = "general",
     progress_cb: Optional[Callable[[str, float], None]] = None,
 ) -> bytes:
     """Run the generator deterministically and return .xsq bytes.
@@ -52,6 +54,8 @@ def run(
                placements on face-capable props and matrices.
         phonemes: Optional Papagayo phoneme marks (same shape) embedded as a
                   "Phonemes" timing track for the Faces effect.
+        genre: Theme-selection genre hint (GenerationConfig.genre).
+        occasion: Theme-selection occasion hint (GenerationConfig.occasion).
 
     Returns:
         Raw .xsq XML bytes.
@@ -87,6 +91,7 @@ def run(
     try:
         return _run_pipeline(audio_path, layout_path, seed, theme_overrides=theme_overrides,
                               lyrics=lyrics, words=words, phonemes=phonemes,
+                              genre=genre, occasion=occasion,
                               progress_cb=progress_cb)
     except GeneratorError:
         raise
@@ -102,6 +107,8 @@ def _run_pipeline(
     lyrics: Optional[list[dict]] = None,
     words: Optional[list[dict]] = None,
     phonemes: Optional[list[dict]] = None,
+    genre: str = "pop",
+    occasion: str = "general",
     progress_cb: Optional[Callable[[str, float], None]] = None,
 ) -> bytes:
     """Execute the full generation pipeline and return .xsq bytes."""
@@ -140,7 +147,13 @@ def _run_pipeline(
             audio_path=audio_path,
             layout_path=layout_path,
             output_dir=Path(tmp_dir),
+            genre=genre,
+            occasion=occasion,
             theme_overrides=theme_overrides,
+            # Per-song seed so theme lineups and effect alternation choices
+            # differ between songs instead of repeating the section-index
+            # pattern (identical output across songs otherwise).
+            variation_seed=seed,
             # Faces placements reference the "Phonemes" timing track, so
             # only enable vocal placements when both mark sets exist.
             vocal_words=words if (words and phonemes) else None,

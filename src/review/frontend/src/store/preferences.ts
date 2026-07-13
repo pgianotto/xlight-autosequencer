@@ -10,6 +10,8 @@ export interface Preferences {
   last_playhead_ms_by_song: Record<string, number>;
   layout_id: string | null;
   library_state_version: number;
+  genre: 'any' | 'pop' | 'rock' | 'classical';
+  occasion: 'general' | 'christmas' | 'halloween';
 }
 
 interface PreferencesState extends Preferences {
@@ -28,6 +30,8 @@ const DEFAULTS: Preferences = {
   last_playhead_ms_by_song: {},
   layout_id: null,
   library_state_version: 0,
+  genre: 'any',
+  occasion: 'general',
 };
 
 function applyDataMode(mode: Preferences['mode']) {

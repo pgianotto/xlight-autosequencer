@@ -165,3 +165,72 @@ class TestThemeSelector:
         assert len(result) == len(sections)
         for assignment in result:
             assert isinstance(assignment, SectionAssignment)
+
+
+class TestPerSongSeedRotation:
+    """base_variation_seed rotates theme choice so songs differ."""
+
+    def _library(self) -> ThemeLibrary:
+        return _make_library([
+            _make_theme("Starlight", mood="ethereal"),
+            _make_theme("Moonbeam", mood="ethereal"),
+            _make_theme("Twilight", mood="ethereal"),
+        ])
+
+    def _sections(self) -> list[SectionEnergy]:
+        return [
+            _make_section("intro", energy_score=20, mood_tier="ethereal", start_ms=0, end_ms=1000),
+            _make_section("verse", energy_score=25, mood_tier="ethereal", start_ms=1000, end_ms=2000),
+        ]
+
+    def test_seed_zero_preserves_legacy_first_candidate(self):
+        """Seed 0 must keep the historical candidates[0] choice."""
+        result = select_themes(self._sections(), self._library(),
+                               genre="pop", occasion="general")
+        assert result[0].theme.name == "Starlight"
+
+    def test_different_seeds_give_different_theme_lineups(self):
+        """Songs with different seeds must not all get the same lineup."""
+        lineups = set()
+        for seed in (0, 1, 2):
+            result = select_themes(self._sections(), self._library(),
+                                   genre="pop", occasion="general",
+                                   base_variation_seed=seed)
+            lineups.add(tuple(a.theme.name for a in result))
+        assert len(lineups) == 3
+
+    def test_seed_rotation_keeps_adjacent_variety(self):
+        """Rotated picks must still avoid repeating the previous theme."""
+        sections = self._sections() + [
+            _make_section("bridge", energy_score=30, mood_tier="ethereal",
+                          start_ms=2000, end_ms=3000),
+        ]
+        for seed in (0, 1, 2, 0x9E3779B9):
+            result = select_themes(sections, self._library(),
+                                   genre="pop", occasion="general",
+                                   base_variation_seed=seed)
+            for i in range(len(result) - 1):
+                assert result[i].theme.name != result[i + 1].theme.name
+
+    def test_seed_rotation_keeps_repeated_label_reuse(self):
+        """Repeated section labels still share one theme under a seed."""
+        sections = [
+            _make_section("chorus", energy_score=80, mood_tier="aggressive", start_ms=0, end_ms=1000),
+            _make_section("chorus", energy_score=80, mood_tier="aggressive", start_ms=2000, end_ms=3000),
+        ]
+        library = _make_library([
+            _make_theme("Power Chord", mood="aggressive"),
+            _make_theme("Inferno", mood="aggressive"),
+        ])
+        result = select_themes(sections, library, genre="pop", occasion="general",
+                               base_variation_seed=7)
+        assert result[0].theme.name == result[1].theme.name
+        assert result[0].variation_seed != result[1].variation_seed
+
+    def test_same_seed_is_deterministic(self):
+        """The same seed must reproduce the same lineup."""
+        a = select_themes(self._sections(), self._library(),
+                          genre="pop", occasion="general", base_variation_seed=5)
+        b = select_themes(self._sections(), self._library(),
+                          genre="pop", occasion="general", base_variation_seed=5)
+        assert [x.theme.name for x in a] == [x.theme.name for x in b]

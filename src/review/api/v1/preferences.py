@@ -8,6 +8,9 @@ from src.review.storage.library import load_library, save_library
 
 _VALID_MODES = {"dark", "light"}
 _VALID_DENSITIES = {"comfortable", "compact"}
+# Mirrors the genre/occasion vocabulary in src/themes/builtin_themes.json.
+_VALID_GENRES = {"any", "pop", "rock", "classical"}
+_VALID_OCCASIONS = {"general", "christmas", "halloween"}
 
 
 @api_v1.route("/preferences", methods=["GET"])
@@ -31,6 +34,20 @@ def put_preferences():
     if density is not None and density not in _VALID_DENSITIES:
         return (
             jsonify({"error": {"code": "invalid_preferences", "message": f"Invalid density: {density!r}"}}),
+            400,
+        )
+
+    genre = body.get("genre")
+    if genre is not None and genre not in _VALID_GENRES:
+        return (
+            jsonify({"error": {"code": "invalid_preferences", "message": f"Invalid genre: {genre!r}"}}),
+            400,
+        )
+
+    occasion = body.get("occasion")
+    if occasion is not None and occasion not in _VALID_OCCASIONS:
+        return (
+            jsonify({"error": {"code": "invalid_preferences", "message": f"Invalid occasion: {occasion!r}"}}),
             400,
         )
 

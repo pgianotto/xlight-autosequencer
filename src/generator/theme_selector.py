@@ -35,9 +35,11 @@ def select_themes(
 
     ``base_variation_seed`` shifts every section's variation seed by a
     constant offset (default 0 preserves the historical
-    ``variation_seed=section_index`` behaviour). The microscope tool
-    sets it from ``GenerationConfig.variation_seed`` for deterministic
-    measurement runs.
+    ``variation_seed=section_index`` behaviour) and rotates the starting
+    position within each mood's candidate pool, so two songs with the
+    same section-mood sequence get different theme lineups. Generation
+    derives it from the audio hash (``generator_runner._derive_seed``);
+    the microscope tool pins it for deterministic measurement runs.
     """
     assignments: list[SectionAssignment] = []
     prev_theme_name: str | None = None
@@ -53,6 +55,7 @@ def select_themes(
             section, theme_library, genre, occasion,
             prev_theme_name, label_theme_map,
             mood_override=effective_mood,
+            selection_seed=base_variation_seed,
         )
 
         # Use global section index as variation seed so every section cycles
@@ -86,6 +89,7 @@ def _select_for_section(
     prev_theme_name: str | None,
     label_theme_map: dict[str, Theme],
     mood_override: str | None = None,
+    selection_seed: int = 0,
 ) -> Theme:
     """Select a theme for a single section with fallback broadening."""
     # If this section type was already assigned a theme, reuse it
@@ -98,14 +102,14 @@ def _select_for_section(
     for attempt_genre, attempt_occasion in _fallback_sequence(genre, occasion):
         candidates = _query_themes(theme_library, mood, attempt_genre, attempt_occasion)
         if candidates:
-            theme = _pick_avoiding_adjacent(candidates, prev_theme_name)
+            theme = _pick_avoiding_adjacent(candidates, prev_theme_name, selection_seed)
             label_theme_map[section.label] = theme
             return theme
 
     # Ultimate fallback: any theme in the library
     all_themes = list(theme_library.themes.values())
     if all_themes:
-        theme = _pick_avoiding_adjacent(all_themes, prev_theme_name)
+        theme = _pick_avoiding_adjacent(all_themes, prev_theme_name, selection_seed)
         label_theme_map[section.label] = theme
         return theme
 
@@ -149,14 +153,22 @@ def _query_themes(
 
 
 def _pick_avoiding_adjacent(
-    candidates: list[Theme], prev_name: str | None
+    candidates: list[Theme], prev_name: str | None, selection_seed: int = 0
 ) -> Theme:
-    """Pick a theme from candidates, avoiding the previously used one."""
-    if prev_name is None or len(candidates) <= 1:
-        return candidates[0]
+    """Pick a theme from candidates, avoiding the previously used one.
 
-    for theme in candidates:
+    ``selection_seed`` rotates the starting position in the candidate
+    list, so songs with different seeds pick different themes from the
+    same pool. Seed 0 preserves the historical first-candidate choice.
+    """
+    start = selection_seed % len(candidates)
+    rotated = candidates[start:] + candidates[:start]
+
+    if prev_name is None or len(candidates) <= 1:
+        return rotated[0]
+
+    for theme in rotated:
         if theme.name != prev_name:
             return theme
 
-    return candidates[0]
+    return rotated[0]

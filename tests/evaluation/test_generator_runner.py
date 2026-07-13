@@ -43,6 +43,53 @@ def test_derive_seed_short_hash():
     assert _derive_seed("md5:abcd") == int("abcd", 16)
 
 
+def test_run_pipeline_threads_seed_and_prefs_into_config(monkeypatch, tmp_path):
+    """_run_pipeline must stamp the audio-hash seed into
+    GenerationConfig.variation_seed (per-song theme/effect variety) and
+    thread genre/occasion through to theme selection."""
+    from types import SimpleNamespace
+
+    captured: dict = {}
+
+    monkeypatch.setattr("src.analyzer.orchestrator.run_orchestrator",
+                        lambda *a, **k: object())
+    monkeypatch.setattr("src.grouper.layout.parse_layout",
+                        lambda p: SimpleNamespace(props=[]))
+    monkeypatch.setattr("src.grouper.classifier.normalize_coords", lambda props: None)
+    monkeypatch.setattr("src.grouper.classifier.classify_props", lambda props: None)
+    monkeypatch.setattr("src.grouper.grouper.generate_groups", lambda props: [])
+    monkeypatch.setattr("src.effects.library.load_effect_library", lambda: object())
+    monkeypatch.setattr("src.variants.library.load_variant_library",
+                        lambda **k: object())
+    monkeypatch.setattr("src.themes.library.load_theme_library", lambda **k: object())
+
+    def fake_build_plan(config, *a, **k):
+        captured["config"] = config
+        return object()
+
+    def fake_write_xsq(plan, output_path, **k):
+        Path(output_path).write_bytes(b"<xsequence/>")
+
+    monkeypatch.setattr("src.generator.plan.build_plan", fake_build_plan)
+    monkeypatch.setattr("src.generator.xsq_writer.write_xsq", fake_write_xsq)
+
+    from src.evaluation.generator_runner import _run_pipeline
+
+    audio = tmp_path / "a.wav"
+    audio.write_bytes(b"x")
+    layout = tmp_path / "l.xml"
+    layout.write_bytes(b"<x/>")
+
+    result = _run_pipeline(audio, layout, seed=0xAABBCCDD,
+                           genre="rock", occasion="christmas")
+
+    assert result == b"<xsequence/>"
+    config = captured["config"]
+    assert config.variation_seed == 0xAABBCCDD
+    assert config.genre == "rock"
+    assert config.occasion == "christmas"
+
+
 def test_run_raises_generator_error_on_missing_audio(tmp_path):
     """run() must raise GeneratorError when audio_path does not exist."""
     from src.evaluation.generator_runner import GeneratorError, run
