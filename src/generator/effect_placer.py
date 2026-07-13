@@ -146,6 +146,7 @@ _CORPUS_MASK_PRIMARIES: tuple[str, ...] = (
 
 def _vivid_mask_color(
     palette: list[str] | None, variation_seed: int, group_name: str = "",
+    offset: int = 0,
 ) -> str:
     """Pick a vivid color for a corpus recipe's On unmask layer.
 
@@ -177,7 +178,7 @@ def _vivid_mask_color(
             c for c in _CORPUS_MASK_PRIMARIES if c not in candidates
         )
     spread = zlib.crc32(group_name.encode("utf-8")) if group_name else 0
-    return candidates[(variation_seed + spread) % len(candidates)]
+    return candidates[(variation_seed + spread + offset) % len(candidates)]
 
 
 def _saturated_colors(palette: list[str]) -> list[str]:
@@ -1915,6 +1916,15 @@ def _place_corpus_recipe(
     mask_layer_idx = 1 if on_def is not None else 0
 
     for i, mark in enumerate(marks):
+        # Volleyed families (whole-house All group) rest for burst_volley's
+        # off-bars — the mined restrained package averages well under one
+        # placement per beat, with phrase-length gaps where only the color
+        # layer carries. Bars are fixed four-beat groups, matching the
+        # secondary-layer stride convention below.
+        if recipe.burst_volley is not None:
+            bars_on, bars_off = recipe.burst_volley
+            if ((i // 4) % (bars_on + bars_off)) >= bars_on:
+                continue
         start = mark.time_ms
         if i + 1 < len(marks):
             end = marks[i + 1].time_ms
@@ -1933,14 +1943,36 @@ def _place_corpus_recipe(
         return None
 
     if on_def is not None:
-        color = _vivid_mask_color(theme_palette, variation_seed, group.name)
-        color_layer = _make_placement(
-            on_def, group.name, section.start_ms, section.end_ms,
-            {"T_CHOICE_LayerMethod": "2 is Unmask"}, [color],
-            layer.blend_mode, "section",
-        )
-        color_layer.layer = 0
-        placements.append(color_layer)
+        on_params = {"T_CHOICE_LayerMethod": "2 is Unmask"}
+        if recipe.color_cycle_bars:
+            # One On block per four-beat bar, stepping through the palette's
+            # vivid colors (mined On medians are ~one bar in both reference
+            # poles: 2.0s and 2.6s, cycling hue bar over bar).
+            for bar_idx, j in enumerate(range(0, len(marks), 4)):
+                bar_start = section.start_ms if j == 0 else marks[j].time_ms
+                bar_end = (
+                    marks[j + 4].time_ms if j + 4 < len(marks) else section.end_ms
+                )
+                if bar_end <= bar_start:
+                    continue
+                color = _vivid_mask_color(
+                    theme_palette, variation_seed, group.name, offset=bar_idx,
+                )
+                color_layer = _make_placement(
+                    on_def, group.name, bar_start, bar_end,
+                    dict(on_params), [color], layer.blend_mode, "bar",
+                    instance_index=bar_idx,
+                )
+                color_layer.layer = 0
+                placements.append(color_layer)
+        else:
+            color = _vivid_mask_color(theme_palette, variation_seed, group.name)
+            color_layer = _make_placement(
+                on_def, group.name, section.start_ms, section.end_ms,
+                on_params, [color], layer.blend_mode, "section",
+            )
+            color_layer.layer = 0
+            placements.append(color_layer)
 
     # Optional sustained motion layer beneath the per-beat bursts (matrix
     # idiom — the reference matrices run 2-3 motion layers under the On

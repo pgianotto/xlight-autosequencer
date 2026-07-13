@@ -103,6 +103,19 @@ class PropFamilyRecipe:
     secondary_effect_name: str | None = None
     secondary_parameter_overrides: tuple[tuple[str, str], ...] = ()
     secondary_beats_per_placement: int = 4
+    # Whole-house restraint (mined from the calmer reference package): the
+    # per-beat motion fires in bar-length volleys — (bars_on, bars_off) —
+    # instead of wall-to-wall coverage. That package averages ~0.9
+    # placements/s against 1.5 beats/s even in its densest chorus run, with
+    # phrase-length rests where only the color layer carries. None → every
+    # beat (the existing prop-family behavior).
+    burst_volley: tuple[int, int] | None = None
+    # The On "2 is Unmask" color layer steps through the palette's vivid
+    # colors one bar at a time instead of holding a single section-spanning
+    # color. Both reference poles agree on this: On block medians are ~2.0s
+    # and ~2.6s (= one bar), cycling blue→green→orange→... False → the
+    # existing single section-spanning On.
+    color_cycle_bars: bool = False
     # Two-layer "color over mask" composition, the dominant mega-tree idiom:
     # a section-spanning On on the upper layer with LayerMethod "2 is Unmask"
     # (517 mined placements), colored from the section theme, over the
@@ -403,7 +416,10 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
     # wash: per-beat Shockwave bursts at whole-house scale (31%, 12/12 songs,
     # median 0.47s) under an On "2 is Unmask" color layer (386/386), with a
     # bottom-centered thin-armed Pinwheel as the recurring alternate (14%,
-    # 6/12 songs). Matches the tier-1 canvas group 01_BASE_All by name;
+    # 6/12 songs). Pacing follows the restrained pole of the corpus rather
+    # than the maximal one: the color layer cycles one vivid color per bar
+    # as the continuous backbone, while the bursts volley one bar on / two
+    # bars off. Matches the tier-1 canvas group 01_BASE_All by name;
     # "fades" keeps it off 01_BASE_All_FADES (the end-of-song fade group).
     PropFamilyRecipe(
         family="all_group",
@@ -414,6 +430,8 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         parameter_overrides=_SHOCKWAVE_ALL,
         alt_parameter_overrides=_PINWHEEL_ALL,
         color_over_mask=True,
+        burst_volley=(1, 2),
+        color_cycle_bars=True,
     ),
 )
 
