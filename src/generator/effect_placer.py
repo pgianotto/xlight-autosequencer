@@ -136,6 +136,55 @@ def _darken_palette_hsl(palette: list[str], target_lightness: float = 0.15) -> l
     return result
 
 
+# Solid saturated primaries used by the reference packages' On unmask layers
+# (mined mask-color histogram: blue, cyan, red, yellow dominate), used as the
+# fallback rotation when a section palette has no saturated color to promote.
+_CORPUS_MASK_PRIMARIES: tuple[str, ...] = (
+    "#0000FF", "#00FFFF", "#FF0000", "#FFFF00", "#00FF00", "#FF00FF",
+)
+
+
+def _vivid_mask_color(palette: list[str] | None, variation_seed: int) -> str:
+    """Pick a vivid color for a corpus recipe's On unmask layer.
+
+    White-over-white reads as colorless, so the first *saturated* palette
+    color wins, pushed to near-full saturation/value the way the reference
+    packages' mask colors are. A palette with no saturated color (all
+    white/gray) falls back to rotating the corpus primaries per section.
+    """
+    import colorsys
+    for color in palette or []:
+        c = color.lstrip("#")
+        if len(c) != 6:
+            continue
+        r, g, b = (int(c[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+        h, s, v = colorsys.rgb_to_hsv(r, g, b)
+        if s >= 0.25 and v >= 0.15:
+            r, g, b = colorsys.hsv_to_rgb(h, max(s, 0.75), max(v, 0.95))
+            return f"#{int(r * 255):02X}{int(g * 255):02X}{int(b * 255):02X}"
+    return _CORPUS_MASK_PRIMARIES[variation_seed % len(_CORPUS_MASK_PRIMARIES)]
+
+
+def _saturated_colors(palette: list[str]) -> list[str]:
+    """Return the palette's saturated colors (drops whites/grays/near-blacks).
+
+    Used before background darkening: darkening white just makes gray, so a
+    backdrop built from the palette's saturated colors keeps the song's color
+    identity even at low lightness.
+    """
+    import colorsys
+    kept: list[str] = []
+    for color in palette:
+        c = color.lstrip("#")
+        if len(c) != 6:
+            continue
+        r, g, b = (int(c[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+        _, s, v = colorsys.rgb_to_hsv(r, g, b)
+        if s >= 0.25 and v >= 0.15:
+            kept.append(color)
+    return kept
+
+
 def _dim_palette(palette: list[str], multiplier: float) -> list[str]:
     """Scale hex color brightness by multiplier (0.0-1.0).
 
@@ -624,12 +673,14 @@ def place_effects(
     danceability = ef.get("danceability")
 
     # Adaptive chord weight: songs with rich harmony get more chord-color
-    # influence; simple I-IV-V songs rely more on theme palette.
-    # 40 unique chords → 0.50 (max), 10 unique → 0.12, 0 → 0.0
+    # influence; simple I-IV-V songs rely more on theme palette. Capped low —
+    # heavier hue rotation drags saturated theme colors into the olive/khaki
+    # midpoints and the whole yard reads as muted mud (the reference packages
+    # stay on solid saturated colors throughout).
     chord_weight = 0.0
     if chord_marks:
         unique_chords = len({m.label for m in chord_marks if m.label and m.label != "N"})
-        chord_weight = min(0.50, unique_chords / 80.0)
+        chord_weight = min(0.15, unique_chords / 80.0)
 
     # Song-level anchor palette: when available, derive BOTH the background wash
     # (tiers 1-2) AND the accent tier (3+) from the same song-level colors.
@@ -650,7 +701,10 @@ def place_effects(
     else:
         accent = _lighten_palette(effective_base, 0.5)
 
-    bg_palette = _darken_palette_hsl(effective_base, target_lightness=0.15)
+    # Backdrop from the palette's saturated colors only (darkened white is
+    # just gray), at a lightness that still reads as color from the street.
+    bg_source = _saturated_colors(effective_base) or effective_base
+    bg_palette = _darken_palette_hsl(bg_source, target_lightness=0.25)
 
     # Detect drop/impact phase from section label (chorus, drop, bridge, etc.)
     section_label = (section.label or "").lower()
@@ -1846,7 +1900,7 @@ def _place_corpus_recipe(
         return None
 
     if on_def is not None:
-        color = (theme_palette or ["#FFFFFF"])[0]
+        color = _vivid_mask_color(theme_palette, variation_seed)
         color_layer = _make_placement(
             on_def, group.name, section.start_ms, section.end_ms,
             {"T_CHOICE_LayerMethod": "2 is Unmask"}, [color],

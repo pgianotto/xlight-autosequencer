@@ -626,6 +626,37 @@ class TestMinitreeRecipe:
         assert all(p.layer == 1 for p in masks)
 
 
+# ── vivid unmask color selection ─────────────────────────────────────────────
+
+
+class TestVividMaskColor:
+    def test_saturated_palette_color_wins_and_is_vivified(self) -> None:
+        from src.generator.effect_placer import _vivid_mask_color
+        # Muted olive (#63A600 ≈ s=1.0 v=0.65) keeps its hue, gains value.
+        color = _vivid_mask_color(["#63A600", "#FFFFFF"], 0)
+        assert color != "#63A600"
+        r, g, b = int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)
+        assert max(r, g, b) >= 242  # value pushed to >= 0.95
+
+    def test_white_skipped_for_first_saturated(self) -> None:
+        from src.generator.effect_placer import _vivid_mask_color
+        assert _vivid_mask_color(["#FFFFFF", "#FF0000"], 0) == "#FF0000"
+
+    def test_all_white_palette_falls_back_to_primary_rotation(self) -> None:
+        from src.generator.effect_placer import (
+            _CORPUS_MASK_PRIMARIES, _vivid_mask_color,
+        )
+        assert _vivid_mask_color(["#FFFFFF", "#EEEEEE"], 0) == _CORPUS_MASK_PRIMARIES[0]
+        assert _vivid_mask_color(["#FFFFFF"], 3) == _CORPUS_MASK_PRIMARIES[3]
+
+    def test_recipe_on_layer_is_never_white(self) -> None:
+        # Even a white-heavy section palette must not produce a white unmask.
+        result = _place(_make_section(label="chorus"), _MATRIX_GROUP,
+                        library_names=_LIBRARY_WITH_ON)
+        ons = [p for p in result["06_PROP_Matrix"] if p.effect_name == "On"]
+        assert ons and ons[0].color_palette[0].upper() != "#FFFFFF"
+
+
 # ── placement progress callback ──────────────────────────────────────────────
 
 

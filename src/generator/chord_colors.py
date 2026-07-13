@@ -391,22 +391,24 @@ def tension_at_time(curve: list[tuple[int, int]], time_ms: int) -> int:
 def adjust_palette_brightness(palette: list[str], tension: int) -> list[str]:
     """Scale palette brightness based on harmonic tension.
 
-    Tension 10 (rest)     → V scaled to 55%
+    Tension 10 (rest)     → V scaled to 80%
     Tension 30 (baseline) → V unchanged
     Tension 80 (peak)     → V boosted to 100%
 
-    Linear interpolation between anchor points.
+    Linear interpolation between anchor points. The rest floor is kept high —
+    deeper dimming stacked on tier darkening and chord blending pushed whole
+    passages into near-black mud.
     """
     if not palette:
         return palette
 
-    # Map tension (10-80) to a brightness multiplier (0.55-1.15)
+    # Map tension (10-80) to a brightness multiplier (0.80-1.15)
     # Clamp tension to 10-80 range for mapping
     t = max(10, min(80, tension))
-    # 10→0.55, 30→1.0, 80→1.15
+    # 10→0.80, 30→1.0, 80→1.15
     if t <= 30:
-        # 10→0.55, 30→1.0 — linear
-        multiplier = 0.55 + (t - 10) / 20.0 * 0.45
+        # 10→0.80, 30→1.0 — linear
+        multiplier = 0.80 + (t - 10) / 20.0 * 0.20
     else:
         # 30→1.0, 80→1.15 — linear
         multiplier = 1.0 + (t - 30) / 50.0 * 0.15
