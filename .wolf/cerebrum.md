@@ -44,6 +44,7 @@
 
 ## Do-Not-Repeat
 
+- **Never write the reference-corpus author's name or file prefix into anything tracked by git** — commit messages, code comments, docs, buglog, tests, or this file. (2026-07-13: a commit message named the author and had to be amended.) Say "the 12 hand-built reference packages" instead. The privacy rule covers the name itself, not just the corpus extracts; the name appears only in gitignored local files (memory.md, corpus dirs) and the auto-memory dir.
 <!-- Mistakes made and corrected. Each entry prevents the same mistake recurring. -->
 <!-- Format: [YYYY-MM-DD] Description of what went wrong and what to do instead. -->
 
