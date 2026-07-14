@@ -1896,14 +1896,19 @@ def _place_corpus_recipe(
     else:
         params = dict(recipe.alt_parameter_overrides)
 
-    # Direction rotation applies only to the primary effect's own preset (see
-    # PropFamilyRecipe.direction_field docstring). One section occurrence
-    # holds a constant alt direction; the other ping-pongs per beat below.
+    # Occurrence style rotation applies only to the primary effect's own
+    # preset (see PropFamilyRecipe.direction_field/size_field docstrings): one
+    # section occurrence holds a constant alt direction and the larger/
+    # smaller mined chase-size alternate together as one coherent style; the
+    # other occurrence ping-pongs direction per beat below and keeps the
+    # primary size. The mined corpus shows both traits held constant across
+    # the same continuous run, so they're driven by the same parity bit
+    # rather than independent axes.
+    use_alt_style = effect_name == recipe.effect_name and variation_seed % 2 == 1
     use_bounce_direction = (
-        effect_name == recipe.effect_name
+        use_alt_style
         and recipe.direction_field is not None
         and recipe.direction_alt_value is not None
-        and variation_seed % 2 == 1
     )
     if use_bounce_direction:
         params[recipe.direction_field] = recipe.direction_alt_value
@@ -1913,6 +1918,12 @@ def _place_corpus_recipe(
         and recipe.direction_field is not None
         and len(recipe.direction_ping_pong_values) == 2
     )
+    if (
+        effect_name == recipe.effect_name
+        and recipe.size_field is not None
+        and len(recipe.size_values) == 2
+    ):
+        params[recipe.size_field] = recipe.size_values[1 if use_alt_style else 0]
     # Two-layer "color over mask" (mega trees): a section-spanning On sits on
     # the top layer with LayerMethod "2 is Unmask", so the motion effect on
     # the layer below only contributes shape/brightness while the On supplies

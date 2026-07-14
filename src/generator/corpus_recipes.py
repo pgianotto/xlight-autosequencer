@@ -107,6 +107,18 @@ class PropFamilyRecipe:
     direction_field: str | None = None
     direction_ping_pong_values: tuple[str, str] = ()
     direction_alt_value: str | None = None
+    # Chase-size (Color_Mix1 -- percentage of lit pixels in the chase band)
+    # rotation for the PRIMARY effect, paired with the same occurrence-style
+    # parity bit as direction_field: about half the mined corpus songs hold
+    # one band-size value for the whole song while the other half vary it
+    # per section occurrence, always holding it constant across a whole
+    # continuous run (never flickering per beat) -- the same idiom as
+    # direction. size_values[0] is used with the primary (ping-pong)
+    # direction style; size_values[1] with the alt (bounce) style. Empty
+    # size_field -> no rotation; parameter_overrides' fixed value is used for
+    # every beat, as before.
+    size_field: str | None = None
+    size_values: tuple[str, str] = ()
     # The reference packages place a section-spanning Off effect on the layer
     # beneath the beat bursts (xLights layer 2) on the group element, so the
     # props render black between bursts instead of picking up whole-house
@@ -306,6 +318,12 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         direction_field="E_CHOICE_Chase_Type1",
         direction_ping_pong_values=("Left-Right", "Right-Left"),
         direction_alt_value="Bounce from Right",
+        # Chase band size (Color_Mix1) paired with the same occurrence style:
+        # 25 and 50 are both heavily used arch values (808 and 1811 mined
+        # placements respectively) with a visually distinct tight-vs-wide
+        # chase band.
+        size_field="E_SLIDER_Color_Mix1",
+        size_values=("25", "50"),
     ),
     # Mega tree — mined from the same 12 packages (docs/megatree_sequencing_
     # corpus/). Time-weighted, the tree is a layered composition, not a
@@ -351,6 +369,10 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         direction_field="E_CHOICE_Chase_Type1",
         direction_ping_pong_values=("Left-Right", "Right-Left"),
         direction_alt_value="Bounce from Right",
+        # Chase band size mined across all 12 cane corpus songs: 37 and 50
+        # are the two most common values (949 and 517 placements).
+        size_field="E_SLIDER_Color_Mix1",
+        size_values=("37", "50"),
     ),
     # Horizontal / vertical house lines — mined from the same 12 packages
     # (docs/horizontal_sequencing_corpus/ 1.6k placements over 10 songs,
@@ -376,6 +398,10 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         direction_field="E_CHOICE_Chase_Type1",
         direction_ping_pong_values=("Left-Right", "Right-Left"),
         direction_alt_value="From Middle",
+        # Chase band size mined across all 10 horizontal corpus songs: 46
+        # and 50 are the two most common values (332 and 448 placements).
+        size_field="E_SLIDER_Color_Mix1",
+        size_values=("46", "50"),
     ),
     PropFamilyRecipe(
         family="vertical",
@@ -392,6 +418,10 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         direction_field="E_CHOICE_Chase_Type1",
         direction_ping_pong_values=("Left-Right", "Right-Left"),
         direction_alt_value="From Middle",
+        # Chase band size mined across all 9 vertical corpus songs: 46 and
+        # 50 are the two most common values (337 and 353 placements).
+        size_field="E_SLIDER_Color_Mix1",
+        size_values=("46", "50"),
     ),
     # Mini trees — mined from the same 12 packages (docs/minitree_
     # sequencing_corpus/, 7.2k placements over 12 songs). White SingleStrand
