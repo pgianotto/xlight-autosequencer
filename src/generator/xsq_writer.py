@@ -102,7 +102,7 @@ _XLIGHTS_EFFECT_DEFAULTS: dict[str, dict[str, str]] = {
         "E_CHECKBOX_Spirals_Grow": "0",
         "E_CHECKBOX_Spirals_Shrink": "0",
         "E_SLIDER_Spirals_Count": "1",
-        "E_SLIDER_Spirals_Movement": "100",
+        "E_TEXTCTRL_Spirals_Movement": "1",
         "E_SLIDER_Spirals_Rotation": "20",
         "E_SLIDER_Spirals_Thickness": "50",
     },

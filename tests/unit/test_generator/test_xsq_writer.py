@@ -264,6 +264,27 @@ class TestXsqWriter:
             )
 
 
+class TestSpiralsDefaultsMatchCatalogStorageNames:
+    """Regression guard for the Spirals_Movement bug: xLights persists a
+    stale E_SLIDER_ snapshot alongside the real E_TEXTCTRL_ value in its
+    clipboard format, but only the E_TEXTCTRL_ key survives once the
+    effect is actually opened in xLights. _XLIGHTS_EFFECT_DEFAULTS used
+    the stale E_SLIDER_ key, so every generated Spirals effect carried
+    both — this asserts the default keys match the real catalog."""
+
+    def test_default_keys_are_real_storage_names(self):
+        from src.effects.library import load_effect_library
+        from src.generator.xsq_writer import _XLIGHTS_EFFECT_DEFAULTS
+
+        library = load_effect_library()
+        effect_def = library.effects["Spirals"]
+        known = {p.storage_name for p in effect_def.parameters}
+        for key in _XLIGHTS_EFFECT_DEFAULTS["Spirals"]:
+            if key.startswith(("T_", "C_")):
+                continue
+            assert key in known, f"Spirals.{key} is not a real catalog storage_name"
+
+
 class TestVideoEffectPortability:
     """Video effect filenames must be host/devcontainer-portable, like mediaFile."""
 
