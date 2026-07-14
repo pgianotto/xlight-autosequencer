@@ -1,0 +1,3643 @@
+{
+  "version": 1,
+  "meta": {
+    "lastScanned": "2026-07-14T22:54:57.391Z",
+    "fileCount": 605,
+    "hits": 0,
+    "misses": 0,
+    "renderedHash": "95495d4a111358102eba70248e8988a03cda7f057740b5f56b6d3334e7d1d75d",
+    "storeUpdatedAt": "2026-07-14T22:54:57.397Z"
+  },
+  "files": {
+    ".DS_Store": {
+      "description": "",
+      "tokens": 1640,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".gitignore": {
+      "description": "Git ignore rules",
+      "tokens": 593,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    "CLAUDE.md": {
+      "description": "OpenWolf",
+      "tokens": 8227,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    "LICENSE": {
+      "description": "Project license",
+      "tokens": 285,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    "pyproject.toml": {
+      "description": "Automatically generate xLights sequences from audio files",
+      "tokens": 752,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    "README.md": {
+      "description": "Project documentation",
+      "tokens": 3264,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    "xlights_rgbeffects.xml": {
+      "description": "",
+      "tokens": 106466,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/settings.json": {
+      "description": "",
+      "tokens": 441,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/settings.local.json": {
+      "description": "",
+      "tokens": 469,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/commands/pre-mortem.md": {
+      "description": "User Input",
+      "tokens": 483,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/commands/review-diff.md": {
+      "description": "User Input",
+      "tokens": 1250,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/commands/speckit.analyze.md": {
+      "description": "User Input",
+      "tokens": 1793,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/commands/speckit.checklist.md": {
+      "description": "Checklist Purpose: \"Unit Tests for English\"",
+      "tokens": 4232,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/commands/speckit.clarify.md": {
+      "description": "User Input",
+      "tokens": 2827,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/commands/speckit.constitution.md": {
+      "description": "User Input",
+      "tokens": 1360,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/commands/speckit.implement.md": {
+      "description": "User Input",
+      "tokens": 2591,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/commands/speckit.plan.md": {
+      "description": "User Input",
+      "tokens": 1543,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/commands/speckit.specify.md": {
+      "description": "User Input",
+      "tokens": 3720,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/commands/speckit.tasks.md": {
+      "description": "User Input",
+      "tokens": 2285,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/commands/speckit.taskstoissues.md": {
+      "description": "User Input",
+      "tokens": 273,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/rules/openwolf.md": {
+      "description": "",
+      "tokens": 313,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/skills/pre-mortem/SKILL.md": {
+      "description": "Input",
+      "tokens": 2104,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/.pytest_cache/.gitignore": {
+      "description": "Git ignore rules",
+      "tokens": 10,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/.pytest_cache/CACHEDIR.TAG": {
+      "description": "",
+      "tokens": 51,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/.pytest_cache/README.md": {
+      "description": "Project documentation",
+      "tokens": 76,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/.pytest_cache/v/cache/lastfailed": {
+      "description": "",
+      "tokens": 3006,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/.pytest_cache/v/cache/nodeids": {
+      "description": "",
+      "tokens": 32329,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/analysis/batch_analyze.sh": {
+      "description": "Batch-analyze a directory of MP3s using only the algorithms needed",
+      "tokens": 583,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/analysis/batch_energy.py": {
+      "description": "analyze_energy, main",
+      "tokens": 1977,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/analysis/batch_ensemble_v2.py": {
+      "description": "class: run_segmentino, get_harmonic_peaks, augment_sections, main",
+      "tokens": 2165,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/analysis/batch_ensemble.py": {
+      "description": "class: run_segmentino, run_qm_segmenter, find_consensus, find_unique + 2 more",
+      "tokens": 2879,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/analysis/batch_report.py": {
+      "description": "load_results, get_track, analyze_energy, analyze_bars + 3 more",
+      "tokens": 4120,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/analysis/split_clips.py": {
+      "description": "get_segmentino_sections, get_harmonic_splits, extract_clip, process_song + 2 more",
+      "tokens": 3256,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/tests/fixtures/10s_mixed.wav": {
+      "description": "",
+      "tokens": 112999,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/tests/fixtures/10s_vocals.wav": {
+      "description": "",
+      "tokens": 116359,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/tests/fixtures/ambient_10s.wav": {
+      "description": "",
+      "tokens": 113156,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/tests/fixtures/beat_120bpm_10s.wav": {
+      "description": "",
+      "tokens": 116988,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/024-story-review-flyouts/tests/fixtures/drums_melody_10s.wav": {
+      "description": "",
+      "tokens": 112751,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/026-theme-editor/analysis/batch_analyze.sh": {
+      "description": "Batch-analyze a directory of MP3s using only the algorithms needed",
+      "tokens": 583,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/026-theme-editor/analysis/batch_energy.py": {
+      "description": "analyze_energy, main",
+      "tokens": 1977,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/026-theme-editor/analysis/batch_ensemble_v2.py": {
+      "description": "class: run_segmentino, get_harmonic_peaks, augment_sections, main",
+      "tokens": 2165,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/026-theme-editor/analysis/batch_ensemble.py": {
+      "description": "class: run_segmentino, run_qm_segmenter, find_consensus, find_unique + 2 more",
+      "tokens": 2879,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/026-theme-editor/analysis/batch_report.py": {
+      "description": "load_results, get_track, analyze_energy, analyze_bars + 3 more",
+      "tokens": 4120,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/026-theme-editor/analysis/split_clips.py": {
+      "description": "get_segmentino_sections, get_harmonic_splits, extract_clip, process_song + 2 more",
+      "tokens": 3256,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/026-theme-editor/tests/fixtures/10s_vocals.wav": {
+      "description": "",
+      "tokens": 116359,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/.pytest_cache/.gitignore": {
+      "description": "Git ignore rules",
+      "tokens": 10,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/.pytest_cache/CACHEDIR.TAG": {
+      "description": "",
+      "tokens": 51,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/.pytest_cache/README.md": {
+      "description": "Project documentation",
+      "tokens": 76,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/.pytest_cache/v/cache/lastfailed": {
+      "description": "",
+      "tokens": 1,
+      "updatedAt": "2026-07-14T22:54:57.393Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/.pytest_cache/v/cache/nodeids": {
+      "description": "",
+      "tokens": 569,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/analysis/batch_analyze.sh": {
+      "description": "Batch-analyze a directory of MP3s using only the algorithms needed",
+      "tokens": 583,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/analysis/batch_energy.py": {
+      "description": "analyze_energy, main",
+      "tokens": 1977,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/analysis/batch_ensemble_v2.py": {
+      "description": "class: run_segmentino, get_harmonic_peaks, augment_sections, main",
+      "tokens": 2165,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/analysis/batch_ensemble.py": {
+      "description": "class: run_segmentino, run_qm_segmenter, find_consensus, find_unique + 2 more",
+      "tokens": 2879,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/analysis/batch_report.py": {
+      "description": "load_results, get_track, analyze_energy, analyze_bars + 3 more",
+      "tokens": 4120,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/analysis/split_clips.py": {
+      "description": "get_segmentino_sections, get_harmonic_splits, extract_clip, process_song + 2 more",
+      "tokens": 3256,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/tests/fixtures/10s_mixed.wav": {
+      "description": "",
+      "tokens": 112999,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/tests/fixtures/10s_vocals.wav": {
+      "description": "",
+      "tokens": 116359,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/tests/fixtures/ambient_10s.wav": {
+      "description": "",
+      "tokens": 113156,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/tests/fixtures/beat_120bpm_10s.wav": {
+      "description": "",
+      "tokens": 116988,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/027-unified-dashboard/tests/fixtures/drums_melody_10s.wav": {
+      "description": "",
+      "tokens": 112751,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.gitignore": {
+      "description": "Git ignore rules",
+      "tokens": 294,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/CLAUDE.md": {
+      "description": "XLight AutoSequencer Development Guidelines",
+      "tokens": 5096,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/LICENSE": {
+      "description": "Project license",
+      "tokens": 285,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/pyproject.toml": {
+      "description": "Python project configuration",
+      "tokens": 502,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/README.md": {
+      "description": "Project documentation",
+      "tokens": 3264,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.claude/settings.local.json": {
+      "description": "",
+      "tokens": 469,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.claude/commands/review-diff.md": {
+      "description": "User Input",
+      "tokens": 1250,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.claude/commands/speckit.analyze.md": {
+      "description": "User Input",
+      "tokens": 1793,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.claude/commands/speckit.checklist.md": {
+      "description": "Checklist Purpose: \"Unit Tests for English\"",
+      "tokens": 4232,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.claude/commands/speckit.clarify.md": {
+      "description": "User Input",
+      "tokens": 2827,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.claude/commands/speckit.constitution.md": {
+      "description": "User Input",
+      "tokens": 1360,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.claude/commands/speckit.implement.md": {
+      "description": "User Input",
+      "tokens": 2591,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.claude/commands/speckit.plan.md": {
+      "description": "User Input",
+      "tokens": 1543,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.claude/commands/speckit.specify.md": {
+      "description": "User Input",
+      "tokens": 3720,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.claude/commands/speckit.tasks.md": {
+      "description": "User Input",
+      "tokens": 2285,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.claude/commands/speckit.taskstoissues.md": {
+      "description": "User Input",
+      "tokens": 273,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.devcontainer/devcontainer.json": {
+      "description": "",
+      "tokens": 626,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.devcontainer/Dockerfile": {
+      "description": "Docker container definition",
+      "tokens": 4618,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.devcontainer/init-firewall.sh": {
+      "description": "",
+      "tokens": 1391,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.devcontainer/xlights-check.sh": {
+      "description": "Validate xLights sequences (check sequence).",
+      "tokens": 663,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.devcontainer/xlights-render.sh": {
+      "description": "Render xLights sequences to FSEQ.",
+      "tokens": 665,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.pytest_cache/.gitignore": {
+      "description": "Git ignore rules",
+      "tokens": 10,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.pytest_cache/CACHEDIR.TAG": {
+      "description": "",
+      "tokens": 51,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.pytest_cache/README.md": {
+      "description": "Project documentation",
+      "tokens": 76,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.pytest_cache/v/cache/lastfailed": {
+      "description": "",
+      "tokens": 3718,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.pytest_cache/v/cache/nodeids": {
+      "description": "",
+      "tokens": 58245,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/init-options.json": {
+      "description": "",
+      "tokens": 60,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/memory/constitution.md": {
+      "description": "XLight AutoSequencer Constitution",
+      "tokens": 1631,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/scripts/bash/check-prerequisites.sh": {
+      "description": "Consolidated prerequisite checking script",
+      "tokens": 1759,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/scripts/bash/common.sh": {
+      "description": "Common functions and variables for all scripts",
+      "tokens": 2842,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/scripts/bash/create-new-feature.sh": {
+      "description": "",
+      "tokens": 3285,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/scripts/bash/setup-plan.sh": {
+      "description": "",
+      "tokens": 642,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/scripts/bash/update-agent-context.sh": {
+      "description": "Update agent context files with information from plan.md",
+      "tokens": 8403,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/templates/agent-file-template.md": {
+      "description": "[PROJECT NAME] Development Guidelines",
+      "tokens": 116,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/templates/checklist-template.md": {
+      "description": "[CHECKLIST TYPE] Checklist: [FEATURE NAME]",
+      "tokens": 328,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/templates/constitution-template.md": {
+      "description": "[PROJECT_NAME] Constitution",
+      "tokens": 584,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/templates/plan-template.md": {
+      "description": "Implementation Plan: [FEATURE]",
+      "tokens": 887,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/templates/spec-template.md": {
+      "description": "Feature Specification: [FEATURE NAME]",
+      "tokens": 990,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/.specify/templates/tasks-template.md": {
+      "description": "Tasks: [FEATURE NAME]",
+      "tokens": 2286,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/analysis/batch_analyze.sh": {
+      "description": "Batch-analyze a directory of MP3s using only the algorithms needed",
+      "tokens": 583,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/analysis/batch_energy.py": {
+      "description": "analyze_energy, main",
+      "tokens": 1977,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/analysis/batch_ensemble_v2.py": {
+      "description": "class: run_segmentino, get_harmonic_peaks, augment_sections, main",
+      "tokens": 2165,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/analysis/batch_ensemble.py": {
+      "description": "class: run_segmentino, run_qm_segmenter, find_consensus, find_unique + 2 more",
+      "tokens": 2879,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/analysis/batch_report.py": {
+      "description": "load_results, get_track, analyze_energy, analyze_bars + 3 more",
+      "tokens": 4120,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/analysis/split_clips.py": {
+      "description": "get_segmentino_sections, get_harmonic_splits, extract_clip, process_song + 2 more",
+      "tokens": 3256,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/Prototype.html": {
+      "description": "x-onset · Interactive Prototype",
+      "tokens": 612,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/README.md": {
+      "description": "Project documentation",
+      "tokens": 6510,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/assets/highway-data.js": {
+      "description": "",
+      "tokens": 7715,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/prototype/analyze-screen.jsx": {
+      "description": "Analyze screen v2 — feels like the tool is actually finding things.",
+      "tokens": 8406,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/prototype/app.jsx": {
+      "description": "App entry: mount, route to screen, keyboard shortcuts.",
+      "tokens": 601,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/prototype/export-screen.jsx": {
+      "description": "Export screen — dry-run first, commit second. Staged pipeline, per-section render,",
+      "tokens": 7739,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/prototype/lights.jsx": {
+      "description": "Live animated lights strip. Reacts to beats + section + theme.",
+      "tokens": 1333,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/prototype/other-screens.jsx": {
+      "description": "The 4 other screens — Library, Drop, Analyze, Export.",
+      "tokens": 7861,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/prototype/sections-edit.jsx": {
+      "description": "Editable sections UI — inline handles on the strip/waveform + Sections mode.",
+      "tokens": 4990,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/prototype/shell.jsx": {
+      "description": "Chrome: header, tool strip (nav), library rail, status bar, tweaks panel.",
+      "tokens": 3277,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/prototype/state.jsx": {
+      "description": "Shared state, theme palettes, helpers, tweak mode.",
+      "tokens": 3590,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/prototype/theme-picker.jsx": {
+      "description": "Theme picker — the north-star interactive screen.",
+      "tokens": 5234,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/prototype/timeline.jsx": {
+      "description": "Review timeline screen — scrub, play, raw detector tracks.",
+      "tokens": 4714,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/reference/Flow Wireframes.html": {
+      "description": "xlight-autosequencer · Flow Wireframes",
+      "tokens": 23986,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/reference/Pro-Tool Flow.html": {
+      "description": "x-onset · Pro-Tool Flow",
+      "tokens": 786,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/design_handoff_xonset/reference/Visual Directions.html": {
+      "description": "x-onset · Visual Directions",
+      "tokens": 825,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/algorithm-categories.md": {
+      "description": "Algorithm Categories",
+      "tokens": 2609,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/algorithms.md": {
+      "description": "Algorithm Reference",
+      "tokens": 5091,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/architecture-overview.md": {
+      "description": "Architecture Overview",
+      "tokens": 2768,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/data-structures.md": {
+      "description": "Data Structures",
+      "tokens": 2651,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/effect-themes-library.md": {
+      "description": "Composite Effect Library — Thematic Design Spec",
+      "tokens": 1855,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/export-formats.md": {
+      "description": "Export Formats",
+      "tokens": 2148,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/hierarchy.md": {
+      "description": "Hierarchy Levels (L0–L6)",
+      "tokens": 2486,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/magic-lighting-breakdown.md": {
+      "description": "Magic [feat. David Archuleta] — Section-by-Section Lighting Design",
+      "tokens": 7315,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/musical-analysis-design.md": {
+      "description": "Musical Analysis Design Document",
+      "tokens": 6657,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/orchestrator-design.md": {
+      "description": "Orchestrator Design — Zero-Flag Analysis Pipeline",
+      "tokens": 2589,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/parameter-tuning-guide.md": {
+      "description": "Cross-Song Parameter Tuning Guide",
+      "tokens": 2354,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/pipeline.md": {
+      "description": "Analysis Pipeline",
+      "tokens": 2937,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/quality-scoring.md": {
+      "description": "Quality Scoring",
+      "tokens": 2110,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/quickstart-tutorial.md": {
+      "description": "x-onset Quick Start Tutorial",
+      "tokens": 4973,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/quickstart.md": {
+      "description": "Quickstart: Analyzing a Song End-to-End",
+      "tokens": 2062,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/README.md": {
+      "description": "Project documentation",
+      "tokens": 497,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/reference-sequence-analysis.md": {
+      "description": "Reference Sequence Analysis",
+      "tokens": 5399,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/review-ui.md": {
+      "description": "Review UI",
+      "tokens": 2649,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/segment-classification-changelog.md": {
+      "description": "Segment Classification Changelog",
+      "tokens": 2621,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/song-story-spec.md": {
+      "description": "Song Story Tool — Specification",
+      "tokens": 5184,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/song-timeline-analysis.md": {
+      "description": "Song Timeline Analysis — Algorithm Overview",
+      "tokens": 1231,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/song-timeline-phase1-features.md": {
+      "description": "Phase 1: Feature Extraction",
+      "tokens": 3209,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/song-timeline-phase2-sections.md": {
+      "description": "Phase 2: Section Detection",
+      "tokens": 1308,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/song-timeline-phase3-events.md": {
+      "description": "Phase 3: Event Detection",
+      "tokens": 2510,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/song-timeline-phase4-profiling.md": {
+      "description": "Phase 4: Section Profiling",
+      "tokens": 2003,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/song-timeline-phase5-ranking.md": {
+      "description": "Phase 5: Dramatic Moment Ranking",
+      "tokens": 1558,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/song-timeline-phase6-assembly.md": {
+      "description": "Phase 6: Timeline Assembly",
+      "tokens": 2025,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/song-timeline-thresholds.md": {
+      "description": "Threshold and Parameter Reference",
+      "tokens": 1825,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/stem-affinity-rationale.md": {
+      "description": "Stem Affinity Rationale",
+      "tokens": 2362,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/stem-lighting-framework.md": {
+      "description": "Stem-Enhanced Lighting Framework",
+      "tokens": 8058,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/stem-separation.md": {
+      "description": "Stem Separation & Routing",
+      "tokens": 2076,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/sweep-system.md": {
+      "description": "Parameter Sweep System",
+      "tokens": 2434,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/timbre-dissonance-integration.md": {
+      "description": "Timbre, Dissonance, and Stem Dominance — Generator Integration RFC",
+      "tokens": 2490,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/timing-tracks-guide.md": {
+      "description": "Timing Tracks Guide",
+      "tokens": 1168,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/troubleshooting.md": {
+      "description": "Troubleshooting Guide",
+      "tokens": 1659,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/tunable-parameters.md": {
+      "description": "Tunable Parameters Reference",
+      "tokens": 1815,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/unaddressed-review-items.md": {
+      "description": "Unaddressed Review Items",
+      "tokens": 1871,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/xlight-grouping-design.md": {
+      "description": "Automated xLights Grouping Algorithm — Design Spec",
+      "tokens": 2411,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/docs/xlights-effect-params.md": {
+      "description": "xLights Effect Parameters Reference",
+      "tokens": 16670,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/scripts/analyze_reference_xsq.py": {
+      "description": "Analyze a hand-sequenced xLights .xsq file to extract sequencing patterns.",
+      "tokens": 8845,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/scripts/compare_genius_sections.py": {
+      "description": "Compare our segment classifier output with Genius lyric sections.",
+      "tokens": 2321,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/scripts/consolidate_direction_variants.py": {
+      "description": "Consolidate directional variant pairs into single variants with direction_cycle.",
+      "tokens": 2514,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/scripts/install.sh": {
+      "description": "XLight AutoSequencer — full dependency installer",
+      "tokens": 4027,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/scripts/scrape_xlights_effects.py": {
+      "description": "Scrape xLights effect parameters from GitHub C++ source files.",
+      "tokens": 2857,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/scripts/start.sh": {
+      "description": "Start the xlight-analyze review UI (upload + analysis + story pipeline).",
+      "tokens": 1453,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/032-section-transitions-fadeout/data-model.md": {
+      "description": "Data Model: Section Transitions & End-of-Song Fade Out",
+      "tokens": 1017,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/032-section-transitions-fadeout/plan.md": {
+      "description": "Implementation Plan: Section Transitions & End-of-Song Fade Out",
+      "tokens": 904,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/032-section-transitions-fadeout/quickstart.md": {
+      "description": "Quickstart: Section Transitions & End-of-Song Fade Out",
+      "tokens": 724,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/032-section-transitions-fadeout/research.md": {
+      "description": "Research: Section Transitions & End-of-Song Fade Out",
+      "tokens": 1472,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/032-section-transitions-fadeout/spec.md": {
+      "description": "Feature Specification: Section Transitions & End-of-Song Fade Out",
+      "tokens": 3492,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/032-section-transitions-fadeout/tasks.md": {
+      "description": "Tasks: Section Transitions & End-of-Song Fade Out",
+      "tokens": 3411,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/032-section-transitions-fadeout/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Section Transitions & End-of-Song Fade Out",
+      "tokens": 333,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/034-library-sequence-gen/data-model.md": {
+      "description": "Data Model: Song Library Sequence Generation",
+      "tokens": 784,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/034-library-sequence-gen/plan.md": {
+      "description": "Implementation Plan: Song Library Sequence Generation",
+      "tokens": 1842,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/034-library-sequence-gen/quickstart.md": {
+      "description": "Quickstart: Song Library Sequence Generation",
+      "tokens": 768,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/034-library-sequence-gen/research.md": {
+      "description": "Research: Song Library Sequence Generation",
+      "tokens": 1843,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/034-library-sequence-gen/spec.md": {
+      "description": "Feature Specification: Song Library Sequence Generation",
+      "tokens": 2175,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/034-library-sequence-gen/tasks.md": {
+      "description": "Tasks: Song Library Sequence Generation",
+      "tokens": 4455,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/034-library-sequence-gen/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Song Library Sequence Generation",
+      "tokens": 286,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/034-library-sequence-gen/contracts/generate_api.md": {
+      "description": "API Contract: Sequence Generation Endpoints",
+      "tokens": 759,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/034-library-sequence-gen/contracts/settings_api.md": {
+      "description": "API Contract: Settings Endpoints (grouper save update)",
+      "tokens": 233,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/035-sequence-quality-refinement/spec.md": {
+      "description": "Feature Specification: Sequence Quality Refinement",
+      "tokens": 3827,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/035-sequence-quality-refinement/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Sequence Quality Refinement",
+      "tokens": 341,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/037-duration-scaling/spec.md": {
+      "description": "Feature Specification: Duration Scaling",
+      "tokens": 4207,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/037-duration-scaling/tasks.md": {
+      "description": "Tasks: Duration Scaling (037)",
+      "tokens": 2578,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/037-duration-scaling/checklists/requirements.md": {
+      "description": "Requirements Checklist: 037 Duration Scaling",
+      "tokens": 1113,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/038-palette-restraint/data-model.md": {
+      "description": "Data Model: Palette Restraint",
+      "tokens": 642,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/038-palette-restraint/plan.md": {
+      "description": "Implementation Plan: Palette Restraint",
+      "tokens": 1993,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/038-palette-restraint/quickstart.md": {
+      "description": "Quickstart: Palette Restraint",
+      "tokens": 340,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/038-palette-restraint/research.md": {
+      "description": "Research: Palette Restraint",
+      "tokens": 1018,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/038-palette-restraint/spec.md": {
+      "description": "Feature Specification: Palette Restraint",
+      "tokens": 3611,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/038-palette-restraint/tasks.md": {
+      "description": "Tasks: Palette Restraint",
+      "tokens": 2821,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/038-palette-restraint/checklists/requirements.md": {
+      "description": "Requirements Checklist: 038 Palette Restraint",
+      "tokens": 1111,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/039-dynamic-model-activation/spec.md": {
+      "description": "Feature Specification: Dynamic Model Activation",
+      "tokens": 4501,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/039-dynamic-model-activation/checklists/requirements.md": {
+      "description": "Requirements Checklist: Dynamic Model Activation (039)",
+      "tokens": 1239,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/040-sparkles-value-curves/spec.md": {
+      "description": "Feature Specification: MusicSparkles + Rotation Value Curves",
+      "tokens": 3897,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/040-sparkles-value-curves/checklists/requirements.md": {
+      "description": "Requirements Checklist: MusicSparkles + Rotation Value Curves (040)",
+      "tokens": 1116,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/041-prop-type-affinity/data-model.md": {
+      "description": "Data Model: Prop-Type Effect Affinity (041)",
+      "tokens": 303,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/041-prop-type-affinity/plan.md": {
+      "description": "Implementation Plan: Prop-Type Effect Affinity",
+      "tokens": 1138,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/041-prop-type-affinity/quickstart.md": {
+      "description": "Quickstart: Prop-Type Effect Affinity (041)",
+      "tokens": 939,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/041-prop-type-affinity/research.md": {
+      "description": "Research: Prop-Type Effect Affinity (041)",
+      "tokens": 941,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/041-prop-type-affinity/spec.md": {
+      "description": "Feature Specification: Prop-Type Effect Affinity",
+      "tokens": 2221,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/041-prop-type-affinity/tasks.md": {
+      "description": "Tasks: Prop-Type Effect Affinity (041)",
+      "tokens": 2278,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/045-web-ux-wayfinding/plan.md": {
+      "description": "Implementation Plan: Web UX Overhaul — Phase 1 Wayfinding",
+      "tokens": 2679,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/045-web-ux-wayfinding/quickstart.md": {
+      "description": "Quickstart: Web UX Phase 1 Wayfinding (045)",
+      "tokens": 1087,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/045-web-ux-wayfinding/research.md": {
+      "description": "Research: Web UX Phase 1 Wayfinding (045)",
+      "tokens": 1054,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/045-web-ux-wayfinding/spec.md": {
+      "description": "Feature Specification: Web UX Overhaul — Phase 1 Wayfinding",
+      "tokens": 5597,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/045-web-ux-wayfinding/tasks.md": {
+      "description": "Tasks: Web UX Overhaul — Phase 1 Wayfinding (045)",
+      "tokens": 4847,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/046-song-workspace-shell/plan.md": {
+      "description": "Implementation Plan: Song Workspace Shell",
+      "tokens": 3209,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/046-song-workspace-shell/quickstart.md": {
+      "description": "Quickstart: Song Workspace Shell",
+      "tokens": 1317,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/046-song-workspace-shell/research.md": {
+      "description": "Research: Song Workspace Shell",
+      "tokens": 2129,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/046-song-workspace-shell/spec.md": {
+      "description": "Feature Specification: Song Workspace Shell",
+      "tokens": 5589,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/046-song-workspace-shell/tasks.md": {
+      "description": "Tasks: Song Workspace Shell (046)",
+      "tokens": 5502,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/047-creative-brief/data-model.md": {
+      "description": "Phase 1 Data Model: Creative Brief",
+      "tokens": 1809,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/047-creative-brief/plan.md": {
+      "description": "Implementation Plan: Creative Brief (Per-Song Workspace, Phase 3)",
+      "tokens": 4046,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/047-creative-brief/quickstart.md": {
+      "description": "Quickstart: Creative Brief Manual Verification",
+      "tokens": 1563,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/047-creative-brief/research.md": {
+      "description": "Phase 0 Research: Creative Brief",
+      "tokens": 2728,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/047-creative-brief/spec.md": {
+      "description": "Feature Specification: Creative Brief (Per-Song Workspace, Phase 3)",
+      "tokens": 8811,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/047-creative-brief/tasks.md": {
+      "description": "Tasks: Creative Brief (Per-Song Workspace, Phase 3) (047)",
+      "tokens": 7647,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/048-pipeline-decision-ordering/data-model.md": {
+      "description": "Data Model: Pipeline Decision-Ordering Refactor (048)",
+      "tokens": 1865,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/048-pipeline-decision-ordering/plan.md": {
+      "description": "Implementation Plan: Pipeline Decision-Ordering Refactor",
+      "tokens": 4143,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/048-pipeline-decision-ordering/quickstart.md": {
+      "description": "Quickstart: Verifying the 048 Refactor",
+      "tokens": 1480,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/048-pipeline-decision-ordering/research.md": {
+      "description": "Research: Pipeline Decision-Ordering Refactor (048)",
+      "tokens": 2243,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/048-pipeline-decision-ordering/spec.md": {
+      "description": "Feature Specification: Pipeline Decision-Ordering Refactor",
+      "tokens": 7641,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/048-pipeline-decision-ordering/tasks.md": {
+      "description": "Tasks: Pipeline Decision-Ordering Refactor (048)",
+      "tokens": 7668,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/049-section-preview-render/data-model.md": {
+      "description": "Phase 1 Data Model — Section Preview Render",
+      "tokens": 1374,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/049-section-preview-render/plan.md": {
+      "description": "Implementation Plan: Section Preview Render",
+      "tokens": 4061,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/049-section-preview-render/quickstart.md": {
+      "description": "Quickstart — Section Preview Render",
+      "tokens": 1004,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/049-section-preview-render/research.md": {
+      "description": "Phase 0 Research — Section Preview Render",
+      "tokens": 1970,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/049-section-preview-render/spec.md": {
+      "description": "Feature Specification: Short-Section Preview Render",
+      "tokens": 6791,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/049-section-preview-render/tasks.md": {
+      "description": "Tasks: Section Preview Render (049)",
+      "tokens": 6472,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/001-audio-timing-tracks/data-model.md": {
+      "description": "Data Model: Audio Analysis and Timing Track Generation",
+      "tokens": 1594,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/001-audio-timing-tracks/plan.md": {
+      "description": "Implementation Plan: Audio Analysis and Timing Track Generation",
+      "tokens": 1265,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/001-audio-timing-tracks/quickstart.md": {
+      "description": "Quickstart: Audio Analysis and Timing Track Generation",
+      "tokens": 530,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/001-audio-timing-tracks/research.md": {
+      "description": "Research: Audio Analysis and Timing Track Generation",
+      "tokens": 2869,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/001-audio-timing-tracks/spec.md": {
+      "description": "Feature Specification: Audio Analysis and Timing Track Generation",
+      "tokens": 2225,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/001-audio-timing-tracks/tasks.md": {
+      "description": "Tasks: Audio Analysis and Timing Track Generation",
+      "tokens": 4922,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/001-audio-timing-tracks/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Audio Analysis and Timing Track Generation",
+      "tokens": 324,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/001-audio-timing-tracks/contracts/cli.md": {
+      "description": "CLI Contract: xlight-analyze",
+      "tokens": 2450,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/002-track-review-ui/data-model.md": {
+      "description": "Data Model: Timing Track Review UI",
+      "tokens": 1134,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/002-track-review-ui/plan.md": {
+      "description": "Implementation Plan: Timing Track Review UI",
+      "tokens": 1622,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/002-track-review-ui/research.md": {
+      "description": "Research: Timing Track Review UI",
+      "tokens": 1698,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/002-track-review-ui/spec.md": {
+      "description": "Feature Specification: Timing Track Review UI",
+      "tokens": 3065,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/002-track-review-ui/tasks.md": {
+      "description": "Tasks: Timing Track Review UI",
+      "tokens": 3448,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/002-track-review-ui/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Timing Track Review UI",
+      "tokens": 391,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/002-track-review-ui/contracts/ui.md": {
+      "description": "UI Contract: Timing Track Review UI",
+      "tokens": 1439,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/003-stem-separation/research.md": {
+      "description": "Research: Music Stem Separation",
+      "tokens": 1750,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/003-stem-separation/spec.md": {
+      "description": "Feature Specification: Music Stem Separation",
+      "tokens": 1456,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/004-vocal-phoneme-tracks/spec.md": {
+      "description": "Feature Specification: Vocal Phoneme Timing Tracks",
+      "tokens": 1587,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/005-vamp-parameter-tuning/data-model.md": {
+      "description": "Data Model: Vamp Plugin Parameter Tuning",
+      "tokens": 1396,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/005-vamp-parameter-tuning/plan.md": {
+      "description": "Implementation Plan: Vamp Plugin Parameter Tuning",
+      "tokens": 2684,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/005-vamp-parameter-tuning/quickstart.md": {
+      "description": "Quickstart: Vamp Parameter Sweep",
+      "tokens": 508,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/005-vamp-parameter-tuning/research.md": {
+      "description": "Research: Vamp Plugin Parameter Tuning",
+      "tokens": 1704,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/005-vamp-parameter-tuning/spec.md": {
+      "description": "Feature Specification: Vamp Plugin Parameter Tuning",
+      "tokens": 2512,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/005-vamp-parameter-tuning/tasks.md": {
+      "description": "Tasks: Vamp Plugin Parameter Tuning",
+      "tokens": 4266,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/005-vamp-parameter-tuning/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Vamp Plugin Parameter Tuning",
+      "tokens": 284,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/005-vamp-parameter-tuning/contracts/cli-commands.md": {
+      "description": "CLI Contract: Vamp Parameter Tuning Commands",
+      "tokens": 1686,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/006-quality-score-config/spec.md": {
+      "description": "Feature Specification: Configurable Quality Scoring",
+      "tokens": 1826,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/007-upload-and-analyze/data-model.md": {
+      "description": "Data Model: In-Browser MP3 Upload and Analysis",
+      "tokens": 913,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/007-upload-and-analyze/plan.md": {
+      "description": "Implementation Plan: In-Browser MP3 Upload and Analysis",
+      "tokens": 1554,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/007-upload-and-analyze/research.md": {
+      "description": "Research: In-Browser MP3 Upload and Analysis",
+      "tokens": 1623,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/007-upload-and-analyze/spec.md": {
+      "description": "Feature Specification: In-Browser MP3 Upload and Analysis",
+      "tokens": 2659,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/007-upload-and-analyze/tasks.md": {
+      "description": "Tasks: In-Browser MP3 Upload and Analysis",
+      "tokens": 3474,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/007-upload-and-analyze/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: In-Browser MP3 Upload and Analysis",
+      "tokens": 378,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/007-upload-and-analyze/contracts/upload.md": {
+      "description": "Upload Contract: In-Browser MP3 Upload and Analysis",
+      "tokens": 1269,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/008-stem-separation/data-model.md": {
+      "description": "Data Model: Stem Separation",
+      "tokens": 880,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/008-stem-separation/plan.md": {
+      "description": "Implementation Plan: Stem Separation",
+      "tokens": 1134,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/008-stem-separation/quickstart.md": {
+      "description": "Quickstart: Stem Separation",
+      "tokens": 586,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/008-stem-separation/research.md": {
+      "description": "Research: Stem Separation",
+      "tokens": 1402,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/008-stem-separation/spec.md": {
+      "description": "Feature Specification: Stem Separation",
+      "tokens": 1950,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/008-stem-separation/tasks.md": {
+      "description": "Tasks: Stem Separation",
+      "tokens": 2576,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/008-stem-separation/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Stem Separation",
+      "tokens": 307,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/008-stem-separation/contracts/cli.md": {
+      "description": "CLI Contract: Stem Separation",
+      "tokens": 698,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/009-vocal-phoneme-tracks/data-model.md": {
+      "description": "Data Model: Vocal Phoneme Timing Tracks",
+      "tokens": 1107,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/009-vocal-phoneme-tracks/plan.md": {
+      "description": "Implementation Plan: Vocal Phoneme Timing Tracks",
+      "tokens": 1185,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/009-vocal-phoneme-tracks/quickstart.md": {
+      "description": "Quickstart: Vocal Phoneme Timing Tracks",
+      "tokens": 652,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/009-vocal-phoneme-tracks/research.md": {
+      "description": "Research: Vocal Phoneme Timing Tracks",
+      "tokens": 1922,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/009-vocal-phoneme-tracks/spec.md": {
+      "description": "Feature Specification: Vocal Phoneme Timing Tracks",
+      "tokens": 2816,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/009-vocal-phoneme-tracks/tasks.md": {
+      "description": "Tasks: Vocal Phoneme Timing Tracks",
+      "tokens": 2845,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/009-vocal-phoneme-tracks/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Vocal Phoneme Timing Tracks",
+      "tokens": 360,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/009-vocal-phoneme-tracks/contracts/cli.md": {
+      "description": "CLI Contract: Vocal Phoneme Timing Tracks",
+      "tokens": 1068,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/010-analysis-cache-library/data-model.md": {
+      "description": "Data Model: Analysis Cache and Song Library",
+      "tokens": 1049,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/010-analysis-cache-library/plan.md": {
+      "description": "Implementation Plan: Analysis Cache and Song Library",
+      "tokens": 1019,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/010-analysis-cache-library/quickstart.md": {
+      "description": "Quickstart: Analysis Cache and Song Library",
+      "tokens": 680,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/010-analysis-cache-library/research.md": {
+      "description": "Research: Analysis Cache and Song Library",
+      "tokens": 1463,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/010-analysis-cache-library/tasks.md": {
+      "description": "Tasks: Analysis Cache and Song Library",
+      "tokens": 2710,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/010-analysis-cache-library/contracts/cli.md": {
+      "description": "CLI Contract: Analysis Cache and Song Library",
+      "tokens": 911,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/011-quality-score-config/data-model.md": {
+      "description": "Data Model: Configurable Quality Scoring",
+      "tokens": 1458,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/011-quality-score-config/plan.md": {
+      "description": "Implementation Plan: Configurable Quality Scoring",
+      "tokens": 1204,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/011-quality-score-config/quickstart.md": {
+      "description": "Quickstart: Configurable Quality Scoring",
+      "tokens": 686,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/011-quality-score-config/research.md": {
+      "description": "Research: Configurable Quality Scoring",
+      "tokens": 2119,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/011-quality-score-config/spec.md": {
+      "description": "Feature Specification: Configurable Quality Scoring",
+      "tokens": 3389,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/011-quality-score-config/tasks.md": {
+      "description": "Tasks: Configurable Quality Scoring",
+      "tokens": 3421,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/011-quality-score-config/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Configurable Quality Scoring",
+      "tokens": 321,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/011-quality-score-config/contracts/cli.md": {
+      "description": "CLI Contract: Configurable Quality Scoring",
+      "tokens": 1144,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/012-intelligent-stem-sweep/data-model.md": {
+      "description": "Data Model: Intelligent Stem Analysis and Automated Light Sequencing Pipeline",
+      "tokens": 2068,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/012-intelligent-stem-sweep/plan.md": {
+      "description": "Implementation Plan: Intelligent Stem Analysis and Automated Light Sequencing Pipeline",
+      "tokens": 1582,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/012-intelligent-stem-sweep/quickstart.md": {
+      "description": "Quickstart: Intelligent Stem Analysis Pipeline",
+      "tokens": 671,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/012-intelligent-stem-sweep/research.md": {
+      "description": "Research: Intelligent Stem Analysis and Automated Light Sequencing Pipeline",
+      "tokens": 3370,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/012-intelligent-stem-sweep/spec.md": {
+      "description": "Feature Specification: Intelligent Stem Analysis and Automated Light Sequencing Pipeline",
+      "tokens": 5352,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/012-intelligent-stem-sweep/tasks.md": {
+      "description": "Tasks: Intelligent Stem Analysis and Automated Light Sequencing Pipeline",
+      "tokens": 5555,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/012-intelligent-stem-sweep/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Intelligent Stem Analysis and Automated Light Sequencing Pipeline",
+      "tokens": 374,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/012-intelligent-stem-sweep/contracts/cli.md": {
+      "description": "CLI Contract: Intelligent Stem Analysis Pipeline",
+      "tokens": 1031,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/013-genius-lyric-segments/data-model.md": {
+      "description": "Data Model: Genius Lyric Segment Timing",
+      "tokens": 1125,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/013-genius-lyric-segments/plan.md": {
+      "description": "Implementation Plan: Genius Lyric Segment Timing",
+      "tokens": 1147,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/013-genius-lyric-segments/quickstart.md": {
+      "description": "Quickstart: Genius Lyric Segment Timing",
+      "tokens": 1028,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/013-genius-lyric-segments/research.md": {
+      "description": "Research: Genius Lyric Segment Timing",
+      "tokens": 1842,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/013-genius-lyric-segments/spec.md": {
+      "description": "Feature Specification: Genius Lyric Segment Timing",
+      "tokens": 2563,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/013-genius-lyric-segments/tasks.md": {
+      "description": "Tasks: Genius Lyric Segment Timing",
+      "tokens": 3599,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/013-genius-lyric-segments/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Genius Lyric Segment Timing",
+      "tokens": 365,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/013-genius-lyric-segments/contracts/cli-genius-flag.md": {
+      "description": "CLI Contract: `--genius` Flag",
+      "tokens": 793,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/014-cli-wizard-pipeline/data-model.md": {
+      "description": "Data Model: Interactive CLI Wizard & Pipeline Optimization",
+      "tokens": 1486,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/014-cli-wizard-pipeline/plan.md": {
+      "description": "Implementation Plan: Interactive CLI Wizard & Pipeline Optimization",
+      "tokens": 1336,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/014-cli-wizard-pipeline/quickstart.md": {
+      "description": "Developer Quickstart: 014-cli-wizard-pipeline",
+      "tokens": 498,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/014-cli-wizard-pipeline/research.md": {
+      "description": "Research: Interactive CLI Wizard & Pipeline Optimization",
+      "tokens": 2546,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/014-cli-wizard-pipeline/spec.md": {
+      "description": "Feature Specification: Interactive CLI Wizard & Pipeline Optimization",
+      "tokens": 3615,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/014-cli-wizard-pipeline/tasks.md": {
+      "description": "Tasks: Interactive CLI Wizard & Pipeline Optimization",
+      "tokens": 5811,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/014-cli-wizard-pipeline/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Interactive CLI Wizard & Pipeline Optimization",
+      "tokens": 294,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/014-cli-wizard-pipeline/contracts/cli-wizard.md": {
+      "description": "CLI Contract: `wizard` Subcommand",
+      "tokens": 922,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/015-sweep-matrix/data-model.md": {
+      "description": "Data Model: Comprehensive Stem×Parameter Sweep Matrix",
+      "tokens": 1382,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/015-sweep-matrix/plan.md": {
+      "description": "Implementation Plan: Comprehensive Stem×Parameter Sweep Matrix",
+      "tokens": 1167,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/015-sweep-matrix/quickstart.md": {
+      "description": "Quickstart: Comprehensive Stem×Parameter Sweep Matrix",
+      "tokens": 700,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/015-sweep-matrix/research.md": {
+      "description": "Research: Comprehensive Stem×Parameter Sweep Matrix",
+      "tokens": 1696,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/015-sweep-matrix/spec.md": {
+      "description": "Feature Specification: Comprehensive Stem×Parameter Sweep Matrix",
+      "tokens": 5666,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/015-sweep-matrix/tasks.md": {
+      "description": "Tasks: Comprehensive Stem×Parameter Sweep Matrix",
+      "tokens": 3888,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/015-sweep-matrix/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Comprehensive Stem×Parameter Sweep Matrix",
+      "tokens": 366,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/015-sweep-matrix/contracts/cli-sweep-matrix.md": {
+      "description": "CLI Contract: `sweep-matrix` and `sweep-results` Subcommands",
+      "tokens": 680,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/016-hierarchy-orchestrator/data-model.md": {
+      "description": "Data Model: Hierarchy Orchestrator",
+      "tokens": 1498,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/016-hierarchy-orchestrator/plan.md": {
+      "description": "Implementation Plan: Hierarchy Orchestrator",
+      "tokens": 1208,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/016-hierarchy-orchestrator/research.md": {
+      "description": "Research: Hierarchy Orchestrator",
+      "tokens": 1322,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/016-hierarchy-orchestrator/spec.md": {
+      "description": "Feature Specification: Hierarchy Orchestrator",
+      "tokens": 3650,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/016-hierarchy-orchestrator/tasks.md": {
+      "description": "Tasks: Hierarchy Orchestrator",
+      "tokens": 3268,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/016-hierarchy-orchestrator/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Hierarchy Orchestrator",
+      "tokens": 326,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/016-hierarchy-orchestrator/contracts/cli.md": {
+      "description": "CLI Contract: Hierarchy Orchestrator",
+      "tokens": 638,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/017-xlights-layout-grouping/data-model.md": {
+      "description": "Data Model: xLights Layout Grouping",
+      "tokens": 1163,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/017-xlights-layout-grouping/plan.md": {
+      "description": "Implementation Plan: xLights Layout Grouping",
+      "tokens": 1469,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/017-xlights-layout-grouping/quickstart.md": {
+      "description": "Quickstart: xLights Layout Grouping",
+      "tokens": 632,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/017-xlights-layout-grouping/research.md": {
+      "description": "Research: xLights Layout Grouping",
+      "tokens": 1053,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/017-xlights-layout-grouping/spec.md": {
+      "description": "Feature Specification: xLights Layout Grouping",
+      "tokens": 3095,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/017-xlights-layout-grouping/tasks.md": {
+      "description": "Tasks: xLights Layout Grouping",
+      "tokens": 3673,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/017-xlights-layout-grouping/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: xLights Layout Grouping",
+      "tokens": 335,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/017-xlights-layout-grouping/contracts/cli-contract.md": {
+      "description": "CLI Contract: group-layout Command",
+      "tokens": 615,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/018-effect-themes-library/data-model.md": {
+      "description": "Data Model: xLights Effect Library",
+      "tokens": 1465,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/018-effect-themes-library/plan.md": {
+      "description": "Implementation Plan: xLights Effect Library",
+      "tokens": 1573,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/018-effect-themes-library/quickstart.md": {
+      "description": "Quickstart: xLights Effect Library",
+      "tokens": 473,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/018-effect-themes-library/research.md": {
+      "description": "Research: xLights Effect Library",
+      "tokens": 1591,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/018-effect-themes-library/spec.md": {
+      "description": "Feature Specification: xLights Effect Library",
+      "tokens": 3115,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/018-effect-themes-library/tasks.md": {
+      "description": "Tasks: xLights Effect Library",
+      "tokens": 2745,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/018-effect-themes-library/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: xLights Effect Library",
+      "tokens": 315,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/018-effect-themes-library/contracts/api-contract.md": {
+      "description": "API Contract: Effect Library",
+      "tokens": 458,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/019-effect-themes/data-model.md": {
+      "description": "Data Model: Effect Themes",
+      "tokens": 924,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/019-effect-themes/plan.md": {
+      "description": "Implementation Plan: Effect Themes",
+      "tokens": 1210,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/019-effect-themes/quickstart.md": {
+      "description": "Quickstart: Effect Themes",
+      "tokens": 279,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/019-effect-themes/research.md": {
+      "description": "Research: Effect Themes",
+      "tokens": 653,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/019-effect-themes/spec.md": {
+      "description": "Feature Specification: Effect Themes",
+      "tokens": 2508,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/019-effect-themes/tasks.md": {
+      "description": "Tasks: Effect Themes",
+      "tokens": 1786,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/019-effect-themes/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Effect Themes",
+      "tokens": 333,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/019-effect-themes/contracts/api-contract.md": {
+      "description": "API Contract: Theme Library",
+      "tokens": 390,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/020-sequence-generator/data-model.md": {
+      "description": "Data Model: Sequence Generator (020)",
+      "tokens": 1584,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/020-sequence-generator/plan.md": {
+      "description": "Implementation Plan: Sequence Generator",
+      "tokens": 2544,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/020-sequence-generator/quickstart.md": {
+      "description": "Quickstart: Sequence Generator (020)",
+      "tokens": 747,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/020-sequence-generator/research.md": {
+      "description": "Research: Sequence Generator (020)",
+      "tokens": 1505,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/020-sequence-generator/spec.md": {
+      "description": "Feature Specification: Sequence Generator",
+      "tokens": 5663,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/020-sequence-generator/tasks.md": {
+      "description": "Tasks: Sequence Generator",
+      "tokens": 4344,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/020-sequence-generator/contracts/cli-commands.md": {
+      "description": "CLI Contract: Sequence Generator Commands",
+      "tokens": 529,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/020-sequence-generator/contracts/xsq-schema.md": {
+      "description": "XSQ Output Schema Contract",
+      "tokens": 706,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/021-song-story-tool/data-model.md": {
+      "description": "Data Model: Song Story Tool",
+      "tokens": 5459,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/021-song-story-tool/plan.md": {
+      "description": "Implementation Plan: Song Story Tool",
+      "tokens": 2710,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/021-song-story-tool/quickstart.md": {
+      "description": "Quickstart: Song Story Tool",
+      "tokens": 669,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/021-song-story-tool/research.md": {
+      "description": "Research: Song Story Tool",
+      "tokens": 1675,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/021-song-story-tool/spec.md": {
+      "description": "Feature Specification: Song Story Tool",
+      "tokens": 6254,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/021-song-story-tool/tasks.md": {
+      "description": "Tasks: Song Story Tool",
+      "tokens": 5752,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/021-song-story-tool/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Song Story Tool",
+      "tokens": 399,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/021-song-story-tool/contracts/song-story-schema.md": {
+      "description": "Song Story JSON Contract",
+      "tokens": 1730,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/022-layout-group-editor/data-model.md": {
+      "description": "Data Model: Layout Group Editor",
+      "tokens": 1344,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/022-layout-group-editor/plan.md": {
+      "description": "Implementation Plan: Layout Group Editor",
+      "tokens": 1131,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/022-layout-group-editor/quickstart.md": {
+      "description": "Quickstart: Layout Group Editor",
+      "tokens": 402,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/022-layout-group-editor/research.md": {
+      "description": "Research: Layout Group Editor",
+      "tokens": 1259,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/022-layout-group-editor/spec.md": {
+      "description": "Feature Specification: Layout Group Editor",
+      "tokens": 4167,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/022-layout-group-editor/tasks.md": {
+      "description": "Tasks: Layout Group Editor",
+      "tokens": 4282,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/022-layout-group-editor/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Layout Group Editor",
+      "tokens": 293,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/022-layout-group-editor/contracts/api-routes.md": {
+      "description": "API Routes Contract: Layout Group Editor",
+      "tokens": 1028,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/023-devcontainer-path-resolution/data-model.md": {
+      "description": "Data Model: Devcontainer Path Resolution",
+      "tokens": 1047,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/023-devcontainer-path-resolution/plan.md": {
+      "description": "Implementation Plan: Devcontainer Path Resolution",
+      "tokens": 1197,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/023-devcontainer-path-resolution/quickstart.md": {
+      "description": "Quickstart: Devcontainer Path Resolution",
+      "tokens": 494,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/023-devcontainer-path-resolution/research.md": {
+      "description": "Research: Devcontainer Path Resolution",
+      "tokens": 1260,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/023-devcontainer-path-resolution/spec.md": {
+      "description": "Feature Specification: Devcontainer Path Resolution",
+      "tokens": 3152,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/023-devcontainer-path-resolution/tasks.md": {
+      "description": "Tasks: Devcontainer Path Resolution",
+      "tokens": 2750,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/023-devcontainer-path-resolution/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Devcontainer Path Resolution",
+      "tokens": 385,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/024-story-review-flyouts/data-model.md": {
+      "description": "Data Model: 024-story-review-flyouts",
+      "tokens": 894,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/024-story-review-flyouts/plan.md": {
+      "description": "Implementation Plan: Story Review Flyout Panels",
+      "tokens": 1940,
+      "updatedAt": "2026-07-14T22:54:57.394Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/024-story-review-flyouts/quickstart.md": {
+      "description": "Quickstart: 024-story-review-flyouts",
+      "tokens": 664,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/024-story-review-flyouts/research.md": {
+      "description": "Research: 024-story-review-flyouts",
+      "tokens": 1597,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/024-story-review-flyouts/spec.md": {
+      "description": "Feature Specification: Story Review Flyout Panels",
+      "tokens": 4114,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/024-story-review-flyouts/tasks.md": {
+      "description": "Tasks: Story Review Flyout Panels",
+      "tokens": 4319,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/024-story-review-flyouts/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Story Review Flyout Panels",
+      "tokens": 373,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/024-story-review-flyouts/contracts/flyout-ui-contract.md": {
+      "description": "UI Contract: Flyout Panel",
+      "tokens": 1108,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/025-theme-data-endpoint/spec.md": {
+      "description": "Feature Specification: Theme Data Endpoint",
+      "tokens": 531,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/026-theme-editor/data-model.md": {
+      "description": "Data Model: Theme Editor",
+      "tokens": 1426,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/026-theme-editor/plan.md": {
+      "description": "Implementation Plan: Theme Editor",
+      "tokens": 1538,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/026-theme-editor/quickstart.md": {
+      "description": "Quickstart: Theme Editor",
+      "tokens": 616,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/026-theme-editor/research.md": {
+      "description": "Research: Theme Editor",
+      "tokens": 2125,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/026-theme-editor/spec.md": {
+      "description": "Feature Specification: Theme Editor",
+      "tokens": 5350,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/026-theme-editor/tasks.md": {
+      "description": "Tasks: Theme Editor",
+      "tokens": 6324,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/026-theme-editor/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Theme Editor",
+      "tokens": 320,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/026-theme-editor/contracts/theme-api.md": {
+      "description": "API Contract: Theme Editor Endpoints",
+      "tokens": 1586,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/027-unified-dashboard/data-model.md": {
+      "description": "Data Model: Unified Dashboard",
+      "tokens": 1016,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/027-unified-dashboard/plan.md": {
+      "description": "Implementation Plan: Unified Dashboard",
+      "tokens": 1842,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/027-unified-dashboard/quickstart.md": {
+      "description": "Quickstart: Unified Dashboard",
+      "tokens": 804,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/027-unified-dashboard/research.md": {
+      "description": "Research: Unified Dashboard",
+      "tokens": 1281,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/027-unified-dashboard/spec.md": {
+      "description": "Feature Specification: Unified Dashboard",
+      "tokens": 3868,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/027-unified-dashboard/tasks.md": {
+      "description": "Tasks: Unified Dashboard",
+      "tokens": 4516,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/027-unified-dashboard/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Unified Dashboard",
+      "tokens": 329,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/027-unified-dashboard/contracts/routes.md": {
+      "description": "HTTP Route Contracts: Unified Dashboard",
+      "tokens": 1293,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/028-effects-variant-library/data-model.md": {
+      "description": "Data Model: Effects Variant Library",
+      "tokens": 1701,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/028-effects-variant-library/plan.md": {
+      "description": "Implementation Plan: Effects Variant Library",
+      "tokens": 1357,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/028-effects-variant-library/quickstart.md": {
+      "description": "Quickstart: Effects Variant Library",
+      "tokens": 906,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/028-effects-variant-library/research.md": {
+      "description": "Research: Effects Variant Library",
+      "tokens": 1631,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/028-effects-variant-library/spec.md": {
+      "description": "Feature Specification: Effects Variant Library",
+      "tokens": 4120,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/028-effects-variant-library/tasks.md": {
+      "description": "Tasks: Effects Variant Library",
+      "tokens": 4538,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/028-effects-variant-library/variant-catalog-backlog.md": {
+      "description": "Variant Catalog Backlog",
+      "tokens": 8044,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/028-effects-variant-library/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Effects Variant Library",
+      "tokens": 338,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/028-effects-variant-library/contracts/api-endpoints.md": {
+      "description": "API Contracts: Effects Variant Library",
+      "tokens": 1259,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/028-effects-variant-library/contracts/cli-commands.md": {
+      "description": "CLI Contracts: Effects Variant Library",
+      "tokens": 864,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/030-intelligent-effect-rotation/data-model.md": {
+      "description": "Data Model: Intelligent Effect Rotation",
+      "tokens": 1722,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/030-intelligent-effect-rotation/plan.md": {
+      "description": "Implementation Plan: Intelligent Effect Rotation",
+      "tokens": 1140,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/030-intelligent-effect-rotation/quickstart.md": {
+      "description": "Quickstart: Intelligent Effect Rotation",
+      "tokens": 648,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/030-intelligent-effect-rotation/research.md": {
+      "description": "Research: Intelligent Effect Rotation",
+      "tokens": 1871,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/030-intelligent-effect-rotation/spec.md": {
+      "description": "Feature Specification: Intelligent Effect Rotation",
+      "tokens": 4586,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/030-intelligent-effect-rotation/tasks.md": {
+      "description": "Tasks: Intelligent Effect Rotation",
+      "tokens": 4606,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/030-intelligent-effect-rotation/checklists/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Intelligent Effect Rotation",
+      "tokens": 292,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/030-intelligent-effect-rotation/contracts/api-endpoints.md": {
+      "description": "API Contracts: Intelligent Effect Rotation",
+      "tokens": 596,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/030-intelligent-effect-rotation/contracts/cli-commands.md": {
+      "description": "CLI Contracts: Intelligent Effect Rotation",
+      "tokens": 576,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/031-effect-variant-ui-wiring/data-model.md": {
+      "description": "Data Model: Effect & Variant Library UI Wiring",
+      "tokens": 914,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/031-effect-variant-ui-wiring/plan.md": {
+      "description": "Implementation Plan: Effect & Variant Library UI Wiring",
+      "tokens": 1010,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/031-effect-variant-ui-wiring/quickstart.md": {
+      "description": "Quickstart: Effect & Variant Library UI Wiring",
+      "tokens": 625,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/031-effect-variant-ui-wiring/research.md": {
+      "description": "Research: Effect & Variant Library UI Wiring",
+      "tokens": 1298,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/031-effect-variant-ui-wiring/spec.md": {
+      "description": "Feature Specification: Effect & Variant Library UI Wiring",
+      "tokens": 2597,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/031-effect-variant-ui-wiring/tasks.md": {
+      "description": "Tasks: Effect & Variant Library UI Wiring",
+      "tokens": 3220,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/031-effect-variant-ui-wiring/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Effect & Variant Library UI Wiring",
+      "tokens": 355,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/031-effect-variant-ui-wiring/contracts/variant-picker-api.md": {
+      "description": "Contract: Variant Picker API (Frontend ↔ Backend)",
+      "tokens": 636,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/032-value-curves-integration/data-model.md": {
+      "description": "Data Model: Value Curves Integration",
+      "tokens": 881,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/032-value-curves-integration/plan.md": {
+      "description": "Implementation Plan: Value Curves Integration",
+      "tokens": 968,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/032-value-curves-integration/quickstart.md": {
+      "description": "Quickstart: Value Curves Integration",
+      "tokens": 628,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/032-value-curves-integration/research.md": {
+      "description": "Research: Value Curves Integration",
+      "tokens": 1511,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/032-value-curves-integration/spec.md": {
+      "description": "Feature Specification: Value Curves Integration",
+      "tokens": 3354,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/032-value-curves-integration/tasks.md": {
+      "description": "Tasks: Value Curves Integration",
+      "tokens": 3225,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/032-value-curves-integration/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Value Curves Integration",
+      "tokens": 359,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/032-value-curves-integration/contracts/cli-curves-flag.md": {
+      "description": "Contract: CLI --curves Flag",
+      "tokens": 311,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/033-theme-variant-separation/data-model.md": {
+      "description": "Data Model: Theme and Effect Variant Separation",
+      "tokens": 1027,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/033-theme-variant-separation/plan.md": {
+      "description": "Implementation Plan: Theme and Effect Variant Separation",
+      "tokens": 2245,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/033-theme-variant-separation/quickstart.md": {
+      "description": "Quickstart: Theme and Effect Variant Separation",
+      "tokens": 505,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/033-theme-variant-separation/research.md": {
+      "description": "Research: Theme and Effect Variant Separation",
+      "tokens": 1377,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/033-theme-variant-separation/spec.md": {
+      "description": "Feature Specification: Theme and Effect Variant Separation",
+      "tokens": 3058,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/033-theme-variant-separation/tasks.md": {
+      "description": "Tasks: Theme and Effect Variant Separation",
+      "tokens": 3723,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/033-theme-variant-separation/checklists/requirements.md": {
+      "description": "Specification Quality Checklist: Theme and Effect Variant Separation",
+      "tokens": 383,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/033-theme-variant-separation/contracts/theme-api.md": {
+      "description": "Theme API Contract Changes",
+      "tokens": 336,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/036-focused-effects-repetition/baseline_metrics.txt": {
+      "description": "",
+      "tokens": 4147,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/036-focused-effects-repetition/data-model.md": {
+      "description": "Data Model: Focused Effect Vocabulary + Embrace Repetition",
+      "tokens": 825,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/036-focused-effects-repetition/plan.md": {
+      "description": "Implementation Plan: Focused Effect Vocabulary + Embrace Repetition",
+      "tokens": 958,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/036-focused-effects-repetition/quickstart.md": {
+      "description": "Quickstart: Focused Effect Vocabulary + Embrace Repetition",
+      "tokens": 532,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/036-focused-effects-repetition/research.md": {
+      "description": "Research: Focused Effect Vocabulary + Embrace Repetition",
+      "tokens": 1345,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/036-focused-effects-repetition/spec.md": {
+      "description": "Feature Specification: Focused Effect Vocabulary + Embrace Repetition",
+      "tokens": 3969,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/036-focused-effects-repetition/tasks.md": {
+      "description": "Tasks: Focused Effect Vocabulary + Embrace Repetition",
+      "tokens": 3200,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/036-focused-effects-repetition/validation_results.md": {
+      "description": "Phase 1 Validation Results",
+      "tokens": 1355,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/specs/archive/036-focused-effects-repetition/checklists/requirements.md": {
+      "description": "Requirements Checklist: 036 - Focused Effect Vocabulary + Embrace Repetition",
+      "tokens": 934,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/__init__.py": {
+      "description": "",
+      "tokens": 0,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/cache.py": {
+      "description": "Analysis result cache keyed by MD5 of the source audio file.",
+      "tokens": 1796,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/cli_old.py": {
+      "description": "CLI entry point for xlight-analyze.",
+      "tokens": 32257,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/export.py": {
+      "description": "T015: JSON serialisation and deserialisation for AnalysisResult.",
+      "tokens": 181,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/generator_wizard.py": {
+      "description": "Interactive wizard for sequence generation.",
+      "tokens": 2470,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/library.py": {
+      "description": "Global song library index stored at ~/.xlight/library.json.",
+      "tokens": 1816,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/log.py": {
+      "description": "Centralized logging for xlight-analyze — writes to ~/.xlight/logs/.",
+      "tokens": 315,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/paths.py": {
+      "description": "Cross-environment path resolution for the xLights show directory.",
+      "tokens": 2174,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/settings.py": {
+      "description": "Installation-wide settings stored at ~/.xlight/settings.json.",
+      "tokens": 489,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/wizard.py": {
+      "description": "Interactive CLI wizard for configuring and launching xlight-analyze runs.",
+      "tokens": 3896,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/__init__.py": {
+      "description": "",
+      "tokens": 0,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/audio.py": {
+      "description": "T013: MP3/WAV loader — returns mono float32 array + AudioFile metadata.",
+      "tokens": 351,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/capabilities.py": {
+      "description": "Capability detection for the hierarchy orchestrator.",
+      "tokens": 1374,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/conditioning.py": {
+      "description": "Data conditioning: downsample, smooth, normalize feature curves for xLights export.",
+      "tokens": 764,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/cross_song_tuner.py": {
+      "description": "Cross-song parameter tuning framework.",
+      "tokens": 8690,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/derived.py": {
+      "description": "Derived feature computation for L0 Special Moments.",
+      "tokens": 1491,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/diversity.py": {
+      "description": "Diversity filter — removes near-identical tracks from --top N selection.",
+      "tokens": 1009,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/drum_classifier.py": {
+      "description": "Drum hit classifier: label each drum onset as kick, snare, or hihat.",
+      "tokens": 666,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/essentia_features.py": {
+      "description": "Essentia-based audio feature extraction.",
+      "tokens": 1210,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/genius_segments.py": {
+      "description": "Genius lyric segment timing: fetch, parse, and align section headers to audio.",
+      "tokens": 8376,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/interaction.py": {
+      "description": "Cross-stem musical interaction analysis.",
+      "tokens": 2966,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/orchestrator.py": {
+      "description": "Hierarchy orchestrator: zero-flag pipeline for hierarchical music analysis.",
+      "tokens": 13310,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/parallel.py": {
+      "description": "Parallel pipeline executor: PipelineStep, DependencyGraph, ParallelRunner.",
+      "tokens": 3482,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/phonemes.py": {
+      "description": "Vocal phoneme analysis: WhisperX transcription + cmudict decomposition.",
+      "tokens": 4807,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/phoneme_align.py": {
+      "description": "Session-friendly WhisperX word/phoneme alignment wrapper (in-process first, .venv-vamp sidecar fallback); feeds singing-faces export",
+      "tokens": 1600,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/pipeline.py": {
+      "description": "Automated end-to-end analysis pipeline (US7).",
+      "tokens": 2440,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/progress.py": {
+      "description": "Multi-track live progress display for parallel pipeline execution (T031).",
+      "tokens": 1436,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/result.py": {
+      "description": "Core data classes for the analysis pipeline.",
+      "tokens": 8644,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/runner.py": {
+      "description": "T016: AnalysisRunner — orchestrates all algorithm runs for a single audio file.",
+      "tokens": 3360,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/scorer.py": {
+      "description": "Quality scorer for timing tracks — category-aware with explainable breakdowns.",
+      "tokens": 2566,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/scoring_config.py": {
+      "description": "Scoring configuration: categories, algorithm mapping, weights, and config loading.",
+      "tokens": 3788,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/segment_selector.py": {
+      "description": "Representative audio segment selection for sweep optimization.",
+      "tokens": 652,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/selector.py": {
+      "description": "Best-of selection for hierarchy levels.",
+      "tokens": 1255,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/solos.py": {
+      "description": "Solo region detection from per-stem energy curves.",
+      "tokens": 1733,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/stem_affinity.py": {
+      "description": "Stem affinity table: maps each algorithm to its preferred stems with rationale.",
+      "tokens": 1860,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/stem_inspector.py": {
+      "description": "Stem quality inspection and intelligent sweep config generation.",
+      "tokens": 3931,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/stems.py": {
+      "description": "Stem separation: StemSet dataclass, StemSeparator, StemCache.",
+      "tokens": 2966,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/structure.py": {
+      "description": "Song structure analysis using librosa segmentation + lyric-enhanced clustering.",
+      "tokens": 4211,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/sweep_matrix.py": {
+      "description": "Sweep matrix: comprehensive algorithm×stem×parameter sweep engine.",
+      "tokens": 6874,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/sweep.py": {
+      "description": "005: Parameter sweep runner for Vamp algorithms.",
+      "tokens": 4731,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/validator.py": {
+      "description": "Hierarchy mark placement validator.",
+      "tokens": 4359,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/value_curve_scorer.py": {
+      "description": "Quality scoring for continuous value curves (energy, spectral flux, etc.).",
+      "tokens": 439,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/vamp_params.py": {
+      "description": "005: Vamp plugin parameter discovery and validation.",
+      "tokens": 1505,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/vamp_runner.py": {
+      "description": "URL configuration",
+      "tokens": 1447,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/xtiming.py": {
+      "description": "XTimingWriter: generate xLights .xtiming XML from PhonemeResult.",
+      "tokens": 1348,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/xvc_export.py": {
+      "description": "xLights value curve (.xvc) XML export.",
+      "tokens": 1028,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/__init__.py": {
+      "description": "",
+      "tokens": 0,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/base.py": {
+      "description": "T010: Abstract base class for all analysis algorithms.",
+      "tokens": 671,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/librosa_bands.py": {
+      "description": "T028: Librosa frequency band energy peak algorithms.",
+      "tokens": 1174,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/librosa_beats.py": {
+      "description": "T027: Librosa beat and bar tracking algorithms.",
+      "tokens": 626,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/librosa_hpss.py": {
+      "description": "T029: Librosa HPSS (Harmonic-Percussive Source Separation) algorithms.",
+      "tokens": 726,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/librosa_onset.py": {
+      "description": "T030: Librosa full-spectrum onset detection algorithm.",
+      "tokens": 341,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/madmom_beat.py": {
+      "description": "T031: Madmom RNN beat and downbeat tracking algorithms (optional).",
+      "tokens": 633,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/registry.py": {
+      "description": "Centralized algorithm registry — single source of truth for all algorithm discovery.",
+      "tokens": 2246,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/vamp_aubio.py": {
+      "description": "Aubio Vamp plugin wrappers: onset detection, tempo/beat tracking, note events.",
+      "tokens": 723,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/vamp_bbc.py": {
+      "description": "BBC Vamp plugin wrappers: energy, spectral flux, peaks, rhythm.",
+      "tokens": 1557,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/vamp_beats.py": {
+      "description": "T032: Vamp beat tracking algorithms — QM and BeatRoot.",
+      "tokens": 822,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/vamp_extra.py": {
+      "description": "Additional Vamp plugin wrappers: key detection, transcription, percussion, etc.",
+      "tokens": 1854,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/vamp_harmony.py": {
+      "description": "T035: Vamp NNLS Chroma and Chordino harmony algorithms.",
+      "tokens": 644,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/vamp_onsets.py": {
+      "description": "T033: Vamp onset detection algorithms — QM onset detector.",
+      "tokens": 860,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/vamp_pitch.py": {
+      "description": "T035: Vamp pYIN pitch/note algorithms.",
+      "tokens": 736,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/vamp_segmentation.py": {
+      "description": "Segmentino Vamp plugin wrapper: automatic structural segmentation.",
+      "tokens": 609,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/vamp_structure.py": {
+      "description": "T034: Vamp structural segmentation and tempo algorithms.",
+      "tokens": 567,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/049-section-preview/src/analyzer/algorithms/vamp_utils.py": {
+      "description": "Shared helper functions for Vamp plugin algorithm wrappers.",
+      "tokens": 399,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/agent-a4576356981f76a28/.wolf/anatomy.md": {
+      "description": "anatomy.md",
+      "tokens": 13907,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/refine-warnings-7/src/review/api/v1/analysis.py": {
+      "description": "Analysis endpoints — T047.",
+      "tokens": 15291,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/refine-warnings-7/src/story/builder.py": {
+      "description": "Song story builder — top-level orchestration for the song story tool.",
+      "tokens": 14028,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".claude/worktrees/refine-warnings-7/tests/unit/test_builder_refinement_warnings.py": {
+      "description": "Unit tests for §7 — Step 15c capability-skip warnings.",
+      "tokens": 2480,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    ".github/workflows/evaluate.yml": {
+      "description": "CI: Acceptance Gate (Tier A)",
+      "tokens": 1647,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "docs/microscope-tier-effectiveness.md": {
+      "description": "Tier and Layout Effectiveness — 2026-05-02 Diagnostic",
+      "tokens": 1637,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/acceptance-gate/tasks.md": {
+      "description": "1. Corpus wiring (reuse existing CC0 pattern)",
+      "tokens": 2580,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/design-first-gate/design.md": {
+      "description": "Context",
+      "tokens": 1978,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/design-first-gate/proposal.md": {
+      "description": "Why",
+      "tokens": 840,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/design-first-gate/tasks.md": {
+      "description": "1. CLAUDE.md gate",
+      "tokens": 840,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/design-first-gate/specs/design-gate/spec.md": {
+      "description": "ADDED Requirements",
+      "tokens": 1095,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/design-first-gate/specs/pre-mortem-review/spec.md": {
+      "description": "ADDED Requirements",
+      "tokens": 1018,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/microscope-panel-tier-coverage/design.md": {
+      "description": "Context",
+      "tokens": 1549,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/microscope-panel-tier-coverage/proposal.md": {
+      "description": "Why",
+      "tokens": 1233,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/microscope-panel-tier-coverage/tasks.md": {
+      "description": "1. Research — find candidate fixtures",
+      "tokens": 1014,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/microscope-panel-tier-coverage/specs/microscope-panel-tier-coverage/spec.md": {
+      "description": "ADDED Requirements",
+      "tokens": 929,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/microscope-placement-coverage/design.md": {
+      "description": "Context",
+      "tokens": 2261,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/microscope-placement-coverage/proposal.md": {
+      "description": "Why",
+      "tokens": 1035,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/microscope-placement-coverage/tasks.md": {
+      "description": "1. Schema bump on SequenceSummary",
+      "tokens": 975,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "openspec/changes/microscope-placement-coverage/specs/microscope-placement-coverage/spec.md": {
+      "description": "ADDED Requirements",
+      "tokens": 1354,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "scripts/boundary_confidence_map.py": {
+      "description": "Boundary confidence map — diagnostic tool for section boundary detection.",
+      "tokens": 8430,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/cli_old.py": {
+      "description": "CLI entry point for xlight-analyze.",
+      "tokens": 34201,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/cli/evaluate.py": {
+      "description": "xlight-evaluate CLI — quality calibration subcommands.",
+      "tokens": 4748,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/cli/library.py": {
+      "description": "``library`` command group: list and refresh the user's analyzed song library.",
+      "tokens": 3148,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/cli/microscope.py": {
+      "description": "xlight-evaluate microscope — visual-quality measurement subcommand group.",
+      "tokens": 5345,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/evaluation/acceptance_gate.py": {
+      "description": "Acceptance-gate orchestrator.",
+      "tokens": 3802,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/evaluation/analyzer_baseline.py": {
+      "description": "Analyzer-layer regression baseline.",
+      "tokens": 3292,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/evaluation/corpus_resolver.py": {
+      "description": "Corpus resolver for the acceptance gate.",
+      "tokens": 1310,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/evaluation/models.py": {
+      "description": "Core data model for the quality calibration harness.",
+      "tokens": 1327,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/evaluation/xsq_reader.py": {
+      "description": "Parser for xLights .xsq and .xsqz sequence files.",
+      "tokens": 2732,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/evaluation/metrics/coverage.py": {
+      "description": "Placement coverage metric.",
+      "tokens": 686,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/evaluation/metrics/suitability.py": {
+      "description": "Suitability metrics — variety + parallel pairing-fit signals.",
+      "tokens": 3865,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/evaluation/metrics/tier_breakdown.py": {
+      "description": "Diagnostic metrics for tier and group activation.",
+      "tokens": 994,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/generator/effect_placer.py": {
+      "description": "Effect placement engine — maps theme layers to power groups and timing tracks.",
+      "tokens": 26888,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/microscope/panel.py": {
+      "description": "Microscope panel runner.",
+      "tokens": 2393,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/microscope/runner.py": {
+      "description": "Microscope per-song runner.",
+      "tokens": 3014,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/microscope/sensitivity.py": {
+      "description": "Sensitivity gate for the visual-quality microscope.",
+      "tokens": 5057,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/microscope/verify.py": {
+      "description": "Tier-coverage verification for the microscope panel.",
+      "tokens": 1442,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/review/server.py": {
+      "description": "Flask review server for xlight-analyze review UI.",
+      "tokens": 24403,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/review/api/v1/analysis.py": {
+      "description": "Analysis endpoints — T047.",
+      "tokens": 13834,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/review/api/v1/library.py": {
+      "description": "Library endpoints — GET /library, folder CRUD, song delete + purge (T045, T090, T092, T094).",
+      "tokens": 4808,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/review/frontend/src/App.tsx": {
+      "description": "SCREENS",
+      "tokens": 6875,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/review/frontend/src/screens/Analyze.tsx": {
+      "description": "When true, run analysis on mount even if the song is already marked",
+      "tokens": 8302,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/review/frontend/src/screens/Drop.tsx": {
+      "description": "Called after a successful /api/v1/import response.",
+      "tokens": 995,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/review/frontend/src/screens/Library.tsx": {
+      "description": "ALLOWED_EXTS",
+      "tokens": 2965,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/review/frontend/src/screens/Timeline.tsx": {
+      "description": "Returns the beat entry whose t_ms is <= timeMs (last beat at or before playhead)",
+      "tokens": 7150,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/review/frontend/tests/screens/Analyze.test.tsx": {
+      "description": "mockFetch",
+      "tokens": 547,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/review/frontend/tests/screens/Drop.test.tsx": {
+      "description": "Mock fetch globally",
+      "tokens": 616,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "src/story/builder.py": {
+      "description": "Song story builder — top-level orchestration for the song story tool.",
+      "tokens": 10110,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/evaluation/test_analyzer_baseline.py": {
+      "description": "Tests for src/evaluation/analyzer_baseline.py.",
+      "tokens": 2479,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/evaluation/test_coverage_metric.py": {
+      "description": "Tests for ``placement_coverage_pct`` (OpenSpec change",
+      "tokens": 1372,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/evaluation/test_gate_cli.py": {
+      "description": "Tests for `xlight-evaluate gate` — orchestration + exit code + JSON report.",
+      "tokens": 3073,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/evaluation/test_tier_breakdown_metric.py": {
+      "description": "Tests for ``tier_placement_breakdown`` and ``group_utilization``",
+      "tokens": 840,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/evaluation/test_xsq_reader_layout_models.py": {
+      "description": "Tests for ``_read_layout_model_names`` and the ``layout_path`` kwarg on",
+      "tokens": 1143,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/fixtures/cc0_music/manifest.json": {
+      "description": "",
+      "tokens": 568,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/fixtures/cc0_music/README.md": {
+      "description": "Project documentation",
+      "tokens": 616,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/microscope/test_panel_manifest_intent.py": {
+      "description": "Tests for tier_intent manifest schema (OpenSpec",
+      "tokens": 1192,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/microscope/test_runner.py": {
+      "description": "Tests for ``src.microscope.runner``.",
+      "tokens": 3473,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/microscope/test_verify_coverage.py": {
+      "description": "Tests for ``verify_panel_coverage`` (OpenSpec",
+      "tokens": 1668,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/ui/conftest.py": {
+      "description": "Shared fixtures for browser-driven UI flow tests.",
+      "tokens": 1887,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/ui/README.md": {
+      "description": "Project documentation",
+      "tokens": 1929,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/ui/flows/__init__.py": {
+      "description": "",
+      "tokens": 0,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/ui/flows/test_analyze_flow.py": {
+      "description": "Analyze flow: uploaded song progresses through analysis to a populated view.",
+      "tokens": 572,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/ui/flows/test_content_flow.py": {
+      "description": "Content verification flow: upload → real analysis → assert content matches manifest.",
+      "tokens": 2184,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/ui/flows/test_export_flow.py": {
+      "description": "Export flow: the export screen renders without crash for an analyzed song.",
+      "tokens": 878,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/ui/flows/test_folder_filter_flow.py": {
+      "description": "Folder toggle + filter pill interactions on the library screen.",
+      "tokens": 980,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/ui/flows/test_metadata_edit_flow.py": {
+      "description": "Metadata override flow: edit artist/title on the analyze-screen banner,",
+      "tokens": 934,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/ui/flows/test_multi_song_flow.py": {
+      "description": "Multi-song library navigation: upload two songs, navigate between them,",
+      "tokens": 1298,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/ui/flows/test_timeline_flow.py": {
+      "description": "Timeline screen navigation: tab access + analysis-gated placeholder.",
+      "tokens": 1108,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/ui/flows/test_upload_flow.py": {
+      "description": "Upload flow: pick a fixture MP3, POST /api/v1/import, verify analyze screen.",
+      "tokens": 398,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/ui/flows/test_view_flow.py": {
+      "description": "View flow: analyzed content renders in the UI coherently.",
+      "tokens": 602,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/unit/test_effect_placer.py": {
+      "description": "Tests for src/generator/effect_placer — _build_effect_pool prop_type filtering (spec 041).",
+      "tokens": 4954,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    },
+    "tests/validation/download_fixtures.py": {
+      "description": "Download CC0 music fixtures for end-to-end validation testing.",
+      "tokens": 1546,
+      "updatedAt": "2026-07-14T22:54:57.395Z",
+      "source": "md-import"
+    }
+  }
+}

@@ -1,13 +1,25 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import * as crypto from "node:crypto";
-import { getWolfDir, ensureWolfDir, readJSON, writeJSON, parseAnatomy, serializeAnatomy, extractDescription, estimateTokens, appendMarkdown, timeShort, readStdin, normalizePath } from "./shared.js";
+import { getWolfDir, ensureWolfDir, readJSON, writeJSON, extractDescription, estimateTokens, appendMarkdown, timeShort, readStdin, normalizePath, isSensitiveFile, getProjectDir } from "./shared.js";
+import { loadStoreReconciled, saveStore, renderToFile, sha256 } from "./anatomy-store.js";
+import { withAnatomyLock, HOOK_LOCK_BUDGET_MS } from "./anatomy-lock.js";
+import { extractSymbols, symbolsSupported, SYMBOL_MIN_TOKENS } from "./symbol-extractor.js";
+// File types where a value/string change is normal content editing, not a bug
+// fix — auto bug detection never runs on these (see autoDetectBugFix). Without
+// this, a version bump in a README or a key change in a JSON/YAML config is
+// logged as a "wrong-value" bug, since the detector matches quoted spans
+// (including markdown backticks) regardless of file type.
+const NON_CODE_EXTS = new Set([
+    ".md", ".mdx", ".markdown", ".txt", ".rst", ".adoc",
+    ".json", ".jsonc", ".yaml", ".yml", ".toml", ".ini", ".env",
+    ".lock", ".csv", ".tsv",
+]);
 async function main() {
     ensureWolfDir();
     const wolfDir = getWolfDir();
     const hooksDir = path.join(wolfDir, "hooks");
     const sessionFile = path.join(hooksDir, "_session.json");
-    const projectRoot = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+    const projectRoot = getProjectDir();
     const raw = await readStdin();
     let input;
     try {
@@ -30,29 +42,27 @@ async function main() {
         process.exit(0);
         return;
     }
-    // Never track .env files in anatomy — they contain secrets
+    // Never track files outside the project root (e.g. the Claude Code scratchpad under
+    // /private/tmp). path.relative() yields ../.. section keys that pollute anatomy.md and are
+    // wiped again by every full `openwolf scan`, so the index churns instead of converging.
+    if (relPath.startsWith("..")) {
+        process.exit(0);
+        return;
+    }
+    // Never track secret-bearing files in anatomy/memory (issue #54): .env is
+    // not the only file whose *description* would leak sensitive content.
     const baseName = path.basename(absolutePath);
-    if (baseName === ".env" || baseName.startsWith(".env.")) {
+    if (isSensitiveFile(baseName)) {
         process.exit(0);
         return;
     }
     const oldStr = input.tool_input?.old_string ?? "";
     const newStr = input.tool_input?.new_string ?? "";
-    // 1. Update anatomy.md
+    // 1. Update the anatomy store, then re-render anatomy.md from it.
+    //    All of this happens under the anatomy lock; if the lock cannot be
+    //    acquired within budget we skip — a later writer converges the state.
     try {
-        const anatomyPath = path.join(wolfDir, "anatomy.md");
-        let anatomyContent;
-        try {
-            anatomyContent = fs.readFileSync(anatomyPath, "utf-8");
-        }
-        catch {
-            anatomyContent = "# anatomy.md\n\n> Auto-maintained by OpenWolf.\n";
-        }
-        const sections = parseAnatomy(anatomyContent);
         const relPathLocal = normalizePath(path.relative(projectRoot, absolutePath));
-        const dir = path.dirname(relPathLocal);
-        const fileName = path.basename(relPathLocal);
-        const sectionKey = dir === "." ? "./" : dir + "/";
         let fileContent = "";
         try {
             fileContent = fs.readFileSync(absolutePath, "utf-8");
@@ -66,40 +76,35 @@ async function main() {
         const proseExts = new Set([".md", ".txt", ".rst"]);
         const type = codeExts.has(ext) ? "code" : proseExts.has(ext) ? "prose" : "mixed";
         const tokens = estimateTokens(fileContent, type);
-        if (!sections.has(sectionKey))
-            sections.set(sectionKey, []);
-        const entries = sections.get(sectionKey);
-        const idx = entries.findIndex((e) => e.file === fileName);
-        if (idx !== -1) {
-            entries[idx] = { file: fileName, description: desc, tokens };
-        }
-        else {
-            entries.push({ file: fileName, description: desc, tokens });
-        }
-        let fileCount = 0;
-        for (const [, list] of sections)
-            fileCount += list.length;
-        const serialized = serializeAnatomy(sections, {
-            lastScanned: new Date().toISOString(),
-            fileCount,
-            hits: 0,
-            misses: 0,
-        });
-        const tmp = anatomyPath + "." + crypto.randomBytes(4).toString("hex") + ".tmp";
+        let size;
+        let mtimeMs;
         try {
-            fs.writeFileSync(tmp, serialized, "utf-8");
-            fs.renameSync(tmp, anatomyPath);
+            const st = fs.statSync(absolutePath);
+            size = st.size;
+            mtimeMs = st.mtimeMs;
         }
-        catch {
-            try {
-                fs.writeFileSync(anatomyPath, serialized, "utf-8");
-            }
-            catch { }
-            try {
-                fs.unlinkSync(tmp);
-            }
-            catch { }
-        }
+        catch { }
+        // Symbols are recomputed on every write (never carried over — the
+        // content just changed, so old line ranges would misdirect slice reads).
+        const symbols = tokens >= SYMBOL_MIN_TOKENS && symbolsSupported(ext)
+            ? extractSymbols(fileContent, ext)
+            : undefined;
+        withAnatomyLock(wolfDir, HOOK_LOCK_BUDGET_MS, () => {
+            const store = loadStoreReconciled(wolfDir, projectRoot);
+            store.files[relPathLocal] = {
+                description: desc,
+                tokens,
+                hash: sha256(fileContent).slice(0, 16),
+                size,
+                mtimeMs,
+                updatedAt: new Date().toISOString(),
+                source: "hook",
+                symbols: symbols && symbols.length > 0 ? symbols : undefined,
+            };
+            store.meta.lastScanned = new Date().toISOString();
+            renderToFile(wolfDir, store);
+            saveStore(wolfDir, store);
+        });
     }
     catch { }
     // 2. Append richer entry to memory.md
@@ -241,12 +246,28 @@ function extractCalls(code) {
             .filter(n => n.length > 2 && !["if", "for", "while", "switch", "catch", "function", "return", "new", "typeof", "instanceof", "const", "let", "var"].includes(n)))];
 }
 // ─── Auto Bug Detection ──────────────────────────────────────────
+function bugAutoDetectEnabled(wolfDir) {
+    try {
+        const cfg = readJSON(path.join(wolfDir, "config.json"), {});
+        // Default on; only an explicit `false` disables auto bug detection.
+        return cfg.openwolf?.buglog?.auto_detect !== false;
+    }
+    catch {
+        return true;
+    }
+}
 function autoDetectBugFix(wolfDir, absolutePath, projectRoot, oldStr, newStr) {
+    const basename = path.basename(absolutePath);
+    const ext = path.extname(basename).toLowerCase();
+    // Bug-fix detection is a code concept — never fire on prose/docs/data files.
+    if (NON_CODE_EXTS.has(ext))
+        return;
+    // Respect an explicit opt-out in .wolf/config.json (default: enabled).
+    if (!bugAutoDetectEnabled(wolfDir))
+        return;
     const bugLogPath = path.join(wolfDir, "buglog.json");
     const bugLog = readJSON(bugLogPath, { version: 1, bugs: [] });
     const relFile = normalizePath(path.relative(projectRoot, absolutePath));
-    const basename = path.basename(absolutePath);
-    const ext = path.extname(basename).toLowerCase();
     // Detect what kind of fix this is
     const detection = detectFixPattern(oldStr, newStr, ext);
     if (!detection)

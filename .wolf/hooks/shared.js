@@ -1,10 +1,25 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as crypto from "node:crypto";
+// Prefer the harness-provided project dir so hooks work even if CWD changes
+// during a session. Each supported agent exposes its own env var; hooks are
+// provider-agnostic (Workstream C) so all are checked.
+export function getProjectDir() {
+    return (process.env.CLAUDE_PROJECT_DIR ||
+        process.env.CODEX_PROJECT_ROOT ||
+        process.env.OPENWOLF_PROJECT_ROOT ||
+        process.cwd());
+}
 export function getWolfDir() {
-    // Prefer CLAUDE_PROJECT_DIR so hooks work even if CWD changes during a session
-    const projectDir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-    return path.join(projectDir, ".wolf");
+    return path.join(getProjectDir(), ".wolf");
+}
+/** Which agent harness invoked this hook — used for per-agent ledger attribution. */
+export function detectAgent() {
+    if (process.env.CLAUDE_PROJECT_DIR)
+        return "claude";
+    if (process.env.CODEX_PROJECT_ROOT)
+        return "codex";
+    return "default";
 }
 /**
  * Bail out silently if .wolf/ directory doesn't exist in the current project.
@@ -60,50 +75,30 @@ export function appendMarkdown(filePath, line) {
         fs.mkdirSync(dir, { recursive: true });
     fs.appendFileSync(filePath, line, "utf-8");
 }
-export function parseAnatomy(content) {
-    const sections = new Map();
-    let currentSection = "";
-    for (const line of content.split("\n")) {
-        const sm = line.match(/^## (.+)/);
-        if (sm) {
-            currentSection = sm[1].trim();
-            if (!sections.has(currentSection))
-                sections.set(currentSection, []);
-            continue;
-        }
-        if (!currentSection)
-            continue;
-        const em = line.match(/^- `([^`]+)`(?:\s+—\s+(.+?))?\s*\(~(\d+)\s+tok\)$/);
-        if (em) {
-            sections.get(currentSection).push({
-                file: em[1],
-                description: em[2] || "",
-                tokens: parseInt(em[3], 10),
-            });
-        }
-    }
-    return sections;
-}
-export function serializeAnatomy(sections, metadata) {
-    const lines = [
-        "# anatomy.md",
-        "",
-        `> Auto-maintained by OpenWolf. Last scanned: ${metadata.lastScanned}`,
-        `> Files: ${metadata.fileCount} tracked | Anatomy hits: ${metadata.hits} | Misses: ${metadata.misses}`,
-        "",
-    ];
-    const keys = [...sections.keys()].sort();
-    for (const key of keys) {
-        lines.push(`## ${key}`);
-        lines.push("");
-        const entries = sections.get(key).sort((a, b) => a.file.localeCompare(b.file));
-        for (const e of entries) {
-            const desc = e.description ? ` — ${e.description}` : "";
-            lines.push(`- \`${e.file}\`${desc} (~${e.tokens} tok)`);
-        }
-        lines.push("");
-    }
-    return lines.join("\n");
+// parseAnatomy / serializeAnatomy / AnatomyEntry moved to ./anatomy-store.ts —
+// the single canonical home of the anatomy format (OPENWOLF-2.0 §F2b).
+// Files whose contents (or content-derived descriptions) must never reach
+// anatomy.md / memory.md because they hold secrets (issue #54). Kept in sync
+// with the copy in src/scanner/anatomy-scanner.ts — hooks are standalone
+// scripts and the scanner cannot be imported from here.
+const SENSITIVE_EXTENSIONS = new Set([
+    ".pem", ".key", ".p8", ".p12", ".pfx", ".keystore", ".jks", ".ppk", ".kdbx", ".tfstate",
+]);
+const SENSITIVE_BASENAMES = new Set([".npmrc", ".netrc", ".htpasswd", ".pgpass"]);
+export function isSensitiveFile(basename) {
+    const lower = basename.toLowerCase();
+    if (lower === ".env" || lower.startsWith(".env."))
+        return true;
+    if (SENSITIVE_BASENAMES.has(lower))
+        return true;
+    const dot = lower.lastIndexOf(".");
+    if (dot >= 0 && SENSITIVE_EXTENSIONS.has(lower.slice(dot)))
+        return true;
+    if (/^id_(rsa|dsa|ecdsa|ed25519)/.test(lower))
+        return true;
+    if (lower.includes("credential") || /^secrets\.(json|ya?ml|toml)$/.test(lower))
+        return true;
+    return false;
 }
 export function extractDescription(filePath) {
     const MAX_DESC = 150;
@@ -610,5 +605,63 @@ export function readStdin() {
 }
 export function normalizePath(p) {
     return p.replace(/\\/g, "/");
+}
+/**
+ * Count non-mechanical semantic entries written to memory.md today.
+ * Mechanical entries (auto-generated file ops, session-end lines) don't count.
+ * Used by the stop hook to detect whether Claude wrote a meaningful summary.
+ */
+export function countSemanticEntries(wolfDir) {
+    const memoryPath = path.join(wolfDir, "memory.md");
+    try {
+        const content = fs.readFileSync(memoryPath, "utf-8");
+        const mechanical = /^\|\s*[\d:]+\s*\|\s*(Created|Edited|Multi-edited|Session end:|designqc:)/;
+        const today = new Date().toISOString().slice(0, 10);
+        const todayPrefix = `| ${today}`;
+        let count = 0;
+        for (const line of content.split("\n")) {
+            if (line.startsWith(todayPrefix) && !mechanical.test(line))
+                count++;
+        }
+        return count;
+    }
+    catch {
+        return 0;
+    }
+}
+export function readTranscriptUsage(transcriptPath) {
+    let raw;
+    try {
+        raw = fs.readFileSync(transcriptPath, "utf-8");
+    }
+    catch {
+        return null;
+    }
+    // One usage block per API call; streaming can emit several transcript lines
+    // for one message id — keep the last usage seen per id.
+    const byId = new Map();
+    let anon = 0;
+    for (const line of raw.split("\n")) {
+        if (!line.trim())
+            continue;
+        try {
+            const entry = JSON.parse(line);
+            const usage = entry?.message?.usage;
+            if (usage && typeof usage === "object" && typeof usage.output_tokens === "number") {
+                byId.set(entry.message.id ?? `anon-${anon++}`, usage);
+            }
+        }
+        catch { }
+    }
+    if (byId.size === 0)
+        return null;
+    const total = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, api_calls: byId.size };
+    for (const u of byId.values()) {
+        total.input_tokens += u.input_tokens ?? 0;
+        total.output_tokens += u.output_tokens ?? 0;
+        total.cache_read_input_tokens += u.cache_read_input_tokens ?? 0;
+        total.cache_creation_input_tokens += u.cache_creation_input_tokens ?? 0;
+    }
+    return total;
 }
 //# sourceMappingURL=shared.js.map
