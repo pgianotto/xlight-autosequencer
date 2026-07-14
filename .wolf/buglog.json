@@ -3230,6 +3230,60 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-13"
+    },
+    {
+      "id": "bug-197",
+      "timestamp": "2026-07-14",
+      "error_message": "User reported arches (then cane/horizontal/vertical) render as a single repeated effect for almost the entire song -- 'the arches are still all left-right' after an initial partial fix.",
+      "file": "src/generator/corpus_recipes.py, src/generator/effect_placer.py",
+      "root_cause": "The arch PropFamilyRecipe was the only corpus recipe with no alt_effect_name, so the seed-based alternation in _place_corpus_recipe had nothing to alternate to; separately, even after adding an alt effect, every Single Strand placement still used one fixed Chase_Type1 direction and Color_Mix1 (chase band size) for the whole song since neither varied per occurrence.",
+      "fix": "Added alt_effect_name=Shockwave (chorus) and a label-keyed alt to Spirals (bridge) for arch, mined from genuine arch elements only (naive substring token matching was contaminating stats via 'Spinarchy' matrix/spinner props -- excluded). Added PropFamilyRecipe.direction_field/direction_ping_pong_values/direction_alt_value and size_field/size_values, rotated by variation_seed parity, extended to cane/horizontal/vertical (minitree excluded -- its data stays fixed to Right-Left). The user's repeated 'didn't work' reports were actually the stale devcontainer server, not the fix itself -- see bug-199.",
+      "tags": [
+        "generator",
+        "corpus-recipes",
+        "arch",
+        "variety",
+        "direction",
+        "chase-size",
+        "corpus-mining-contamination"
+      ],
+      "related_bugs": ["bug-199"],
+      "occurrences": 1,
+      "last_seen": "2026-07-14"
+    },
+    {
+      "id": "bug-198",
+      "timestamp": "2026-07-14",
+      "error_message": "Re-dropping a video for a song that already exists (same audio hash, different filename) leaves the exported .xsq's Video effect pointing at the ORIGINAL video file, not the one just dropped.",
+      "file": "src/review/api/v1/import_video.py",
+      "root_cause": "import_video() only set existing['video_path'] the first time a song was created (`if not existing.get('video_path')`); on every later drop that dedups to the same song, the new video file was correctly copied to disk under its own filename, but the library record's video_path was never updated to point at it.",
+      "fix": "Removed the guard -- always set existing['video_path'] = video_path on dedup, since this route always includes a video (missing_file check earlier in the same function), so the freshest drop should always win. Extended test_repeat_import_returns_created_false's dedup test with an explicit video_path-reflects-latest-drop assertion.",
+      "tags": [
+        "review",
+        "import-video",
+        "video-path",
+        "stale-state"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-14"
+    },
+    {
+      "id": "bug-199",
+      "timestamp": "2026-07-14",
+      "error_message": "User regenerated a sequence through localhost:5000 and saw zero difference from committed fixes -- 'I dont think it made a difference'.",
+      "file": "N/A (devcontainer process, not project code)",
+      "root_cause": "The devcontainer's xlight-review server process (PID visible via `docker exec xlight-dev ps aux`) does not hot-reload backend Python changes despite running with --dev; it keeps whatever module state it imported at process start. /workspace is a live bind-mount so git commits are visible inside immediately, but the running process itself must be killed and relaunched. This recurred multiple times in the same session before being documented.",
+      "fix": "No code fix -- process/workflow fix. Documented in CLAUDE.md under 'Restarting the dev review server after a commit': `docker exec xlight-dev pkill -f xlight-review` then relaunch in a SEPARATE docker exec -d call (matching the existing Do-Not-Repeat entry about not combining pkill+relaunch in one docker exec). Always check the UI's `api <commit>` version banner before concluding a fix didn't work.",
+      "tags": [
+        "devcontainer",
+        "review-server",
+        "stale-process",
+        "workflow"
+      ],
+      "related_bugs": ["bug-197"],
+      "occurrences": 1,
+      "last_seen": "2026-07-14"
     }
   ]
 }
