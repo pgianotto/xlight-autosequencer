@@ -287,6 +287,15 @@ class TestCorpusRecipePlacement:
         assert placements
         assert all(p.parameters["E_CHOICE_Chase_Type1"] == "Bounce from Right" for p in placements)
 
+    def test_arch_chase_size_rotates_with_occurrence_style(self) -> None:
+        # Chase band size is paired with the same style bit as direction:
+        # ping-pong occurrences (even seed) get the tighter 25, bounce
+        # occurrences (odd seed) get the wider 50.
+        even = _place(_make_section(label="chorus"), _ARCH_GROUP, variation_seed=0)
+        odd = _place(_make_section(label="chorus"), _ARCH_GROUP, variation_seed=1)
+        assert all(p.parameters["E_SLIDER_Color_Mix1"] == "25" for p in even["06_PROP_Arch"])
+        assert all(p.parameters["E_SLIDER_Color_Mix1"] == "50" for p in odd["06_PROP_Arch"])
+
     def test_arch_bridge_gets_spirals(self) -> None:
         # "bridge" is not in the default qualifying_labels, but arch adds it
         # specifically so its label-alt (mined: Spirals 56/76 bridge
@@ -509,6 +518,12 @@ class TestCaneRecipe:
         assert placements
         assert all(p.parameters["E_CHOICE_Chase_Type1"] == "Bounce from Right" for p in placements)
 
+    def test_cane_chase_size_rotates_with_occurrence_style(self) -> None:
+        even = _place(_make_section(label="chorus"), _CANE_GROUP, variation_seed=0)
+        odd = _place(_make_section(label="chorus"), _CANE_GROUP, variation_seed=1)
+        assert all(p.parameters["E_SLIDER_Color_Mix1"] == "37" for p in even["06_PROP_Candy_Cane"])
+        assert all(p.parameters["E_SLIDER_Color_Mix1"] == "50" for p in odd["06_PROP_Candy_Cane"])
+
 
 # ── horizontal / vertical house-line recipes ─────────────────────────────────
 
@@ -578,6 +593,13 @@ class TestHouseLineRecipes:
             placements = result[group.name]
             assert placements
             assert all(p.parameters["E_CHOICE_Chase_Type1"] == "From Middle" for p in placements)
+
+    def test_chase_size_rotates_with_occurrence_style(self) -> None:
+        for group in (_HORIZONTAL_GROUP, _VERTICAL_GROUP):
+            even = _place(_make_section(label="chorus"), group, variation_seed=0)
+            odd = _place(_make_section(label="chorus"), group, variation_seed=1)
+            assert all(p.parameters["E_SLIDER_Color_Mix1"] == "46" for p in even[group.name])
+            assert all(p.parameters["E_SLIDER_Color_Mix1"] == "50" for p in odd[group.name])
 
 
 # ── matrix recipe (three-layer stack) ────────────────────────────────────────
