@@ -175,7 +175,7 @@
       "parameters": [
         {
           "name": "ColorWash_Cycles",
-          "storage_name": "E_SLIDER_ColorWash_Cycles",
+          "storage_name": "E_TEXTCTRL_ColorWash_Cycles",
           "widget_type": "textctrl",
           "value_type": "float",
           "default": 1.0,
@@ -247,12 +247,12 @@
         },
         {
           "name": "Color_Wash_Cycles",
-          "storage_name": "E_SLIDER_ColorWash_Cycles",
-          "widget_type": "slider",
-          "value_type": "int",
-          "default": 1,
-          "min": 1,
-          "max": 10,
+          "storage_name": "E_TEXTCTRL_ColorWash_Cycles",
+          "widget_type": "textctrl",
+          "value_type": "float",
+          "default": 0.1,
+          "min": 0.1,
+          "max": 1.0,
           "description": "Number of color fade cycles per second",
           "supports_value_curve": true
         },
@@ -434,7 +434,7 @@
         },
         {
           "name": "Shimmer_Cycles",
-          "storage_name": "E_SLIDER_Shimmer_Cycles",
+          "storage_name": "E_TEXTCTRL_Shimmer_Cycles",
           "widget_type": "textctrl",
           "value_type": "float",
           "default": 1.0,
@@ -965,7 +965,7 @@
           "storage_name": "E_CHECKBOX_Circles_Bounce",
           "widget_type": "checkbox",
           "value_type": "bool",
-          "default": true,
+          "default": false,
           "min": null,
           "max": null,
           "choices": null,
@@ -985,25 +985,13 @@
           "supports_value_curve": false
         },
         {
-          "name": "Circles_Collide",
-          "storage_name": "E_CHECKBOX_Circles_Bounce",
-          "widget_type": "checkbox",
-          "value_type": "bool",
-          "default": true,
-          "min": null,
-          "max": null,
-          "choices": null,
-          "description": "Enable collision detection between circles",
-          "supports_value_curve": false
-        },
-        {
           "name": "Circles_Speed",
           "storage_name": "E_SLIDER_Circles_Speed",
           "widget_type": "slider",
           "value_type": "int",
-          "default": 1,
-          "min": 0,
-          "max": 50,
+          "default": 10,
+          "min": 1,
+          "max": 30,
           "choices": null,
           "description": "Speed of circle movement/animation",
           "supports_value_curve": true
@@ -1014,8 +1002,8 @@
           "widget_type": "slider",
           "value_type": "int",
           "default": 0,
-          "min": -100,
-          "max": 100,
+          "min": -50,
+          "max": 50,
           "choices": null,
           "description": "Horizontal center offset for radial mode",
           "supports_value_curve": true
@@ -1026,8 +1014,8 @@
           "widget_type": "slider",
           "value_type": "int",
           "default": 0,
-          "min": -100,
-          "max": 100,
+          "min": -50,
+          "max": 50,
           "choices": null,
           "description": "Vertical center offset for radial mode",
           "supports_value_curve": true
@@ -1042,6 +1030,42 @@
           "max": null,
           "choices": null,
           "description": "Use plasma coloring instead of solid colors",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Circles_Radial_3D",
+          "storage_name": "E_CHECKBOX_Circles_Radial_3D",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": false,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Render radial circles with a 3D depth effect",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Circles_Bubbles",
+          "storage_name": "E_CHECKBOX_Circles_Bubbles",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": false,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Vary circle size like rising bubbles",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Circles_Linear_Fade",
+          "storage_name": "E_CHECKBOX_Circles_Linear_Fade",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": false,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Fade circles linearly instead of at fixed opacity",
           "supports_value_curve": false
         }
       ],
@@ -1625,11 +1649,11 @@
           "storage_name": "E_CHOICE_Pinwheel_3D",
           "widget_type": "choice",
           "value_type": "choice",
-          "default": "none",
+          "default": "None",
           "min": null,
           "max": null,
           "choices": [
-            "none",
+            "None",
             "3D",
             "3D Inverted",
             "Sweep"
@@ -1672,6 +1696,33 @@
           "choices": null,
           "description": "Vertical center offset of the pinwheel",
           "supports_value_curve": true
+        },
+        {
+          "name": "Pinwheel_Style",
+          "storage_name": "E_CHOICE_Pinwheel_Style",
+          "widget_type": "choice",
+          "value_type": "choice",
+          "default": "New Render Method",
+          "min": null,
+          "max": null,
+          "choices": [
+            "Old Render Method",
+            "New Render Method"
+          ],
+          "description": "Rendering algorithm version",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Pinwheel_Rotation",
+          "storage_name": "E_CHECKBOX_Pinwheel_Rotation",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": true,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Rotate counter-clockwise (unchecked = clockwise)",
+          "supports_value_curve": false
         }
       ],
       "prop_suitability": {
@@ -1886,12 +1937,12 @@
         },
         {
           "name": "Ripple_Cycles",
-          "storage_name": "E_SLIDER_Ripple_Cycles",
-          "widget_type": "slider",
-          "value_type": "int",
-          "default": 10,
-          "min": 0,
-          "max": 300,
+          "storage_name": "E_TEXTCTRL_Ripple_Cycles",
+          "widget_type": "textctrl",
+          "value_type": "float",
+          "default": 1.0,
+          "min": 0.0,
+          "max": 30.0,
           "choices": null,
           "description": "Number of complete ripple cycles (divided by 10)",
           "supports_value_curve": true
@@ -2030,12 +2081,12 @@
         },
         {
           "name": "Ripple_Movement_Speed",
-          "storage_name": "E_SLIDER_Ripple_Cycles",
-          "widget_type": "slider",
-          "value_type": "int",
-          "default": 15,
-          "min": 0,
-          "max": 100,
+          "storage_name": "E_TEXTCTRL_Ripple_Cycles",
+          "widget_type": "textctrl",
+          "value_type": "float",
+          "default": 1.5,
+          "min": 0.0,
+          "max": 10.0,
           "description": "Speed of ripple expansion or contraction",
           "supports_value_curve": true
         }
@@ -2640,8 +2691,8 @@
         },
         {
           "name": "Wave_Speed",
-          "storage_name": "E_SLIDER_Wave_Speed",
-          "widget_type": "slider",
+          "storage_name": "E_TEXTCTRL_Wave_Speed",
+          "widget_type": "textctrl",
           "value_type": "int",
           "default": 10,
           "min": 0,
@@ -3081,8 +3132,8 @@
         },
         {
           "name": "Liquid_Lifetime",
-          "storage_name": "E_SLIDER_LifeTime",
-          "widget_type": "slider",
+          "storage_name": "E_TEXTCTRL_LifeTime",
+          "widget_type": "textctrl",
           "value_type": "int",
           "default": 1000,
           "min": 0,
@@ -3105,20 +3156,20 @@
         },
         {
           "name": "Liquid_Gravity",
-          "storage_name": "E_SLIDER_Liquid_Gravity",
-          "widget_type": "slider",
-          "value_type": "int",
-          "default": 100,
-          "min": -1000,
-          "max": 1000,
+          "storage_name": "E_TEXTCTRL_Liquid_Gravity",
+          "widget_type": "textctrl",
+          "value_type": "float",
+          "default": 10.0,
+          "min": -100.0,
+          "max": 100.0,
           "choices": null,
           "description": "Gravity force applied to particles (divided by 10 for float)",
           "supports_value_curve": true
         },
         {
           "name": "Liquid_GravityAngle",
-          "storage_name": "E_SLIDER_Liquid_GravityAngle",
-          "widget_type": "slider",
+          "storage_name": "E_TEXTCTRL_Liquid_GravityAngle",
+          "widget_type": "textctrl",
           "value_type": "int",
           "default": 0,
           "min": 0,
@@ -3129,8 +3180,8 @@
         },
         {
           "name": "Liquid_X1",
-          "storage_name": "E_SLIDER_X1",
-          "widget_type": "slider",
+          "storage_name": "E_TEXTCTRL_X1",
+          "widget_type": "textctrl",
           "value_type": "int",
           "default": 50,
           "min": 0,
@@ -3141,8 +3192,8 @@
         },
         {
           "name": "Liquid_Y1",
-          "storage_name": "E_SLIDER_Y1",
-          "widget_type": "slider",
+          "storage_name": "E_TEXTCTRL_Y1",
+          "widget_type": "textctrl",
           "value_type": "int",
           "default": 100,
           "min": 0,
@@ -3153,8 +3204,8 @@
         },
         {
           "name": "Liquid_Direction1",
-          "storage_name": "E_SLIDER_Direction1",
-          "widget_type": "slider",
+          "storage_name": "E_TEXTCTRL_Direction1",
+          "widget_type": "textctrl",
           "value_type": "int",
           "default": 270,
           "min": 0,
@@ -3165,8 +3216,8 @@
         },
         {
           "name": "Liquid_Velocity1",
-          "storage_name": "E_SLIDER_Velocity1",
-          "widget_type": "slider",
+          "storage_name": "E_TEXTCTRL_Velocity1",
+          "widget_type": "textctrl",
           "value_type": "int",
           "default": 100,
           "min": 0,
@@ -3177,8 +3228,8 @@
         },
         {
           "name": "Liquid_Flow1",
-          "storage_name": "E_SLIDER_Flow1",
-          "widget_type": "slider",
+          "storage_name": "E_TEXTCTRL_Flow1",
+          "widget_type": "textctrl",
           "value_type": "int",
           "default": 100,
           "min": 0,
@@ -3189,8 +3240,8 @@
         },
         {
           "name": "Liquid_SourceSize1",
-          "storage_name": "E_SLIDER_Liquid_SourceSize1",
-          "widget_type": "slider",
+          "storage_name": "E_TEXTCTRL_Liquid_SourceSize1",
+          "widget_type": "textctrl",
           "value_type": "int",
           "default": 0,
           "min": 0,
@@ -3437,7 +3488,7 @@
         },
         {
           "name": "Meteors_XOffset",
-          "storage_name": "E_SLIDER_Meteors_XOffset",
+          "storage_name": "E_TEXTCTRL_Meteors_XOffset",
           "widget_type": "slider",
           "value_type": "int",
           "default": 0,
@@ -3449,7 +3500,7 @@
         },
         {
           "name": "Meteors_YOffset",
-          "storage_name": "E_SLIDER_Meteors_YOffset",
+          "storage_name": "E_TEXTCTRL_Meteors_YOffset",
           "widget_type": "slider",
           "value_type": "int",
           "default": 0,
@@ -3904,14 +3955,14 @@
         },
         {
           "name": "Chase_Rotations",
-          "storage_name": "E_SLIDER_Chase_Rotations",
-          "widget_type": "slider",
-          "value_type": "int",
-          "default": 10,
-          "min": 1,
-          "max": 500,
+          "storage_name": "E_TEXTCTRL_Chase_Rotations",
+          "widget_type": "textctrl",
+          "value_type": "float",
+          "default": 1.0,
+          "min": 0.1,
+          "max": 50.0,
           "choices": null,
-          "description": "Number of chase rotations (divided by 10 for float, e.g. 10 = 1.0 rotation)",
+          "description": "Number of chase rotations (cycles) over the effect duration",
           "supports_value_curve": true
         },
         {
@@ -3940,14 +3991,14 @@
         },
         {
           "name": "Chase_Offset",
-          "storage_name": "E_SLIDER_Chase_Offset",
-          "widget_type": "slider",
-          "value_type": "int",
-          "default": 0,
-          "min": -5000,
-          "max": 5000,
+          "storage_name": "E_TEXTCTRL_Chase_Offset",
+          "widget_type": "textctrl",
+          "value_type": "float",
+          "default": 0.0,
+          "min": -500.0,
+          "max": 500.0,
           "choices": null,
-          "description": "Starting offset position of the chase (divided by 10 for float)",
+          "description": "Starting offset position of the chase",
           "supports_value_curve": true
         },
         {
@@ -4156,7 +4207,7 @@
       "parameters": [
         {
           "name": "Morph_Start_X1",
-          "storage_name": "E_SLIDER_MorphStartX1",
+          "storage_name": "E_SLIDER_Morph_Start_X1",
           "widget_type": "slider",
           "value_type": "int",
           "default": 0,
@@ -4168,7 +4219,7 @@
         },
         {
           "name": "Morph_Start_Y1",
-          "storage_name": "E_SLIDER_MorphStartY1",
+          "storage_name": "E_SLIDER_Morph_Start_Y1",
           "widget_type": "slider",
           "value_type": "int",
           "default": 0,
@@ -4180,7 +4231,7 @@
         },
         {
           "name": "Morph_End_X1",
-          "storage_name": "E_SLIDER_MorphEndX1",
+          "storage_name": "E_SLIDER_Morph_End_X1",
           "widget_type": "slider",
           "value_type": "int",
           "default": 100,
@@ -4192,7 +4243,7 @@
         },
         {
           "name": "Morph_End_Y1",
-          "storage_name": "E_SLIDER_MorphEndY1",
+          "storage_name": "E_SLIDER_Morph_End_Y1",
           "widget_type": "slider",
           "value_type": "int",
           "default": 100,
@@ -4208,7 +4259,7 @@
           "widget_type": "slider",
           "value_type": "int",
           "default": 0,
-          "min": 0,
+          "min": -100,
           "max": 100,
           "choices": null,
           "description": "Stagger amount for multi-pixel morph movement",
@@ -4849,15 +4900,15 @@
       "intent": "Display text messages, song lyrics, and countdown numbers",
       "parameters": [
         {
-          "name": "Text_Line1",
-          "storage_name": "E_TEXTCTRL_Text_Line1",
+          "name": "Text",
+          "storage_name": "E_TEXTCTRL_Text",
           "widget_type": "textctrl",
           "value_type": "string",
           "default": "",
           "min": null,
           "max": null,
           "choices": null,
-          "description": "First line of text to display",
+          "description": "Text to display",
           "supports_value_curve": false
         },
         {
@@ -4870,11 +4921,12 @@
           "max": null,
           "choices": [
             "Use OS Fonts",
-            "xLights 5x5",
-            "xLights 6x6",
-            "xLights 7x7"
+            "5-5x5 Thin",
+            "5-5x5 Mono",
+            "6-5x6 Thin",
+            "10-12x12 Bold"
           ],
-          "description": "Font to use for rendering text",
+          "description": "XL bitmap font to use for rendering text (distinct from the OS font picker)",
           "supports_value_curve": false
         },
         {
@@ -4882,29 +4934,36 @@
           "storage_name": "E_CHOICE_Text_Dir",
           "widget_type": "choice",
           "value_type": "choice",
-          "default": "Left",
+          "default": "none",
           "min": null,
           "max": null,
           "choices": [
-            "Left",
-            "Right",
-            "Up",
-            "Down",
-            "None",
-            "Wave Up",
-            "Wave Down"
+            "none",
+            "left",
+            "right",
+            "up",
+            "down",
+            "vector",
+            "up-left",
+            "down-left",
+            "up-right",
+            "down-right",
+            "wavey",
+            "word-flip",
+            "left-right",
+            "up-down"
           ],
           "description": "Text scroll direction",
           "supports_value_curve": false
         },
         {
           "name": "Text_Speed",
-          "storage_name": "E_SLIDER_Text_Speed",
+          "storage_name": "E_TEXTCTRL_Text_Speed",
           "widget_type": "slider",
           "value_type": "int",
           "default": 10,
           "min": 0,
-          "max": 50,
+          "max": 100,
           "choices": null,
           "description": "Speed of text scrolling",
           "supports_value_curve": true
@@ -5482,6 +5541,501 @@
       "layer_role": "either",
       "duration_type": "trigger",
       "duration_behavior": "accent"
+    },
+    "Garlands": {
+      "name": "Garlands",
+      "xlights_id": "eff_GARLANDS",
+      "category": "pattern",
+      "description": "Draped garland strands of alternating colors moving along the model",
+      "intent": "Traditional garland/tinsel motion for tree and outline props",
+      "parameters": [
+        {
+          "name": "Garlands_Type",
+          "storage_name": "E_SLIDER_Garlands_Type",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 0,
+          "min": 0,
+          "max": 4,
+          "choices": null,
+          "description": "Garland style/shape variant",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Garlands_Spacing",
+          "storage_name": "E_SLIDER_Garlands_Spacing",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 10,
+          "min": 1,
+          "max": 100,
+          "choices": null,
+          "description": "Spacing between garland repeats",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Garlands_Cycles",
+          "storage_name": "E_TEXTCTRL_Garlands_Cycles",
+          "widget_type": "slider",
+          "value_type": "float",
+          "default": 1.0,
+          "min": 0,
+          "max": 20,
+          "choices": null,
+          "description": "Number of garland movement cycles across the effect duration",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Garlands_Direction",
+          "storage_name": "E_CHOICE_Garlands_Direction",
+          "widget_type": "choice",
+          "value_type": "choice",
+          "default": "Up",
+          "min": null,
+          "max": null,
+          "choices": [
+            "Up",
+            "Down",
+            "Left",
+            "Right",
+            "Up then Down",
+            "Down then Up",
+            "Left then Right",
+            "Right then Left"
+          ],
+          "description": "Direction the garland stacks/moves",
+          "supports_value_curve": false
+        }
+      ],
+      "prop_suitability": {
+        "matrix": "possible",
+        "outline": "good",
+        "arch": "good",
+        "vertical": "good",
+        "tree": "ideal",
+        "radial": "possible"
+      },
+      "analysis_mappings": [],
+      "layer_role": "standalone",
+      "duration_type": "section"
+    },
+    "Galaxy": {
+      "name": "Galaxy",
+      "xlights_id": "eff_GALAXY",
+      "category": "movement",
+      "description": "Spiral galaxy arm that grows, rotates, and sweeps across the model",
+      "intent": "Slow evolving spiral sweep for ambient and transition sections",
+      "parameters": [
+        {
+          "name": "Galaxy_CenterX",
+          "storage_name": "E_SLIDER_Galaxy_CenterX",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 50,
+          "min": 0,
+          "max": 100,
+          "choices": null,
+          "description": "Horizontal center of the galaxy spiral",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Galaxy_CenterY",
+          "storage_name": "E_SLIDER_Galaxy_CenterY",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 50,
+          "min": 0,
+          "max": 100,
+          "choices": null,
+          "description": "Vertical center of the galaxy spiral",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Galaxy_Start_Radius",
+          "storage_name": "E_SLIDER_Galaxy_Start_Radius",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 1,
+          "min": 0,
+          "max": 250,
+          "choices": null,
+          "description": "Radius of the spiral arm at the start",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Galaxy_Start_Width",
+          "storage_name": "E_SLIDER_Galaxy_Start_Width",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 5,
+          "min": 0,
+          "max": 255,
+          "choices": null,
+          "description": "Width of the spiral arm at the start",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Galaxy_Start_Angle",
+          "storage_name": "E_SLIDER_Galaxy_Start_Angle",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 0,
+          "min": 0,
+          "max": 360,
+          "choices": null,
+          "description": "Starting angle of the spiral arm",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Galaxy_End_Radius",
+          "storage_name": "E_SLIDER_Galaxy_End_Radius",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 10,
+          "min": 0,
+          "max": 250,
+          "choices": null,
+          "description": "Radius of the spiral arm at the end",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Galaxy_End_Width",
+          "storage_name": "E_SLIDER_Galaxy_End_Width",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 5,
+          "min": 0,
+          "max": 255,
+          "choices": null,
+          "description": "Width of the spiral arm at the end",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Galaxy_Revolutions",
+          "storage_name": "E_SLIDER_Galaxy_Revolutions",
+          "widget_type": "slider",
+          "value_type": "float",
+          "default": 1440,
+          "min": 0,
+          "max": 3600,
+          "choices": null,
+          "description": "Number of revolutions the spiral sweeps through (raw value, divided by 360 for the displayed revolution count)",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Galaxy_Duration",
+          "storage_name": "E_SLIDER_Galaxy_Duration",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 20,
+          "min": 0,
+          "max": 100,
+          "choices": null,
+          "description": "Head duration as a percentage of the effect time",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Galaxy_Accel",
+          "storage_name": "E_SLIDER_Galaxy_Accel",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 0,
+          "min": -10,
+          "max": 10,
+          "choices": null,
+          "description": "Acceleration of the spiral sweep (negative = decelerate)",
+          "supports_value_curve": true
+        },
+        {
+          "name": "Galaxy_Reverse",
+          "storage_name": "E_CHECKBOX_Galaxy_Reverse",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": false,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Reverse the sweep direction",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Galaxy_Blend_Edges",
+          "storage_name": "E_CHECKBOX_Galaxy_Blend_Edges",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": true,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Blend the edges of the spiral arm for a softer look",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Galaxy_Inward",
+          "storage_name": "E_CHECKBOX_Galaxy_Inward",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": false,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Sweep the spiral inward instead of outward",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Galaxy_Scale",
+          "storage_name": "E_CHECKBOX_Galaxy_Scale",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": true,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Scale the spiral to fit the model buffer",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Galaxy_RenderStyle",
+          "storage_name": "E_CHOICE_Galaxy_RenderStyle",
+          "widget_type": "choice",
+          "value_type": "choice",
+          "default": "New Render Method",
+          "min": null,
+          "max": null,
+          "choices": [
+            "Old Render Method",
+            "New Render Method"
+          ],
+          "description": "Rendering algorithm version",
+          "supports_value_curve": false
+        }
+      ],
+      "prop_suitability": {
+        "matrix": "ideal",
+        "outline": "possible",
+        "arch": "not_recommended",
+        "vertical": "possible",
+        "tree": "good",
+        "radial": "ideal"
+      },
+      "analysis_mappings": [],
+      "layer_role": "standalone",
+      "duration_type": "section"
+    },
+    "Faces": {
+      "name": "Faces",
+      "xlights_id": "Faces",
+      "category": "media",
+      "description": "Singing-face phoneme/timing-track mouth shapes for node-mapped face props",
+      "intent": "Lip-synced mouth movement driven by a phoneme or timing track",
+      "parameters": [
+        {
+          "name": "Faces_FaceDefinition",
+          "storage_name": "E_CHOICE_Faces_FaceDefinition",
+          "widget_type": "choice",
+          "value_type": "choice",
+          "default": "Default",
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Face definition to use for mouth shape mapping",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_Phoneme",
+          "storage_name": "E_CHOICE_Faces_Phoneme",
+          "widget_type": "choice",
+          "value_type": "choice",
+          "default": "",
+          "min": null,
+          "max": null,
+          "choices": [
+            "AI",
+            "E",
+            "FV",
+            "L",
+            "MBP",
+            "O",
+            "U",
+            "WQ",
+            "etc",
+            "rest",
+            "(off)"
+          ],
+          "description": "Static phoneme mouth shape (mutually exclusive with Faces_TimingTrack)",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_TimingTrack",
+          "storage_name": "E_CHOICE_Faces_TimingTrack",
+          "widget_type": "choice",
+          "value_type": "choice",
+          "default": "",
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Timing track driving mouth shapes over time (mutually exclusive with Faces_Phoneme)",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_Eyes",
+          "storage_name": "E_CHOICE_Faces_Eyes",
+          "widget_type": "choice",
+          "value_type": "choice",
+          "default": "Auto",
+          "min": null,
+          "max": null,
+          "choices": [
+            "Open",
+            "Closed",
+            "Auto"
+          ],
+          "description": "Eye state for the face",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_EyeBlinkFrequency",
+          "storage_name": "E_CHOICE_Faces_EyeBlinkFrequency",
+          "widget_type": "choice",
+          "value_type": "choice",
+          "default": "Normal",
+          "min": null,
+          "max": null,
+          "choices": [
+            "Slowest",
+            "Slow",
+            "Normal",
+            "Fast",
+            "Fastest"
+          ],
+          "description": "How often the face blinks",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_EyeBlinkDuration",
+          "storage_name": "E_CHOICE_Faces_EyeBlinkDuration",
+          "widget_type": "choice",
+          "value_type": "choice",
+          "default": "Normal",
+          "min": null,
+          "max": null,
+          "choices": [
+            "Short",
+            "Normal",
+            "Long",
+            "Longer"
+          ],
+          "description": "How long each blink lasts",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_UseState",
+          "storage_name": "E_CHOICE_Faces_UseState",
+          "widget_type": "choice",
+          "value_type": "choice",
+          "default": "",
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Named face state to use instead of live phoneme/timing mapping",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_Outline",
+          "storage_name": "E_CHECKBOX_Faces_Outline",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": false,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Draw an outline around the mouth shape",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_SuppressShimmer",
+          "storage_name": "E_CHECKBOX_Faces_SuppressShimmer",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": false,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Suppress shimmer/sparkle rendering on the face",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_SuppressWhenNotSinging",
+          "storage_name": "E_CHECKBOX_Faces_SuppressWhenNotSinging",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": false,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Hide the face when no phoneme/timing data is active",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_Fade",
+          "storage_name": "E_CHECKBOX_Faces_Fade",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": false,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Fade between mouth shapes instead of hard-cutting",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_TransparentBlack",
+          "storage_name": "E_CHECKBOX_Faces_TransparentBlack",
+          "widget_type": "checkbox",
+          "value_type": "bool",
+          "default": false,
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Treat near-black pixels in the face image as transparent",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_TransparentBlackThreshold",
+          "storage_name": "E_TEXTCTRL_Faces_TransparentBlack",
+          "widget_type": "textctrl",
+          "value_type": "int",
+          "default": 0,
+          "min": 0,
+          "max": 300,
+          "choices": null,
+          "description": "Brightness threshold below which pixels are treated as transparent black",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Faces_LeadFrames",
+          "storage_name": "E_SPINCTRL_Faces_LeadFrames",
+          "widget_type": "textctrl",
+          "value_type": "int",
+          "default": 0,
+          "min": 0,
+          "max": 1000,
+          "choices": null,
+          "description": "Number of lead-in frames before the timed mouth shape appears",
+          "supports_value_curve": false
+        }
+      ],
+      "prop_suitability": {
+        "matrix": "ideal",
+        "outline": "not_recommended",
+        "arch": "not_recommended",
+        "vertical": "not_recommended",
+        "tree": "ideal",
+        "radial": "not_recommended"
+      },
+      "analysis_mappings": [],
+      "layer_role": "standalone",
+      "duration_type": "section"
     }
   }
 }

@@ -285,6 +285,190 @@ class TestSpiralsDefaultsMatchCatalogStorageNames:
             assert key in known, f"Spirals.{key} is not a real catalog storage_name"
 
 
+def _default_keys_match_catalog(effect_name: str) -> None:
+    """Shared assertion for the storage-name regression guards below —
+    same check as TestSpiralsDefaultsMatchCatalogStorageNames, scoped per
+    effect so a failure names exactly which effect's writer defaults
+    drifted from the catalog."""
+    from src.effects.library import load_effect_library
+    from src.generator.xsq_writer import _XLIGHTS_EFFECT_DEFAULTS
+
+    library = load_effect_library()
+    effect_def = library.effects[effect_name]
+    known = {p.storage_name for p in effect_def.parameters}
+    for key in _XLIGHTS_EFFECT_DEFAULTS[effect_name]:
+        if key.startswith(("T_", "C_", "E_NOTEBOOK", "E_FILEPICKERCTRL", "E_FONTPICKER")):
+            continue
+        assert key in known, f"{effect_name}.{key} is not a real catalog storage_name"
+
+
+class TestMorphCoordinateKeysMatchCatalog:
+    """Regression guard: Morph_Start_X1/Y1 and Morph_End_X1/Y1 were catalogued
+    as E_SLIDER_MorphStartX1 etc (missing underscores) instead of the real
+    E_SLIDER_Morph_Start_X1. xLights' GetValueCurveInt only checks
+    SLIDER_Morph_Start_X1 then TEXTCTRL_Morph_Start_X1 — the mangled name
+    matches neither, so a non-default coordinate is silently dropped and
+    the effect always renders at the hardcoded 0,0/100,100 corners."""
+
+    def test_coordinate_params_use_underscored_storage_names(self):
+        from src.effects.library import load_effect_library
+
+        library = load_effect_library()
+        by_name = {p.name: p.storage_name for p in library.effects["Morph"].parameters}
+        assert by_name["Morph_Start_X1"] == "E_SLIDER_Morph_Start_X1"
+        assert by_name["Morph_Start_Y1"] == "E_SLIDER_Morph_Start_Y1"
+        assert by_name["Morph_End_X1"] == "E_SLIDER_Morph_End_X1"
+        assert by_name["Morph_End_Y1"] == "E_SLIDER_Morph_End_Y1"
+
+    def test_stagger_allows_negative_values(self):
+        from src.effects.library import load_effect_library
+
+        library = load_effect_library()
+        by_name = {p.name: p for p in library.effects["Morph"].parameters}
+        assert by_name["Morph_Stagger"].min == -100
+
+
+class TestMeteorsOffsetKeysMatchCatalog:
+    """Regression guard: Meteors_XOffset/YOffset persist as E_TEXTCTRL_ in
+    xLights (the panel's real control is a text ctrl; the paired slider is
+    a non-persisting display twin), not E_SLIDER_. Render has a
+    SLIDER-then-TEXTCTRL fallback so the old key still rendered, but was
+    not the GUI-canonical key."""
+
+    def test_offset_params_use_textctrl_storage_names(self):
+        from src.effects.library import load_effect_library
+
+        library = load_effect_library()
+        by_name = {p.name: p.storage_name for p in library.effects["Meteors"].parameters}
+        assert by_name["Meteors_XOffset"] == "E_TEXTCTRL_Meteors_XOffset"
+        assert by_name["Meteors_YOffset"] == "E_TEXTCTRL_Meteors_YOffset"
+
+
+class TestGarlandsCatalogAndDefaults:
+    """Garlands had no catalog entry at all, and _XLIGHTS_EFFECT_DEFAULTS
+    used the pre-migration E_SLIDER_Garlands_Cycles key (xLights migrated
+    this control to E_TEXTCTRL_Garlands_Cycles, divisor 10, in 2026.05.2)
+    plus an out-of-range Spacing default (0, when the real control's min
+    is 1)."""
+
+    def test_writer_defaults_match_catalog(self):
+        _default_keys_match_catalog("Garlands")
+
+    def test_cycles_uses_textctrl_storage_name(self):
+        from src.effects.library import load_effect_library
+
+        library = load_effect_library()
+        by_name = {p.name: p.storage_name for p in library.effects["Garlands"].parameters}
+        assert by_name["Garlands_Cycles"] == "E_TEXTCTRL_Garlands_Cycles"
+
+    def test_writer_spacing_default_within_real_min(self):
+        from src.generator.xsq_writer import _XLIGHTS_EFFECT_DEFAULTS
+
+        assert int(_XLIGHTS_EFFECT_DEFAULTS["Garlands"]["E_SLIDER_Garlands_Spacing"]) >= 1
+
+
+class TestCirclesValuesMatchXLightsRanges:
+    """Circles_Speed/XC/YC had wrong default/range (Speed 1/0-50 vs the
+    real 10/1-30; XC/YC +-100 vs the real +-50), Circles_Bounce defaulted
+    true instead of false, and a phantom Circles_Collide parameter aliased
+    to E_CHECKBOX_Circles_Bounce duplicated a control xLights removed in
+    2026.05.2 (migrated into Bounce, then erased)."""
+
+    def test_speed_and_center_ranges_match_xlights(self):
+        from src.effects.library import load_effect_library
+
+        library = load_effect_library()
+        by_name = {p.name: p for p in library.effects["Circles"].parameters}
+        assert (by_name["Circles_Speed"].default, by_name["Circles_Speed"].min, by_name["Circles_Speed"].max) == (10, 1, 30)
+        assert (by_name["Circles_XC"].min, by_name["Circles_XC"].max) == (-50, 50)
+        assert (by_name["Circles_YC"].min, by_name["Circles_YC"].max) == (-50, 50)
+        assert by_name["Circles_Bounce"].default is False
+
+    def test_phantom_collide_param_removed(self):
+        from src.effects.library import load_effect_library
+
+        library = load_effect_library()
+        names = {p.name for p in library.effects["Circles"].parameters}
+        assert "Circles_Collide" not in names
+
+
+class TestGalaxyCatalogAndDefaults:
+    """Galaxy had no catalog entry at all, and _XLIGHTS_EFFECT_DEFAULTS'
+    Revolutions default ("3") was off by two orders of magnitude — the
+    real slider stores a pre-divisor int (divisor 360), so "3" is
+    effectively ~0.008 revolutions instead of the intended 4.0 (raw 1440)."""
+
+    def test_writer_defaults_match_catalog(self):
+        _default_keys_match_catalog("Galaxy")
+
+    def test_writer_revolutions_default_is_pre_divisor_scale(self):
+        from src.generator.xsq_writer import _XLIGHTS_EFFECT_DEFAULTS
+
+        # 1440 / 360 == 4.0 revolutions; "3" (the old value) would be ~0.008.
+        assert _XLIGHTS_EFFECT_DEFAULTS["Galaxy"]["E_SLIDER_Galaxy_Revolutions"] == "1440"
+
+
+class TestTextCatalogKeysMatchXLights:
+    """Text_Line1/E_TEXTCTRL_Text_Line1 and E_SLIDER_Text_Speed had no
+    render-side fallback in xLights — TextEffect.cpp only ever reads
+    TEXTCTRL_Text and TEXTCTRL_Text_Speed, so a catalog consumer using the
+    old keys would silently render no text / ignore the speed override."""
+
+    def test_text_and_speed_use_textctrl_storage_names(self):
+        from src.effects.library import load_effect_library
+
+        library = load_effect_library()
+        by_name = {p.name: p.storage_name for p in library.effects["Text"].parameters}
+        assert by_name["Text"] == "E_TEXTCTRL_Text"
+        assert by_name["Text_Speed"] == "E_TEXTCTRL_Text_Speed"
+
+    def test_text_dir_choices_are_real_lowercase_tokens(self):
+        from src.effects.library import load_effect_library
+
+        library = load_effect_library()
+        by_name = {p.name: p for p in library.effects["Text"].parameters}
+        assert by_name["Text_Dir"].default == "none"
+        assert "vector" in by_name["Text_Dir"].choices
+        assert "Left" not in by_name["Text_Dir"].choices
+
+
+class TestFacesCatalogAndDefaults:
+    """Faces had no catalog entry at all. LeadFrames persists as a spin
+    control (E_SPINCTRL_Faces_LeadFrames), not a slider/textctrl, and
+    Faces_Fade was missing from the writer defaults entirely."""
+
+    def test_writer_defaults_match_catalog(self):
+        _default_keys_match_catalog("Faces")
+
+    def test_lead_frames_uses_spinctrl_storage_name(self):
+        from src.effects.library import load_effect_library
+
+        library = load_effect_library()
+        by_name = {p.name: p.storage_name for p in library.effects["Faces"].parameters}
+        assert by_name["Faces_LeadFrames"] == "E_SPINCTRL_Faces_LeadFrames"
+
+    def test_writer_defaults_include_fade(self):
+        from src.generator.xsq_writer import _XLIGHTS_EFFECT_DEFAULTS
+
+        assert "E_CHECKBOX_Faces_Fade" in _XLIGHTS_EFFECT_DEFAULTS["Faces"]
+
+
+class TestPinwheel3DChoiceCasing:
+    """Pinwheel_3D's "None" option was catalogued as lowercase "none".
+    xLights' to3dType() treats any non-matching string as None anyway, so
+    this was cosmetic/round-trip-only, not a rendering bug — this guards
+    against it drifting from the canonical casing the variants already use."""
+
+    def test_none_choice_uses_canonical_casing(self):
+        from src.effects.library import load_effect_library
+
+        library = load_effect_library()
+        by_name = {p.name: p for p in library.effects["Pinwheel"].parameters}
+        assert by_name["Pinwheel_3D"].default == "None"
+        assert "None" in by_name["Pinwheel_3D"].choices
+        assert "none" not in by_name["Pinwheel_3D"].choices
+
+
 class TestVideoEffectPortability:
     """Video effect filenames must be host/devcontainer-portable, like mediaFile."""
 
@@ -829,3 +1013,60 @@ class TestFacesAndTextEffectSerialization:
         assert len(texts) == 1
         assert "E_CHOICE_Text_LyricTrack=Lyrics - Words" in texts[0]
         assert "E_FONTPICKER_Text_Font=" in texts[0]
+
+
+# Bare parameter names whose slider widget was replaced by a float/int
+# textctrl in current xLights (bugs 192-194, re-applied 2026-07-14 after
+# the original fix landed on an unmerged branch). The obsolete E_SLIDER_
+# form corrupts rendering when emitted; only the E_TEXTCTRL_ form may
+# appear in writer defaults or builtin variant overrides.
+_MIGRATED_TO_TEXTCTRL = (
+    "Spirals_Movement",
+    "Chase_Rotations",
+    "Chase_Offset",
+    "ColorWash_Cycles",
+    "Shimmer_Cycles",
+    "Ripple_Cycles",
+    "Wave_Speed",
+    "LifeTime",
+    "Liquid_Gravity",
+    "Liquid_GravityAngle",
+    "Liquid_SourceSize1",
+    "X1",
+    "Y1",
+    "Direction1",
+    "Velocity1",
+    "Flow1",
+    "Meteors_XOffset",
+    "Meteors_YOffset",
+    "Garlands_Cycles",
+)
+
+
+class TestMigratedSliderKeysAbsent:
+    def test_writer_defaults_carry_no_migrated_slider_keys(self) -> None:
+        from src.generator.xsq_writer import _XLIGHTS_EFFECT_DEFAULTS
+
+        for effect, params in _XLIGHTS_EFFECT_DEFAULTS.items():
+            for bare in _MIGRATED_TO_TEXTCTRL:
+                assert f"E_SLIDER_{bare}" not in params, (effect, bare)
+
+    def test_builtin_variants_carry_no_migrated_slider_keys(self) -> None:
+        import json
+        from pathlib import Path
+
+        for path in Path("src/variants/builtins").glob("*.json"):
+            data = json.loads(path.read_text(encoding="utf-8"))
+            for variant in data.get("variants", []):
+                overrides = variant.get("parameter_overrides", {})
+                for bare in _MIGRATED_TO_TEXTCTRL:
+                    assert f"E_SLIDER_{bare}" not in overrides, (
+                        path.name, variant["name"], bare,
+                    )
+
+    def test_builtin_effects_catalog_carries_no_migrated_slider_keys(self) -> None:
+        from pathlib import Path
+
+        text = Path("src/effects/builtin_effects.json").read_text(encoding="utf-8")
+        for bare in _MIGRATED_TO_TEXTCTRL:
+            assert f'"E_SLIDER_{bare}"' not in text, bare
