@@ -5075,6 +5075,65 @@
       "layer_role": "standalone",
       "duration_type": "section"
     },
+    "Video": {
+      "name": "Video",
+      "xlights_id": "eff_VIDEO",
+      "category": "media",
+      "description": "Plays a video file on the model",
+      "intent": "Show a video clip as content on a matrix model",
+      "parameters": [
+        {
+          "name": "Video_Filename",
+          "storage_name": "E_FILEPICKER_Video_Filename",
+          "widget_type": "filepicker",
+          "value_type": "string",
+          "default": "",
+          "min": null,
+          "max": null,
+          "choices": null,
+          "description": "Path to the video file to play",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Video_Starttime",
+          "storage_name": "E_TEXTCTRL_Video_Starttime",
+          "widget_type": "slider",
+          "value_type": "int",
+          "default": 0,
+          "min": 0,
+          "max": 3600,
+          "choices": null,
+          "description": "Start time offset into the video, in seconds",
+          "supports_value_curve": false
+        },
+        {
+          "name": "Video_AspectRatio",
+          "storage_name": "E_CHOICE_Video_AspectRatio",
+          "widget_type": "choice",
+          "value_type": "choice",
+          "default": "Stretch to fit",
+          "min": null,
+          "max": null,
+          "choices": [
+            "Stretch to fit",
+            "Preserve aspect ratio"
+          ],
+          "description": "How the video frame maps onto the model buffer",
+          "supports_value_curve": false
+        }
+      ],
+      "prop_suitability": {
+        "matrix": "ideal",
+        "outline": "not_recommended",
+        "arch": "not_recommended",
+        "vertical": "not_recommended",
+        "tree": "not_recommended",
+        "radial": "not_recommended"
+      },
+      "analysis_mappings": [],
+      "layer_role": "standalone",
+      "duration_type": "section"
+    },
     "Kaleidoscope": {
       "name": "Kaleidoscope",
       "xlights_id": "eff_KALEIDOSCOPE",

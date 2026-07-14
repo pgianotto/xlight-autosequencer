@@ -328,8 +328,12 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
     # (On+Spirals, On+Ripple+Shockwave, On+Pinwheel), so this recipe is
     # three layers deep: On color (0) / per-beat bursts (1) / sustained
     # Spirals spin (2). Text/Pictures/Video content effects in the corpus
-    # are deliberately not replicated. "lyric" is excluded so a lyrics
-    # matrix keeps its dedicated word-sync treatment.
+    # are deliberately not replicated by this recipe. "lyric" is excluded
+    # so a lyrics matrix keeps its dedicated word-sync treatment. The one
+    # explicit exception is a user-supplied video file (config.video_path):
+    # that's placed as a separate song-scoped Video effect in
+    # effect_placer._place_video_effect, mirroring the vocal_effects/
+    # lyric-text pattern — never auto-selected from this recipe's pool.
     PropFamilyRecipe(
         family="matrix",
         match_tokens=("matrix",),

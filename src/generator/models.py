@@ -147,6 +147,10 @@ class SequencePlan:
     # matrix), keyed by model name. Kept off the section assignments so a
     # 0-section analysis (bug-159) still renders them.
     vocal_effects: dict[str, list[EffectPlacement]] = field(default_factory=dict)
+    # Song-scoped Video effect placement (imported video clip on a matrix),
+    # keyed by model name. Same rationale as vocal_effects: not tied to a
+    # section assignment, so it survives a 0-section analysis.
+    video_effects: dict[str, list[EffectPlacement]] = field(default_factory=dict)
 
 
 @dataclass
@@ -196,6 +200,7 @@ class GenerationConfig:
     audio_path: Path
     layout_path: Path
     output_dir: Optional[Path] = None
+    video_path: Optional[Path] = None   # Song's imported video, for matrix Video effect
     genre: str = "pop"
     occasion: str = "general"
     force_reanalyze: bool = False
@@ -236,6 +241,8 @@ class GenerationConfig:
     def __post_init__(self) -> None:
         self.audio_path = Path(self.audio_path)
         self.layout_path = Path(self.layout_path)
+        if self.video_path is not None:
+            self.video_path = Path(self.video_path)
         if self.output_dir is None:
             from src.paths import get_show_dir as _get_show_dir
             show_dir = _get_show_dir()

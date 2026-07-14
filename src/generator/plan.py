@@ -18,6 +18,7 @@ from src.generator.effect_placer import (
     _place_impact_accent,
     _place_lyric_text,
     _place_singing_faces,
+    _place_video_effect,
     compute_duration_target,
     place_effects,
     restrain_palette,
@@ -272,6 +273,15 @@ def build_plan(
         for gname, placements in _place_lyric_text(props, config.vocal_words).items():
             vocal_effects.setdefault(gname, []).extend(placements)
 
+    # 5c. Imported video on a matrix (config.video_path). Song-scoped,
+    # same rationale as vocal_effects. Downscaled to 480p once and cached
+    # next to the source file before being referenced by the placement.
+    video_effects: dict[str, list] = {}
+    if config.video_path is not None:
+        from src.generator.video_prep import ensure_scaled_video
+        scaled_video_path = ensure_scaled_video(config.video_path)
+        video_effects = _place_video_effect(props, scaled_video_path, hierarchy.duration_ms)
+
     # 5. Value curves — generate for each placement when curves are enabled
     if config.curves_mode != "none":
         for assignment in assignments:
@@ -314,6 +324,7 @@ def build_plan(
         models=model_names,
         rotation_plan=rotation_plan,
         vocal_effects=vocal_effects,
+        video_effects=video_effects,
     )
 
 

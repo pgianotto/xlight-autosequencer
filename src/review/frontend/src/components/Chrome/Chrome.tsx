@@ -15,7 +15,7 @@ function fmtBuildTime(iso: string): string {
 
 const TABS: { id: Screen; label: string; key: string }[] = [
   { id: 'library', label: 'Library', key: '1' },
-  { id: 'drop', label: 'Drop', key: '2' },
+  { id: 'drop', label: 'Import', key: '2' },
   { id: 'analyze', label: 'Analyze', key: '3' },
   { id: 'timeline', label: 'Timeline', key: '4' },
   { id: 'theme', label: 'Theme', key: '5' },

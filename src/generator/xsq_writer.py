@@ -310,6 +310,14 @@ def write_xsq(
     for group_name, placements in plan.vocal_effects.items():
         unordered.setdefault(group_name, []).extend(placements)
 
+    # Song-scoped Video placement (imported video clip on a matrix). Its
+    # E_FILEPICKER_Video_Filename already holds the absolute path to the
+    # cached, 480p-downscaled copy next to the stored video — unlike
+    # mediaFile below, filepicker effect parameters are absolute paths by
+    # xLights convention, so there's nothing to copy alongside the XSQ.
+    for group_name, placements in plan.video_effects.items():
+        unordered.setdefault(group_name, []).extend(placements)
+
     # Sort groups by tier prefix so BASE (01) renders behind HERO (08).
     # Groups without a 2-digit tier prefix sort last.
     def _tier_sort_key(name: str) -> tuple[int, str]:

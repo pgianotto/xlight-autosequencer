@@ -9,38 +9,44 @@ interface Song {
   folder_id: string;
   imported_at: string;
   source_paths: string[];
+  video_path?: string | null;
 }
 
 interface DropProps {
   /**
-   * Called after a successful /api/v1/import response.
+   * Called after a successful import response (either /api/v1/import or
+   * /api/v1/import-video).
    *
    * `created` is the server's "this is a new library entry" flag. When
    * `created: false` the user dropped a file that's already in the library
-   * (deduplicated by SHA-256) and the returned song is the existing record,
-   * typically with status='analyzed'. Callers can use this to decide whether
-   * to force a re-analysis rather than just showing the cached result.
+   * (deduplicated by SHA-256 of the audio) and the returned song is the
+   * existing record. Callers can use this to decide whether to force a
+   * re-analysis rather than just showing the cached result.
    */
   onSongImported: (song: Song, created: boolean) => void;
 }
 
-const ALLOWED_EXTS = new Set(['.mp3', '.wav', '.flac', '.aiff', '.aif']);
+const ALLOWED_AUDIO_EXTS = new Set(['.mp3', '.wav', '.flac', '.aiff', '.aif']);
+const ALLOWED_VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm']);
 
 function getExt(filename: string): string {
   const i = filename.lastIndexOf('.');
   return i >= 0 ? filename.slice(i).toLowerCase() : '';
 }
 
+type ImportMode = 'audio' | 'video';
+
 export function Drop({ onSongImported }: DropProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
+  const [mode, setMode] = useState<ImportMode>('audio');
 
   async function handleFile(file: File) {
     const ext = getExt(file.name);
-    if (!ALLOWED_EXTS.has(ext)) {
-      setError(`Unsupported file type: ${ext}. Supported: ${[...ALLOWED_EXTS].join(', ')}`);
+    const allowedExts = mode === 'audio' ? ALLOWED_AUDIO_EXTS : ALLOWED_VIDEO_EXTS;
+    if (!allowedExts.has(ext)) {
+      setError(`Unsupported file type: ${ext}. Supported: ${[...allowedExts].join(', ')}`);
       return;
     }
 
@@ -49,9 +55,10 @@ export function Drop({ onSongImported }: DropProps) {
 
     try {
       const formData = new FormData();
-      formData.append('audio', file);
+      const endpoint = mode === 'audio' ? '/api/v1/import' : '/api/v1/import-video';
+      formData.append(mode === 'audio' ? 'audio' : 'video', file);
 
-      const res = await fetch('/api/v1/import', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         body: formData,
       });
@@ -81,14 +88,38 @@ export function Drop({ onSongImported }: DropProps) {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   }, []);
 
+  const acceptAttr = mode === 'audio'
+    ? [...ALLOWED_AUDIO_EXTS].join(',')
+    : [...ALLOWED_VIDEO_EXTS].join(',');
+
   return (
     <div className={styles.root}>
+      <div className={styles.modeToggle} role="tablist">
+        <button
+          type="button"
+          data-testid="mode-audio"
+          className={mode === 'audio' ? styles.modeButtonActive : styles.modeButton}
+          onClick={() => setMode('audio')}
+        >
+          Audio file
+        </button>
+        <button
+          type="button"
+          data-testid="mode-video"
+          className={mode === 'video' ? styles.modeButtonActive : styles.modeButton}
+          onClick={() => setMode('video')}
+        >
+          Video file
+        </button>
+      </div>
+
       <div
         data-testid="drop-target"
         className={styles.dropZone}
@@ -100,19 +131,28 @@ export function Drop({ onSongImported }: DropProps) {
           data-testid="file-input"
           ref={inputRef}
           type="file"
-          accept=".mp3,.wav,.flac,.aiff,.aif"
+          accept={acceptAttr}
           style={{ display: 'none' }}
           onChange={handleChange}
         />
         {loading ? (
           <p>Importing…</p>
-        ) : (
+        ) : mode === 'audio' ? (
           <>
             <p className={styles.hint}>Drop an MP3 here or click to browse</p>
             <p className={styles.sub}>Supports MP3, WAV, FLAC, AIFF</p>
           </>
+        ) : (
+          <>
+            <p className={styles.hint}>Drop an MP4 here or click to browse</p>
+            <p className={styles.sub}>
+              Supports MP4, MOV, AVI, MKV, WEBM. Audio drives the sequence;
+              the video can be placed on a matrix with the Video effect.
+            </p>
+          </>
         )}
       </div>
+
       {error && (
         <p data-testid="error-message" className={styles.error}>{error}</p>
       )}

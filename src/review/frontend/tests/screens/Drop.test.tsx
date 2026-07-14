@@ -93,4 +93,80 @@ describe('Drop screen', () => {
       );
     });
   });
+
+  it('imports via video file when toggled to video mode', async () => {
+    const songData = {
+      song_id: 'vid123',
+      title: 'Video Song',
+      status: 'draft',
+      duration_ms: 180000,
+      folder_id: 'unfiled',
+      imported_at: '2026-01-01T00:00:00Z',
+      source_paths: [],
+      video_path: '/some/path/clip.mp4',
+    };
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ created: true, song: songData }),
+    });
+
+    const onImported = vi.fn();
+    render(<Drop onSongImported={onImported} />);
+
+    fireEvent.click(screen.getByTestId('mode-video'));
+    const input = screen.getByTestId('file-input') as HTMLInputElement;
+    const file = new File(['fake'], 'clip.mp4', { type: 'video/mp4' });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/v1/import-video',
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(onImported).toHaveBeenCalledWith(
+        expect.objectContaining({ song_id: 'vid123' }),
+        true,
+      );
+    });
+  });
+
+  it('rejects an audio extension when in video mode', async () => {
+    render(<Drop onSongImported={() => {}} />);
+    fireEvent.click(screen.getByTestId('mode-video'));
+    const input = screen.getByTestId('file-input') as HTMLInputElement;
+
+    const file = new File(['fake'], 'song.mp3', { type: 'audio/mpeg' });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('error-message')).toBeTruthy();
+    });
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('shows server error message when video import fails', async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      json: async () => ({
+        error: { code: 'video_audio_extraction_failed', message: 'Could not extract audio from video' },
+      }),
+    });
+
+    const onImported = vi.fn();
+    render(<Drop onSongImported={onImported} />);
+
+    fireEvent.click(screen.getByTestId('mode-video'));
+    const input = screen.getByTestId('file-input') as HTMLInputElement;
+    const file = new File(['fake'], 'clip.mp4', { type: 'video/mp4' });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      const err = screen.getByTestId('error-message');
+      expect(err.textContent).toContain('Could not extract audio');
+    });
+    expect(onImported).not.toHaveBeenCalled();
+  });
 });

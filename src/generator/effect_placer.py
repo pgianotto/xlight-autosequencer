@@ -2790,6 +2790,45 @@ def _place_lyric_text(
     return result
 
 
+def _place_video_effect(
+    props: list[Any],
+    video_path: Any,
+    duration_ms: int,
+) -> dict[str, list[EffectPlacement]]:
+    """Place a Video effect spanning the whole song on the largest matrix prop.
+
+    Explicit opt-in only: fires when the song has a ``video_path`` (from a
+    video-file import), never selected as part of the general effect pool —
+    corpus-mined matrix recipes deliberately don't replicate Video content
+    (see ``corpus_recipes.py``). Returns ``{}`` when there's no video or no
+    Matrix props in the layout.
+    """
+    if video_path is None:
+        return {}
+    matrix_props = [p for p in props if getattr(p, "display_as", "") == "Matrix"]
+    if not matrix_props:
+        return {}
+
+    target = max(matrix_props, key=lambda p: (getattr(p, "pixel_count", 0), p.name))
+    placement = EffectPlacement(
+        effect_name="Video",
+        xlights_id="Video",
+        model_or_group=target.name,
+        start_ms=0,
+        end_ms=duration_ms,
+        parameters={
+            "E_FILEPICKER_Video_Filename": str(video_path),
+        },
+        color_palette=["#FFFFFF"],
+    )
+
+    logger.info(
+        "video_effect: Video placed on matrix '%s' from '%s'",
+        target.name, video_path,
+    )
+    return {target.name: [placement]}
+
+
 def _vocal_regions(vocal_words: Optional[list[dict]]) -> list[tuple[int, int]]:
     """Merge word marks into contiguous vocal regions.
 
