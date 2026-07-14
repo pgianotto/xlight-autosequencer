@@ -1981,7 +1981,13 @@ def _place_corpus_recipe(
 
     # Primary-motion segment length in beats: 1 for the burst families,
     # longer for calmer ones (icicles run 2-beat segments per the corpus).
-    beat_stride = max(1, recipe.beats_per_placement)
+    # The alt-style occurrence swaps in a sparser mined stride (cane/
+    # horizontal: whole-song ~4-beat pacing), bundled with the same
+    # direction/size occurrence bit rather than a fourth independent axis.
+    stride = recipe.beats_per_placement
+    if use_alt_style and recipe.beats_per_placement_alt is not None:
+        stride = recipe.beats_per_placement_alt
+    beat_stride = max(1, stride)
     for i in range(0, len(marks), beat_stride):
         start = marks[i].time_ms
         if i + beat_stride < len(marks):

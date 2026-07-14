@@ -150,6 +150,14 @@ class PropFamilyRecipe:
     # beat (1); icicles run calmer 2-beat segments (mined medians 0.65-1.98s
     # against 0.44-0.65s beats — 1-4 beat segments, never per-beat bursts).
     beats_per_placement: int = 1
+    # Occurrence-style alternate for beats_per_placement, paired with the
+    # same use_alt_style parity bit as direction_field/size_field: some
+    # corpus songs commit their whole cane/horizontal treatment to sparse
+    # ~4-beat (one-bar) segments instead of per-beat bursts, corroborated
+    # across multiple songs at nearly identical values (cane: 4.04/4.05
+    # beats mined, two songs; horizontal: 4.90, one song) rather than
+    # varying within a song. None -> beats_per_placement always applies.
+    beats_per_placement_alt: int | None = None
     # The On "2 is Unmask" color layer steps through the palette's vivid
     # colors one bar at a time instead of holding a single section-spanning
     # color. Both reference poles agree on this: On block medians are ~2.0s
@@ -477,6 +485,12 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         # are the two most common values (949 and 517 placements).
         size_field="E_SLIDER_Color_Mix1",
         size_values=("37", "50"),
+        # Pacing: two corpus songs commit their whole cane treatment to
+        # sparse ~4-beat (one-bar) segments instead of per-beat bursts
+        # (Hockey Song 4.05 beats/seg n=24, Huntrix 4.04 beats/seg n=40) --
+        # bundled into the same "alt style" occurrence as the bounce
+        # direction and wider band above.
+        beats_per_placement_alt=4,
     ),
     # Horizontal / vertical house lines — mined from the same 12 packages
     # (docs/horizontal_sequencing_corpus/ 1.6k placements over 10 songs,
@@ -506,6 +520,11 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         # and 50 are the two most common values (332 and 448 placements).
         size_field="E_SLIDER_Color_Mix1",
         size_values=("46", "50"),
+        # Pacing: one corpus song commits its whole horizontal treatment to
+        # sparse ~4-beat segments instead of per-beat bursts (Gone Gone Gone
+        # 4.90 beats/seg, n=61) -- bundled into the same "alt style"
+        # occurrence as the From-Middle direction and wider band above.
+        beats_per_placement_alt=4,
     ),
     PropFamilyRecipe(
         family="vertical",

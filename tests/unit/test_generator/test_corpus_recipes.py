@@ -536,6 +536,15 @@ class TestCaneRecipe:
         assert all(p.parameters["E_SLIDER_Color_Mix1"] == "37" for p in even["06_PROP_Candy_Cane"])
         assert all(p.parameters["E_SLIDER_Color_Mix1"] == "50" for p in odd["06_PROP_Candy_Cane"])
 
+    def test_cane_bounce_style_uses_sparse_four_beat_pacing(self) -> None:
+        # Even seed (ping-pong style): one segment per beat, matching _BEATS
+        # (8 marks). Odd seed (bounce style): mined whole-song 4-beat pacing
+        # -- only 2 segments (marks 0 and 4) instead of 8.
+        even = _place(_make_section(label="chorus"), _CANE_GROUP, variation_seed=0)
+        odd = _place(_make_section(label="chorus"), _CANE_GROUP, variation_seed=1)
+        assert len(even["06_PROP_Candy_Cane"]) == len(_BEATS)
+        assert len(odd["06_PROP_Candy_Cane"]) == 2
+
 
 # ── horizontal / vertical house-line recipes ─────────────────────────────────
 
@@ -612,6 +621,21 @@ class TestHouseLineRecipes:
             odd = _place(_make_section(label="chorus"), group, variation_seed=1)
             assert all(p.parameters["E_SLIDER_Color_Mix1"] == "46" for p in even[group.name])
             assert all(p.parameters["E_SLIDER_Color_Mix1"] == "50" for p in odd[group.name])
+
+    def test_horizontal_bounce_style_uses_sparse_four_beat_pacing(self) -> None:
+        # Only horizontal has beats_per_placement_alt (mined: one strong
+        # corpus song, 4.90 beats/seg); vertical's evidence wasn't
+        # independently corroborated, so it keeps per-beat pacing always.
+        even = _place(_make_section(label="chorus"), _HORIZONTAL_GROUP, variation_seed=0)
+        odd = _place(_make_section(label="chorus"), _HORIZONTAL_GROUP, variation_seed=1)
+        assert len(even["06_PROP_Horizontal"]) == len(_BEATS)
+        assert len(odd["06_PROP_Horizontal"]) == 2
+
+    def test_vertical_keeps_per_beat_pacing_on_both_styles(self) -> None:
+        even = _place(_make_section(label="chorus"), _VERTICAL_GROUP, variation_seed=0)
+        odd = _place(_make_section(label="chorus"), _VERTICAL_GROUP, variation_seed=1)
+        assert len(even["06_PROP_Vertical"]) == len(_BEATS)
+        assert len(odd["06_PROP_Vertical"]) == len(_BEATS)
 
 
 # ── matrix recipe (three-layer stack) ────────────────────────────────────────
