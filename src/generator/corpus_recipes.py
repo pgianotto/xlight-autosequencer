@@ -197,6 +197,29 @@ _SHOCKWAVE_BURST: tuple[tuple[str, str], ...] = (
 )
 
 
+# Snowflake SingleStrand preset — mined from 721 SingleStrand placements on
+# genuine snowflake elements (Spinarchy-style false positives excluded, same
+# contamination check as arch): "To Middle" converging chase dominates (61%,
+# "From Middle" 37%), Fireworks 1D sub-mode, Colors Palette, no group-chase
+# blending, all near-unanimous. The real secondary idiom for snowflakes --
+# actually the *dominant* effect in two corpus songs -- unlike the
+# previously-used Ripple alternate (82 placements total, confined to one
+# song where SingleStrand still outnumbers it 246/81).
+_SINGLESTRAND_SNOWFLAKE: tuple[tuple[str, str], ...] = (
+    ("E_NOTEBOOK_SSEFFECT_TYPE", "Chase"),
+    ("E_CHOICE_Chase_Type1", "To Middle"),
+    ("E_CHOICE_Fade_Type", "None"),
+    ("E_CHOICE_SingleStrand_Colors", "Palette"),
+    ("E_CHOICE_SingleStrand_FX", "Fireworks 1D"),
+    ("E_CHOICE_SingleStrand_FX_Palette", "* Colors Only"),
+    ("E_CHOICE_Skips_Direction", "Left"),
+    ("E_SLIDER_Number_Chases", "1"),
+    ("E_SLIDER_Color_Mix1", "20"),
+    ("E_TEXTCTRL_Chase_Rotations", "1.0"),
+    ("E_TEXTCTRL_Chase_Offset", "0.0"),
+)
+
+
 # Candy-cane Spirals preset — mined from 736 Spirals placements on cane
 # elements: flat 2D (3D=0 at 100%, unlike the mega-tree preset), single
 # spiral (Count=1 at 54%), thickness 33 (67%), slow movement (1 at 56%),
@@ -354,9 +377,17 @@ CORPUS_RECIPES: tuple[PropFamilyRecipe, ...] = (
         family="snowflake",
         match_tokens=("snowflake", "flake"),
         effect_name="Shockwave",
-        alt_effect_name="Ripple",
+        alt_effect_name="Single Strand",
         parameter_overrides=_SHOCKWAVE_BURST,
+        alt_parameter_overrides=_SINGLESTRAND_SNOWFLAKE,
         off_backdrop=True,
+        # Burst size mined across all 12 corpus songs: End_Radius varies by
+        # song (40-150), usually one fixed value per song but sometimes
+        # varying within a song too -- same per-occurrence idiom as arch's
+        # Color_Mix1. 100 (the existing default) and 50 are the two most
+        # heavily used values (1463 and 411 mined placements respectively).
+        size_field="E_SLIDER_Shockwave_End_Radius",
+        size_values=("100", "50"),
     ),
     # "star" keeps Arch Star props out — they are a star-family prop that
     # happens to sit on an arch, and the star recipe (later in this tuple)

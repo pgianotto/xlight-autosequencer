@@ -243,14 +243,23 @@ class TestCorpusRecipePlacement:
         assert all(p.effect_name == "Single Strand" for p in placements)
         assert all(p.color_palette == ["#FFFFFF"] for p in placements)
 
-    def test_repeated_section_alternates_to_ripple(self) -> None:
+    def test_repeated_section_alternates_to_single_strand(self) -> None:
         # variation_seed is the global section index; the recipe halves it
         # before taking parity so verse/chorus alternation still cycles both
-        # effects. Seeds 0-1 -> Shockwave, 2-3 -> Ripple.
+        # effects. Seeds 0-1 -> Shockwave, 2-3 -> SingleStrand.
         result = _place(_make_section(label="chorus"), _SNOWFLAKE_GROUP, variation_seed=3)
         placements = result["06_PROP_Snowflake"]
         assert placements
-        assert all(p.effect_name == "Ripple" for p in placements)
+        assert all(p.effect_name == "Single Strand" for p in placements)
+
+    def test_snowflake_burst_size_rotates_with_occurrence_style(self) -> None:
+        # Shockwave End_Radius is mined per-song (40-150); rotate between the
+        # two best-supported values by variation_seed parity, same idiom as
+        # arch's chase-size rotation.
+        even = _place(_make_section(label="chorus"), _SNOWFLAKE_GROUP, variation_seed=0)
+        odd = _place(_make_section(label="chorus"), _SNOWFLAKE_GROUP, variation_seed=1)
+        assert all(p.parameters["E_SLIDER_Shockwave_End_Radius"] == "100" for p in even["06_PROP_Snowflake"])
+        assert all(p.parameters["E_SLIDER_Shockwave_End_Radius"] == "50" for p in odd["06_PROP_Snowflake"])
 
     def test_snowflake_placements_carry_shockwave_burst_preset(self) -> None:
         result = _place(_make_section(label="chorus"), _SNOWFLAKE_GROUP)
@@ -336,13 +345,16 @@ class TestCorpusRecipePlacement:
             assert p.parameters["E_SLIDER_Shockwave_End_Radius"] == "100"
 
     def test_alternate_effect_does_not_inherit_primary_preset(self) -> None:
-        # Ripple must not receive Shockwave parameter overrides.
+        # SingleStrand must not receive Shockwave parameter overrides, and
+        # must carry its own mined preset.
         result = _place(_make_section(label="chorus"), _SNOWFLAKE_GROUP, variation_seed=3)
         placements = result["06_PROP_Snowflake"]
         assert placements
         for p in placements:
-            assert p.effect_name == "Ripple"
+            assert p.effect_name == "Single Strand"
             assert "E_SLIDER_Shockwave_End_Radius" not in p.parameters
+            assert p.parameters["E_CHOICE_Chase_Type1"] == "To Middle"
+            assert p.parameters["E_CHOICE_SingleStrand_FX"] == "Fireworks 1D"
 
     def test_adjacent_seed_keeps_primary_effect(self) -> None:
         result = _place(_make_section(label="chorus"), _SNOWFLAKE_GROUP, variation_seed=1)
