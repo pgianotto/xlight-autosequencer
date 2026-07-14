@@ -95,6 +95,10 @@ class AccentPolicy:
 
     drum_hits: bool = False  # spec 042A — per-hit Shockwave on small radial props
     impact: bool = False     # spec 042B — whole-house white Shockwave at section start
+    # Number of extra energy-gated composite layers to stack on the tier-1
+    # BASE whole-house group (mined from the corpus's "All" group idiom —
+    # see _whole_house_layer_count). 0 = no composite this section.
+    whole_house_layers: int = 0
 
 
 @dataclass
@@ -215,6 +219,7 @@ class GenerationConfig:
     palette_restraint: bool = True      # Trim active palette colors to 2-4 based on energy/tier
     duration_scaling: bool = True       # Scale effect durations by BPM and section energy
     beat_accent_effects: bool = True    # Drum-hit Shockwave on small radials + whole-house impact accents
+    whole_house_composite: bool = True  # Energy-gated multi-layer accent on tier-1 BASE_All (spec: whole-house-composite)
     tier_selection: bool = True         # Energy/mood-driven single partition tier per section
     # Nominal fields (spec 047) — stored but not read in Phase 3. Phase 4
     # (spec 048 follow-up) will wire them into build_plan/theme_selector so

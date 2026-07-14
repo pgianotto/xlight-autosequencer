@@ -65,6 +65,7 @@ def _build_plan_and_deps(
     palette_restraint: bool = True,
     duration_scaling: bool = True,
     beat_accent_effects: bool = True,
+    whole_house_composite: bool = True,
     tier_selection: bool = True,
     focused_vocabulary: bool = True,
 ):
@@ -79,6 +80,7 @@ def _build_plan_and_deps(
         palette_restraint=palette_restraint,
         duration_scaling=duration_scaling,
         beat_accent_effects=beat_accent_effects,
+        whole_house_composite=whole_house_composite,
         tier_selection=tier_selection,
     )
     hierarchy = _build_fixture_hierarchy()
@@ -343,6 +345,7 @@ class TestUS4_Isolation:
             # place_effects alone won't re-add the accent overlay. Turn accents off
             # so the snapshot equals what place_effects alone produces.
             beat_accent_effects=False,
+            whole_house_composite=False,
         )
         a = plan.sections[2]
         original = dict(a.group_effects)

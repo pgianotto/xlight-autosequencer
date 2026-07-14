@@ -337,6 +337,30 @@ _IMPACT_ACCENT_DURATION_MS = 800
 _IMPACT_ACCENT_PALETTE = ["#FFFFFF"]
 _IMPACT_ACCENT_TIERS = frozenset({4, 5, 6, 7, 8})
 
+# Whole-house composite accent — mined from the reference corpus's "All"
+# whole-house group idiom (docs/*_sequencing_corpus, 12 songs). Simultaneous
+# active-layer-count sampled every 250ms across the whole song: 0=18%, 1=23%,
+# 2=10%, 3=6%, 4=32% (modal), 5=4%, 6=2%, 7=1%. Activity strongly tracks
+# section energy: chorus sections carry the bulk of placements, quiet/bridge
+# sections are near-silent. Bucketed onto our energy_score scale (0-100);
+# gates deliberately distinct from _IMPACT_ENERGY_GATE (that's a single
+# section-start flash, this is a sustained per-section layer stack).
+_WHOLE_HOUSE_LOW_ENERGY_GATE = 40
+_WHOLE_HOUSE_MID_ENERGY_GATE = 60
+_WHOLE_HOUSE_HIGH_ENERGY_GATE = 85
+# Effect-pool weights mined from the "All" group's aggregate effect usage:
+# Shockwave 27%, On 25%, Shader 17%, Pinwheel 12%, Ripple 4% (Fan/Liquid/Warp/
+# Morph/Meteors/Spirals/Wave omitted -- each under 2%, and Fan/Liquid/Warp
+# have no mined whole-house preset yet). Repeated entries approximate the
+# mined ratios; effects rotate across layers by (variation_seed + layer_idx).
+_WHOLE_HOUSE_EFFECT_POOL = (
+    "Shockwave", "Shockwave", "Shockwave",
+    "On", "On", "On",
+    "Shader", "Shader",
+    "Pinwheel", "Pinwheel",
+    "Ripple",
+)
+
 
 def _apply_palette_target(palette: list[str], target: int) -> list[str]:
     """Trim a palette to ``target`` colours using spread-based indexing.
@@ -2697,6 +2721,96 @@ def _place_impact_accent(
             layer=1,
         )
         result.setdefault(group.name, []).append(placement)
+
+    return result
+
+
+def _whole_house_layer_count(energy_score: int, variation_seed: int) -> int:
+    """Extra composite layer count for tier-1 BASE_All, mined from the
+    corpus's "All" whole-house group idiom (see _WHOLE_HOUSE_* constants).
+
+    Deterministic in variation_seed so re-running the same song/seed
+    reproduces the same layer counts (microscope relies on this).
+    """
+    if energy_score < _WHOLE_HOUSE_LOW_ENERGY_GATE:
+        return 0
+    if energy_score < _WHOLE_HOUSE_MID_ENERGY_GATE:
+        return 1
+    if energy_score < _WHOLE_HOUSE_HIGH_ENERGY_GATE:
+        return 3
+    # Peak energy: 4 layers is the corpus's single most common state (32% of
+    # samples); rare climactic occurrences push to a fuller 6-layer stack
+    # (the corpus's 6-7 layer states are together only ~3% of samples).
+    return 6 if variation_seed % 4 == 0 else 4
+
+
+def _place_whole_house_composite(
+    groups: list[PowerGroup],
+    assignment: SectionAssignment,
+    variant_library: Any,
+) -> dict[str, list[EffectPlacement]]:
+    """Stack energy-gated extra layers on tier-1 BASE_All, mined from the
+    reference corpus's "All" whole-house group idiom (see _WHOLE_HOUSE_*
+    constants above).
+
+    This is additive to BASE's existing quiet theme wash, not a replacement:
+    new layers start at ``len(assignment.theme.layers)`` so they never
+    collide with whatever layer indices the normal per-section theme
+    placement already used on the same group (see _assign_layers_to_tiers --
+    theme layers can land on tier 1 at any index up to n-1).
+
+    Section-level gating (``assignment.accent_policy.whole_house_layers``)
+    is computed once in ``build_plan`` from ``config.whole_house_composite``
+    and ``section.energy_score``; this helper is mechanical and trusts it.
+    """
+    result: dict[str, list[EffectPlacement]] = {}
+    layer_count = assignment.accent_policy.whole_house_layers
+    if layer_count <= 0:
+        return result
+
+    base_group = next((g for g in groups if g.tier == 1), None)
+    if base_group is None:
+        return result
+
+    section = assignment.section
+    variation_seed = assignment.variation_seed
+    base_layer = len(assignment.theme.layers)
+    palette = list(assignment.theme.palette[:2]) or ["#FFFFFF"]
+
+    for i in range(layer_count):
+        effect_name = _WHOLE_HOUSE_EFFECT_POOL[
+            (variation_seed + i) % len(_WHOLE_HOUSE_EFFECT_POOL)
+        ]
+        if effect_name == "Shockwave":
+            params = {
+                "E_CHECKBOX_Shockwave_Blend_Edges": "1",
+                "E_SLIDER_Shockwave_CenterX": "50",
+                "E_SLIDER_Shockwave_CenterY": "50",
+                "E_SLIDER_Shockwave_Cycles": "1",
+                "E_SLIDER_Shockwave_Start_Radius": "1",
+                "E_SLIDER_Shockwave_End_Radius": "100",
+            }
+        elif effect_name == "Shader":
+            variant_name = (
+                "Shader Plasma Emitter Surge"
+                if section.energy_score >= _WHOLE_HOUSE_HIGH_ENERGY_GATE
+                else "Shader Plasma Emitter Drift"
+            )
+            variant = variant_library.get(variant_name) if variant_library is not None else None
+            params = dict(variant.parameter_overrides) if variant is not None else {}
+        else:
+            params = {}
+        placement = EffectPlacement(
+            effect_name=effect_name,
+            xlights_id=effect_name,
+            model_or_group=base_group.name,
+            start_ms=section.start_ms,
+            end_ms=section.end_ms,
+            parameters=params,
+            color_palette=list(palette),
+            layer=base_layer + i,
+        )
+        result.setdefault(base_group.name, []).append(placement)
 
     return result
 

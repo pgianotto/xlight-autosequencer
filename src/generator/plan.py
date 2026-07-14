@@ -19,6 +19,8 @@ from src.generator.effect_placer import (
     _place_lyric_text,
     _place_singing_faces,
     _place_video_effect,
+    _place_whole_house_composite,
+    _whole_house_layer_count,
     compute_duration_target,
     place_effects,
     restrain_palette,
@@ -281,6 +283,14 @@ def build_plan(
         for gname, placements in impact_accents.items():
             assignment.group_effects.setdefault(gname, []).extend(placements)
 
+        whole_house_composite = _place_whole_house_composite(
+            groups=groups,
+            assignment=assignment,
+            variant_library=variant_library,
+        )
+        for gname, placements in whole_house_composite.items():
+            assignment.group_effects.setdefault(gname, []).extend(placements)
+
     # 5b. Singing faces + word-synced lyric text (config.vocal_words).
     # Song-scoped, not per-section — vocal regions derive from the word marks
     # alone and ride on plan.vocal_effects, so a 0-section analysis (bug-159:
@@ -482,7 +492,14 @@ def _populate_assignment_decisions(
             and (section.end_ms - section.start_ms) >= _IMPACT_MIN_DURATION_MS
             and (not role or role in _IMPACT_QUALIFYING_ROLES)
         )
-        assignment.accent_policy = AccentPolicy(drum_hits=drum_ok, impact=impact_ok)
+        whole_house_layers = (
+            _whole_house_layer_count(section.energy_score, assignment.variation_seed)
+            if config.whole_house_composite
+            else 0
+        )
+        assignment.accent_policy = AccentPolicy(
+            drum_hits=drum_ok, impact=impact_ok, whole_house_layers=whole_house_layers,
+        )
 
         # Group density — fraction of groups per tier to activate.
         # Low-energy sections leave most props dark; only the prominent hero/focal

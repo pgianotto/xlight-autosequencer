@@ -23,8 +23,14 @@ from src.generator.effect_placer import (
     _IMPACT_QUALIFYING_ROLES,
     _RADIAL_NAME_KEYWORDS,
     _SMALL_RADIAL_THRESHOLD,
+    _WHOLE_HOUSE_EFFECT_POOL,
+    _WHOLE_HOUSE_HIGH_ENERGY_GATE,
+    _WHOLE_HOUSE_LOW_ENERGY_GATE,
+    _WHOLE_HOUSE_MID_ENERGY_GATE,
     _place_drum_accents,
     _place_impact_accent,
+    _place_whole_house_composite,
+    _whole_house_layer_count,
 )
 from src.generator.models import AccentPolicy, GenerationConfig, SectionAssignment, SectionEnergy
 from src.grouper.grouper import PowerGroup
@@ -71,6 +77,9 @@ def _make_assignment(
     end_ms: int = 10_000,
     drum_hits: bool = True,
     impact: bool = True,
+    whole_house_layers: int = 0,
+    variation_seed: int = 0,
+    theme: Theme | None = None,
 ) -> SectionAssignment:
     """Build an assignment for accent-helper tests.
 
@@ -83,8 +92,11 @@ def _make_assignment(
     return SectionAssignment(
         section=_make_section(label=label, energy_score=energy_score,
                                start_ms=start_ms, end_ms=end_ms),
-        theme=_make_theme(),
-        accent_policy=AccentPolicy(drum_hits=drum_hits, impact=impact),
+        theme=theme or _make_theme(),
+        accent_policy=AccentPolicy(
+            drum_hits=drum_hits, impact=impact, whole_house_layers=whole_house_layers,
+        ),
+        variation_seed=variation_seed,
     )
 
 
@@ -953,3 +965,134 @@ class TestGenerationConfigFlag:
             beat_accent_effects=False,
         )
         assert config.beat_accent_effects is False
+
+
+# ---------------------------------------------------------------------------
+# Whole-house composite accent (tier-1 BASE_All energy-gated layer stack)
+# ---------------------------------------------------------------------------
+
+def _make_base_group(name: str = "01_BASE_All") -> PowerGroup:
+    return PowerGroup(name=name, tier=1, members=["m1", "m2"])
+
+
+class TestWholeHouseLayerCount:
+    def test_below_low_gate_is_silent(self):
+        assert _whole_house_layer_count(_WHOLE_HOUSE_LOW_ENERGY_GATE - 1, variation_seed=0) == 0
+
+    def test_low_energy_band_gets_one_layer(self):
+        assert _whole_house_layer_count(_WHOLE_HOUSE_LOW_ENERGY_GATE, variation_seed=0) == 1
+        assert _whole_house_layer_count(_WHOLE_HOUSE_MID_ENERGY_GATE - 1, variation_seed=0) == 1
+
+    def test_mid_energy_band_gets_three_layers(self):
+        assert _whole_house_layer_count(_WHOLE_HOUSE_MID_ENERGY_GATE, variation_seed=0) == 3
+        assert _whole_house_layer_count(_WHOLE_HOUSE_HIGH_ENERGY_GATE - 1, variation_seed=1) == 3
+
+    def test_peak_energy_is_usually_four_layers(self):
+        # variation_seed % 4 != 0 -> the modal 4-layer state
+        assert _whole_house_layer_count(_WHOLE_HOUSE_HIGH_ENERGY_GATE, variation_seed=1) == 4
+
+    def test_peak_energy_occasionally_stacks_to_six(self):
+        # variation_seed % 4 == 0 -> the rare climactic 6-layer state
+        assert _whole_house_layer_count(_WHOLE_HOUSE_HIGH_ENERGY_GATE, variation_seed=0) == 6
+
+    def test_deterministic_for_same_inputs(self):
+        a = _whole_house_layer_count(90, variation_seed=3)
+        b = _whole_house_layer_count(90, variation_seed=3)
+        assert a == b
+
+
+class TestWholeHouseCompositePlacement:
+    def test_no_placement_when_layer_count_zero(self):
+        assignment = _make_assignment(energy_score=90, whole_house_layers=0)
+        result = _place_whole_house_composite(
+            groups=[_make_base_group()], assignment=assignment,
+            variant_library=_make_variant_library(),
+        )
+        assert result == {}
+
+    def test_no_placement_without_a_tier_one_group(self):
+        assignment = _make_assignment(energy_score=90, whole_house_layers=4)
+        result = _place_whole_house_composite(
+            groups=[_make_arch_group()], assignment=assignment,
+            variant_library=_make_variant_library(),
+        )
+        assert result == {}
+
+    def test_places_exactly_layer_count_placements_on_base_group(self):
+        assignment = _make_assignment(energy_score=90, whole_house_layers=4)
+        base = _make_base_group()
+        result = _place_whole_house_composite(
+            groups=[base, _make_arch_group()], assignment=assignment,
+            variant_library=_make_variant_library(),
+        )
+        assert list(result.keys()) == [base.name]
+        assert len(result[base.name]) == 4
+
+    def test_layers_span_the_full_section(self):
+        assignment = _make_assignment(
+            energy_score=90, whole_house_layers=2, start_ms=1000, end_ms=9000,
+        )
+        base = _make_base_group()
+        result = _place_whole_house_composite(
+            groups=[base], assignment=assignment, variant_library=_make_variant_library(),
+        )
+        for p in result[base.name]:
+            assert p.start_ms == 1000
+            assert p.end_ms == 9000
+
+    def test_layer_indices_start_after_existing_theme_layers(self):
+        # A 2-layer theme already occupies xLights layer indices 0-1 on BASE
+        # (see _assign_layers_to_tiers) -- the composite must not collide.
+        theme = _make_theme()
+        theme.layers = [object(), object()]
+        assignment = _make_assignment(energy_score=90, whole_house_layers=3, theme=theme)
+        base = _make_base_group()
+        result = _place_whole_house_composite(
+            groups=[base], assignment=assignment, variant_library=_make_variant_library(),
+        )
+        layer_indices = sorted(p.layer for p in result[base.name])
+        assert layer_indices == [2, 3, 4]
+
+    def test_effect_names_come_from_the_mined_pool(self):
+        assignment = _make_assignment(energy_score=90, whole_house_layers=7, variation_seed=0)
+        base = _make_base_group()
+        result = _place_whole_house_composite(
+            groups=[base], assignment=assignment, variant_library=_make_variant_library(),
+        )
+        for p in result[base.name]:
+            assert p.effect_name in _WHOLE_HOUSE_EFFECT_POOL
+
+    def test_shader_placements_include_the_ifs_filepicker_param(self):
+        # Force an all-Shader pool run isn't practical without monkeypatching
+        # the pool, so just assert: whenever Shader is selected, its params
+        # carry the shader-file reference (never an empty/default preset).
+        assignment = _make_assignment(energy_score=90, whole_house_layers=len(_WHOLE_HOUSE_EFFECT_POOL))
+        base = _make_base_group()
+        variant_library = _make_variant_library({
+            "Shader Plasma Emitter Drift": {"E_0FILEPICKERCTRL_IFS": "Shaders/Plasma Emitter.fs"},
+            "Shader Plasma Emitter Surge": {"E_0FILEPICKERCTRL_IFS": "Shaders/Plasma Emitter.fs"},
+        })
+        result = _place_whole_house_composite(
+            groups=[base], assignment=assignment, variant_library=variant_library,
+        )
+        shader_placements = [p for p in result[base.name] if p.effect_name == "Shader"]
+        assert shader_placements
+        for p in shader_placements:
+            assert p.parameters.get("E_0FILEPICKERCTRL_IFS") == "Shaders/Plasma Emitter.fs"
+
+
+class TestWholeHouseCompositeConfigFlag:
+    def test_flag_defaults_to_true(self):
+        config = GenerationConfig(
+            audio_path=Path("/fake/song.mp3"),
+            layout_path=Path("/fake/layout.xml"),
+        )
+        assert config.whole_house_composite is True
+
+    def test_flag_can_be_disabled(self):
+        config = GenerationConfig(
+            audio_path=Path("/fake/song.mp3"),
+            layout_path=Path("/fake/layout.xml"),
+            whole_house_composite=False,
+        )
+        assert config.whole_house_composite is False

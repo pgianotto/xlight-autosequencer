@@ -1,0 +1,62 @@
+{
+  "effect": "Shader",
+  "variants": [
+    {
+      "name": "Shader Plasma Emitter Calm",
+      "base_effect": "Shader",
+      "description": "Slow Plasma Emitter shader drift. Ambient whole-house texture for quiet sections.",
+      "parameter_overrides": {
+        "E_0FILEPICKERCTRL_IFS": "Shaders/Plasma Emitter.fs",
+        "E_SLIDER_Shader_Speed": 100,
+        "E_TEXTCTRL_Shader_Zoom": 0
+      },
+      "tags": {
+        "tier_affinity": "background",
+        "energy_level": "low",
+        "speed_feel": "slow",
+        "direction": null,
+        "section_roles": ["verse", "intro", "outro", "bridge"],
+        "scope": "group",
+        "genre_affinity": "any"
+      }
+    },
+    {
+      "name": "Shader Plasma Emitter Drift",
+      "base_effect": "Shader",
+      "description": "Mined default Plasma Emitter shader speed. Versatile whole-house texture for mid-energy sections.",
+      "parameter_overrides": {
+        "E_0FILEPICKERCTRL_IFS": "Shaders/Plasma Emitter.fs",
+        "E_SLIDER_Shader_Speed": 200,
+        "E_TEXTCTRL_Shader_Zoom": 0
+      },
+      "tags": {
+        "tier_affinity": "mid",
+        "energy_level": "medium",
+        "speed_feel": "moderate",
+        "direction": null,
+        "section_roles": ["verse", "chorus", "build"],
+        "scope": "group",
+        "genre_affinity": "any"
+      }
+    },
+    {
+      "name": "Shader Plasma Emitter Surge",
+      "base_effect": "Shader",
+      "description": "Fast, zoomed-in Plasma Emitter shader. Intense whole-house texture for peak energy moments.",
+      "parameter_overrides": {
+        "E_0FILEPICKERCTRL_IFS": "Shaders/Plasma Emitter.fs",
+        "E_SLIDER_Shader_Speed": 500,
+        "E_TEXTCTRL_Shader_Zoom": 20
+      },
+      "tags": {
+        "tier_affinity": "hero",
+        "energy_level": "high",
+        "speed_feel": "fast",
+        "direction": null,
+        "section_roles": ["chorus", "drop", "build"],
+        "scope": "group",
+        "genre_affinity": "any"
+      }
+    }
+  ]
+}
