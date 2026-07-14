@@ -160,6 +160,7 @@ class TestRunGeneratorCallConformance:
             lyrics=None,
             words=None,
             phonemes=None,
+            video_path=None,
         )
 
 

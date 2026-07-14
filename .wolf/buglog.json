@@ -3151,6 +3151,24 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-13"
+    },
+    {
+      "id": "bug-192",
+      "timestamp": "2026-07-14",
+      "error_message": "User: 'i selected the .mp4 as the audio but the video wasnt put on a video effect on the matrix' -- new import-video feature's video_path never reached the actual export pipeline",
+      "file": "src/review/api/v1/export.py, src/evaluation/generator_runner.py",
+      "root_cause": "GenerationConfig.video_path / _place_video_effect were wired all the way through build_plan and xsq_writer, but the live export path (Export.tsx -> POST /songs/<id>/export -> export.py::_run_export -> generator_runner.run -> _run_pipeline) never had a video_path parameter at all, so song['video_path'] from the library record was silently dropped before it ever reached GenerationConfig. Same class of bug as bug-172 (kwarg drift between _run_export and run()'s real signature) but this time the parameter didn't exist on either side.",
+      "fix": "added video_path param to generator_runner.run() and _run_pipeline(), threaded into GenerationConfig(video_path=...); export.py._run_export now passes video_path=song.get('video_path'). Extended the bug-172 regression guard (test_export_kwargs_match_generator_run_signature) to include video_path.",
+      "tags": [
+        "generator",
+        "review-api",
+        "video-effect",
+        "dead-wiring",
+        "regression-surface"
+      ],
+      "related_bugs": ["bug-172"],
+      "occurrences": 1,
+      "last_seen": "2026-07-14"
     }
   ]
 }

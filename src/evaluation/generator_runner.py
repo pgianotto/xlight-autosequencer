@@ -34,6 +34,7 @@ def run(
     phonemes: Optional[list[dict]] = None,
     genre: str = "pop",
     occasion: str = "general",
+    video_path: Optional[Path | str] = None,
     progress_cb: Optional[Callable[[str, float], None]] = None,
 ) -> bytes:
     """Run the generator deterministically and return .xsq bytes.
@@ -56,6 +57,8 @@ def run(
                   "Phonemes" timing track for the Faces effect.
         genre: Theme-selection genre hint (GenerationConfig.genre).
         occasion: Theme-selection occasion hint (GenerationConfig.occasion).
+        video_path: Optional path to an imported video file — placed as a
+                    Video effect on the largest matrix prop (GenerationConfig.video_path).
 
     Returns:
         Raw .xsq XML bytes.
@@ -91,7 +94,7 @@ def run(
     try:
         return _run_pipeline(audio_path, layout_path, seed, theme_overrides=theme_overrides,
                               lyrics=lyrics, words=words, phonemes=phonemes,
-                              genre=genre, occasion=occasion,
+                              genre=genre, occasion=occasion, video_path=video_path,
                               progress_cb=progress_cb)
     except GeneratorError:
         raise
@@ -109,6 +112,7 @@ def _run_pipeline(
     phonemes: Optional[list[dict]] = None,
     genre: str = "pop",
     occasion: str = "general",
+    video_path: Optional[Path | str] = None,
     progress_cb: Optional[Callable[[str, float], None]] = None,
 ) -> bytes:
     """Execute the full generation pipeline and return .xsq bytes."""
@@ -157,6 +161,7 @@ def _run_pipeline(
             # Faces placements reference the "Phonemes" timing track, so
             # only enable vocal placements when both mark sets exist.
             vocal_words=words if (words and phonemes) else None,
+            video_path=video_path,
         )
 
         # Re-seed after config construction (which may trigger path resolution calls)

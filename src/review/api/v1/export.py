@@ -120,6 +120,7 @@ def _run_export(state: "_ExportState", song: dict, session: dict,
             phonemes=phonemes or None,
             genre=genre,
             occasion=occasion,
+            video_path=song.get("video_path"),
             progress_cb=_placement_progress,
         )
 
