@@ -8,36 +8,23 @@
 
 ## ✅ Done
 
-- Arch prop-family recipe: chorus alternates Single Strand/Shockwave, bridge alternates to Spirals, chase direction + chase-size (Color_Mix1) rotate per section occurrence — all merged to `main`.
+- Arch prop-family recipe: chorus alternates Single Strand/Shockwave, bridge alternates to Spirals, chase direction + chase-size (Color_Mix1) rotate per section occurrence — merged to `main`.
 - Same direction/size rotation extended to cane/horizontal/vertical (minitree deliberately excluded — its data stays fixed to Right-Left).
 - Fixed stale `video_path` on re-import in `src/review/api/v1/import_video.py` (always adopts the latest drop, not just the first).
 - Added `Shader` effect (scoped to Plasma Emitter.fs) + 3 variants, and a new energy-gated whole-house composite mechanism (`AccentPolicy.whole_house_layers`, `_place_whole_house_composite` in `effect_placer.py`) that stacks extra layers on `01_BASE_All`, mined from the corpus's "All" group idiom.
-- Installed the real `openwolf` CLI (`npm install -g openwolf`), ran `openwolf init` — it auto-wired unrequested Codex integration (removed) and silently deleted the Branch Discipline / Code Review Discipline sections from OPENWOLF.md plus inserted an unsolicited "Astryx" framework recommendation into reframe-frameworks.md (both restored/removed). `.claude/settings.json` hook registration now real.
+- Installed the real `openwolf` CLI (`npm install -g openwolf`), ran `openwolf init` — it auto-wired unrequested Codex integration (removed) and silently deleted the Branch Discipline / Code Review Discipline sections from OPENWOLF.md plus inserted an unsolicited "Astryx" framework recommendation into reframe-frameworks.md (both restored/removed). `.claude/settings.json` hook registration now real. Note: live hooks auto-write noisy "auto-detected" entries to `.wolf/buglog.json`/`anatomy.md` on every Read/Edit — currently just `git checkout`-ing those away each time; worth revisiting whether to disable that specific hook behavior.
+- **Recovered all genuinely-missing work from branches ≤2 days old** (per user's cutoff): cherry-picked icicle recipe, mega-topper recipe + topper→hero promotion, star recipe, corpus-paired-hero pairing + always-fade-out, matrix motion rotation (4 looks), and the `mine_arch_corpus.py` tool script from `fix/spirals-textctrl-movement` / `feat/arch-sequencing-corpus-miner`. Deliberately dropped: the old All-group recipe (superseded by today's whole-house composite — removed `all_group`/`_SHOCKWAVE_ALL`/`_PINWHEEL_ALL`/`burst_volley` + related dead code), and several already-redundant commits (textctrl migrations, a devcontainer doc already present differently). Deleted all now-fully-accounted-for local branches (remotes untouched as backup).
+- Full test suite green throughout (2916 passed at last full run).
 
 ---
 
 ## 🚀 Next phase
 
-**Goal:** Recover the genuinely-missing (non-conflicting) feature work stranded on the unmerged `origin/fix/spirals-textctrl-movement` branch (14 commits, diverged 2026-07-13) before it drifts further and becomes unrecoverable.
-
-### To cherry-pick onto a fresh integration branch (in this order)
-1. `7aa9f89` — 14 more slider→textctrl migrations (verify overlap with main's own "re-land lost textctrl migration" commit first — likely partial, not full)
-2. `8167f58` + `78c6c41` — icicle recipe + the grouper DisplayAs fix it depends on
-3. `820079b` + `a9d5fb2` — mega-topper recipe + topper→hero promotion it depends on
-4. `072b7c3` — star recipe (chorus pops over verse chases)
-5. `eb78af8` — pair corpus-matched heroes together + always fade out
-6. `5cf867e` — matrix motion rotation, four mined looks (main currently only has a simpler 3-effect version)
-
-### Explicitly NOT to bring in
-- `a5604f9` + `d0421d0` — the old All-group recipe (volley-pacing, PropFamilyRecipe-integrated approach). User decided to keep today's separate whole-house-composite mechanism instead.
-- `42e679a`, `7956c5b`, `95e0f4a`, `a79b474` — already-equivalent or superseded (textctrl migrations, cerebrum note, devcontainer doc).
-
-### Closed decisions
-- Keep today's `AccentPolicy`-based whole-house composite over the old branch's corpus-recipe-integrated approach (user call, already merged/tested).
-- Delete the two now-fully-merged branches `fix/arch-effect-variety` / `fix/video-path-stale-on-reimport` once recovery work lands (already done for those two; the spirals-textctrl-movement branch stays until its recoverable commits are cherry-picked).
+**Goal:** none queued — this was a cleanup/consolidation session. Next work starts fresh from whatever the user brings.
 
 ### Open decisions
-- Whether to also re-mine/redo the All-group idiom later as an enhancement on top of today's composite (volley pacing, color-cycling backbone) — deferred, not decided.
+- Whether to re-mine/redo the All-group idiom later as an enhancement on top of today's whole-house composite (volley pacing, color-cycling backbone) — deferred, not decided.
+- Whether to investigate/disable the openwolf hook that auto-generates noisy "auto-detected" buglog.json entries and drastically rewrites anatomy.md on every Read/Edit.
 
 ---
 
