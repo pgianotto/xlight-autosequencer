@@ -549,6 +549,10 @@ class HierarchyResult:
     energy_impacts: list[TimingMark] = field(default_factory=list)
     energy_drops: list[TimingMark] = field(default_factory=list)
     gaps: list[TimingMark] = field(default_factory=list)
+    # Rare, extreme percussive transients (e.g. cymbal crashes) — see
+    # src/analyzer/crash_accents.py. Deliberately sparse: most songs will
+    # have zero. Distinct from energy_impacts (1s window, section-level).
+    crash_accents: list[TimingMark] = field(default_factory=list)
 
     # L1: Structure
     sections: list[TimingMark] = field(default_factory=list)
@@ -629,6 +633,7 @@ class HierarchyResult:
             "energy_impacts": [self._mark_to_dict(m) for m in self.energy_impacts],
             "energy_drops": [self._mark_to_dict(m) for m in self.energy_drops],
             "gaps": [self._mark_to_dict(m) for m in self.gaps],
+            "crash_accents": [self._mark_to_dict(m) for m in self.crash_accents],
             "sections": [self._mark_to_dict(m) for m in self.sections],
             "bars": self.bars.to_dict() if self.bars else None,
             "beats": self.beats.to_dict() if self.beats else None,
@@ -684,6 +689,11 @@ class HierarchyResult:
             TimingMark(time_ms=m["time_ms"], confidence=m.get("confidence"),
                        label=m.get("label"), duration_ms=m.get("duration_ms"))
             for m in d.get("gaps", [])
+        ]
+        obj.crash_accents = [
+            TimingMark(time_ms=m["time_ms"], confidence=m.get("confidence"),
+                       label=m.get("label"), duration_ms=m.get("duration_ms"))
+            for m in d.get("crash_accents", [])
         ]
         obj.sections = [
             TimingMark(time_ms=m["time_ms"], confidence=m.get("confidence"),

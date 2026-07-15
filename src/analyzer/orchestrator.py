@@ -656,6 +656,11 @@ def run_orchestrator(
     else:
         warnings.append("L0 Special Moments: skipped — bbc_energy not available")
 
+    from src.analyzer.crash_accents import detect_crash_accents
+    crash_accents = detect_crash_accents(audio, sr)
+    if crash_accents:
+        print(f"L0 Crash accents: {len(crash_accents)} rare transient(s)")
+
     # ── Stage 9: Interaction analysis ────────────────────────────────────────
     interactions = None
     if stems is not None:
@@ -737,6 +742,7 @@ def run_orchestrator(
         energy_impacts=impacts,
         energy_drops=drops,
         gaps=gaps,
+        crash_accents=crash_accents,
         sections=sections,
         bars=bars,
         beats=beats,

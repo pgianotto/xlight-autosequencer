@@ -199,7 +199,24 @@ preconditions, and 16-song corpus results.
 - Consider per-prop-type affinity: arches look best with Chase/Wave, mini-trees with
   Spirals/Fire, candy canes with Single Strand/Bars.
 
-### Crash/Transient Detector for Whole-House Accent (01_BASE_All_FADES)
+### Crash/Transient Detector for Whole-House Accent (01_BASE_All_FADES) — IMPLEMENTED 2026-07-14
+- **Shipped**: `src/analyzer/crash_accents.py::detect_crash_accents()` runs
+  librosa `onset_strength` on the full-mix audio (finer native resolution
+  than the coarse `bbc_energy` curve `energy_impacts` uses), keeping frames
+  that clear both the song's own 95th percentile AND a 4x-over-median ratio
+  floor, collapsing candidates within 10s to their strongest peak, and
+  hard-capping at 5 marks/song. Wired into `run_orchestrator` (Stage 8, right
+  after `energy_impacts`/`drops`/`gaps`) and stored on
+  `HierarchyResult.crash_accents`. Generator side:
+  `effect_placer.py::_place_crash_accents()` places a ~700ms "Shockwave Full
+  Fast" variant on `01_BASE_All_FADES` for each mark, skipping any mark
+  within 500ms of a vocal word (`config.vocal_words`) or at/after the
+  existing end-of-song fade's start boundary (computed via `_audible_end_ms`
+  in `plan.py`, passed in as `fade_exclusion_start_ms`). Gated by
+  `GenerationConfig.crash_accents` (default `True`). Tests:
+  `tests/unit/test_crash_accents.py` (detector),
+  `tests/unit/test_generator/test_crash_accents_placement.py` (placement).
+- Below is the original design/investigation note, kept for context.
 - User request (2026-07-14): identify audible "crash" moments (e.g. a cymbal
   hit) mid-song — not just at section boundaries — and place a Shockwave on
   `01_BASE_All_FADES` (a special override canvas that covers the whole

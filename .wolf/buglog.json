@@ -3324,6 +3324,27 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-14"
+    },
+    {
+      "id": "bug-201",
+      "timestamp": "2026-07-14",
+      "error_message": "FEATURE (not a bug fix): user requested a rare whole-house crash/transient accent (Shockwave on 01_BASE_All_FADES) for audible cymbal-crash-style moments not currently caught by any existing detector.",
+      "file": "src/analyzer/crash_accents.py (new), src/analyzer/orchestrator.py, src/analyzer/result.py, src/generator/effect_placer.py, src/generator/plan.py, src/generator/models.py, src/generator/xsq_writer.py",
+      "root_cause": "N/A (new feature). Prior gap: derive_energy_impacts (1s window, 1.8x ratio) verified too coarse to catch sub-second percussive transients -- see bug/CLAUDE.md Future Work entry from earlier the same day.",
+      "fix": "New detect_crash_accents() runs librosa onset_strength on full-mix audio, gated by 95th percentile + 4x-over-median ratio, 10s min spacing, hard cap 5/song. Wired into orchestrator Stage 8 -> HierarchyResult.crash_accents (schema fields added to to_dict/from_dict). Generator _place_crash_accents() places a 700ms Shockwave Full Fast on 01_BASE_All_FADES per mark, excluding marks within 500ms of a vocal word (config.vocal_words) and marks at/after the end-of-song fades own start boundary (passed as fade_exclusion_start_ms, computed via plan._audible_end_ms before _place_end_of_song_fade runs, so the two never collide in time on the same group/layer). Song-scoped like vocal_effects/video_effects (new SequencePlan.crash_effects field), gated by new GenerationConfig.crash_accents flag (default True).",
+      "tags": [
+        "analyzer",
+        "generator",
+        "crash-detection",
+        "whole-house-accent",
+        "new-feature",
+        "01_BASE_All_FADES"
+      ],
+      "related_bugs": [
+        "bug-200"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-07-14"
     }
   ]
 }

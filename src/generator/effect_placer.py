@@ -3079,3 +3079,75 @@ def _vocal_regions(vocal_words: Optional[list[dict]]) -> list[tuple[int, int]]:
         else:
             regions.append((start, end))
     return regions
+
+
+# Rare whole-house crash accent (see src/analyzer/crash_accents.py). A short
+# Shockwave burst on 01_BASE_All_FADES at the song's most extreme percussive
+# transients -- by design most songs get zero of these.
+_CRASH_EFFECT_DURATION_MS = 700
+# A crash landing inside a sung word reads as accompaniment, not a standalone
+# accent; per user design decision (2026-07-14) losing a true-positive crash
+# this way is preferred over letting vocal transients through as false hits.
+_CRASH_VOCAL_EXCLUSION_MS = 500
+
+
+def _place_crash_accents(
+    groups: list[PowerGroup],
+    hierarchy: HierarchyResult,
+    vocal_words: Optional[list[dict]],
+    variant_library: Any,
+    fade_exclusion_start_ms: Optional[int] = None,
+) -> dict[str, list[EffectPlacement]]:
+    """Place a short Shockwave on ``01_BASE_All_FADES`` at each rare crash
+    mark from ``hierarchy.crash_accents``.
+
+    Excludes marks within ``_CRASH_VOCAL_EXCLUSION_MS`` of any vocal word,
+    and marks at or after ``fade_exclusion_start_ms`` (the same group's
+    existing end-of-song Min-blend fade -- see ``plan._place_end_of_song_fade``
+    -- covers that span and a Shockwave there would collide with it).
+    Song-scoped like ``_place_singing_faces``/``_place_video_effect``, not
+    routed through the per-section pipeline.
+    """
+    result: dict[str, list[EffectPlacement]] = {}
+    if not hierarchy.crash_accents:
+        return result
+    if not any(g.name == "01_BASE_All_FADES" for g in groups):
+        return result
+
+    word_spans = [
+        (int(w["start_ms"]), int(w["end_ms"]))
+        for w in (vocal_words or [])
+        if int(w["end_ms"]) > int(w["start_ms"])
+    ]
+
+    def _near_vocal(time_ms: int) -> bool:
+        return any(
+            start - _CRASH_VOCAL_EXCLUSION_MS <= time_ms <= end + _CRASH_VOCAL_EXCLUSION_MS
+            for start, end in word_spans
+        )
+
+    variant = variant_library.get("Shockwave Full Fast") if variant_library is not None else None
+    params = dict(variant.parameter_overrides) if variant is not None else {}
+
+    placements: list[EffectPlacement] = []
+    for mark in hierarchy.crash_accents:
+        if _near_vocal(mark.time_ms):
+            continue
+        if fade_exclusion_start_ms is not None and mark.time_ms >= fade_exclusion_start_ms:
+            continue
+        end_ms = min(mark.time_ms + _CRASH_EFFECT_DURATION_MS, hierarchy.duration_ms)
+        if end_ms <= mark.time_ms:
+            continue
+        placements.append(EffectPlacement(
+            effect_name="Shockwave",
+            xlights_id="Shockwave",
+            model_or_group="01_BASE_All_FADES",
+            start_ms=mark.time_ms,
+            end_ms=end_ms,
+            parameters=params,
+            color_palette=["#FFFFFF"],
+        ))
+
+    if placements:
+        result["01_BASE_All_FADES"] = placements
+    return result

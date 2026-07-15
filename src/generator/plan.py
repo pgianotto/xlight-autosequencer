@@ -16,6 +16,7 @@ from src.generator.effect_placer import (
     _compute_active_tiers,
     _place_drum_accents,
     _place_impact_accent,
+    _place_crash_accents,
     _place_lyric_text,
     _place_singing_faces,
     _place_video_effect,
@@ -308,6 +309,23 @@ def build_plan(
     if config.video_path is not None:
         video_effects = _place_video_effect(props, config.video_path, hierarchy.duration_ms)
 
+    # 5d. Rare whole-house crash accents (config.crash_accents). Song-scoped,
+    # same rationale as vocal_effects/video_effects. Computed here (before
+    # transitions/end-of-song fade) so the fade's own start boundary can be
+    # used to exclude any crash mark that would collide with it.
+    crash_effects: dict[str, list] = {}
+    if config.crash_accents and hierarchy.crash_accents:
+        fade_exclusion_start_ms = max(
+            0, min(_audible_end_ms(assignments, hierarchy), hierarchy.duration_ms - _FADE_MIN_MS)
+        )
+        crash_effects = _place_crash_accents(
+            groups=groups,
+            hierarchy=hierarchy,
+            vocal_words=config.vocal_words,
+            variant_library=variant_library,
+            fade_exclusion_start_ms=fade_exclusion_start_ms,
+        )
+
     # 5. Value curves — generate for each placement when curves are enabled
     if config.curves_mode != "none":
         for assignment in assignments:
@@ -351,6 +369,7 @@ def build_plan(
         rotation_plan=rotation_plan,
         vocal_effects=vocal_effects,
         video_effects=video_effects,
+        crash_effects=crash_effects,
     )
 
 

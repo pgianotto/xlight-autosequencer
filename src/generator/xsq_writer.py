@@ -337,6 +337,11 @@ def write_xsq(
     for group_name, placements in plan.vocal_effects.items():
         unordered.setdefault(group_name, []).extend(placements)
 
+    # Song-scoped rare crash/transient accents (Shockwave on
+    # 01_BASE_All_FADES) — same rationale as vocal_effects.
+    for group_name, placements in plan.crash_effects.items():
+        unordered.setdefault(group_name, []).extend(placements)
+
     # Song-scoped Video placement (imported video clip on a matrix). Its
     # E_FILEPICKERCTRL_Video_Filename holds an absolute path into
     # ~/.xlight/library/ — a devcontainer-only location with no host
