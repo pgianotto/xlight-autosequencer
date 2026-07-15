@@ -2,12 +2,13 @@
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-07-14
+> Last updated: 2026-07-15
 
 ---
 
 ## ✅ Done
 
+- Fixed two user-reported whole-house rendering bugs, both confirmed against a real exported `.xsq` before fixing (bug-206, bug-207): (1) `01_BASE_All` composite layers could stack the identical effect on itself simultaneously ("shader on top of shader") — `_place_whole_house_composite` (`src/generator/effect_placer.py`) now rotates through 5 distinct effect names instead of indexing a flat pool with duplicate runs; (2) fade in/out values could exceed the duration of the placement they were on (503/789 fades in the sample file exceeded 25% of their own effect's length) — `_serialize_effect_params` (`src/generator/xsq_writer.py`) now caps `fade_in_ms`/`fade_out_ms` to 25% of the placement's own `end_ms - start_ms` at write time, guarding every fade producer at one point. Full generator/transitions/xsq_writer test suites green (330+ passed, no regressions).
 - Arch prop-family recipe: chorus alternates Single Strand/Shockwave, bridge alternates to Spirals, chase direction + chase-size (Color_Mix1) rotate per section occurrence — merged to `main`.
 - Same direction/size rotation extended to cane/horizontal/vertical (minitree deliberately excluded — its data stays fixed to Right-Left).
 - Fixed stale `video_path` on re-import in `src/review/api/v1/import_video.py` (always adopts the latest drop, not just the first).

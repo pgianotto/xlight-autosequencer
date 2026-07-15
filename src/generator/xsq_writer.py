@@ -650,11 +650,21 @@ def _serialize_effect_params(
     if buffer_style is not None:
         defaults["B_CHOICE_BufferStyle"] = buffer_style
 
-    # Add fades
-    if placement.fade_in_ms > 0:
-        defaults["T_TEXTCTRL_Fadein"] = f"{placement.fade_in_ms / 1000:.2f}".rstrip("0").rstrip(".")
-    if placement.fade_out_ms > 0:
-        defaults["T_TEXTCTRL_Fadeout"] = f"{placement.fade_out_ms / 1000:.2f}".rstrip("0").rstrip(".")
+    # Add fades -- capped to 25% of the effect's own duration so a fade
+    # computed from a section/crossfade-region length (e.g. apply_crossfades,
+    # apply_fadeout in transitions.py) never swallows a short placement
+    # whole. This is the single point where placement duration and fade
+    # values are both available, so it guards every fade producer, present
+    # and future (mirrors the B_CHOICE_BufferStyle single-source-of-truth
+    # precedent above).
+    duration_ms = placement.end_ms - placement.start_ms
+    max_fade_ms = duration_ms * 0.25 if duration_ms > 0 else 0
+    fade_in_ms = min(placement.fade_in_ms, max_fade_ms)
+    fade_out_ms = min(placement.fade_out_ms, max_fade_ms)
+    if fade_in_ms > 0:
+        defaults["T_TEXTCTRL_Fadein"] = f"{fade_in_ms / 1000:.2f}".rstrip("0").rstrip(".")
+    if fade_out_ms > 0:
+        defaults["T_TEXTCTRL_Fadeout"] = f"{fade_out_ms / 1000:.2f}".rstrip("0").rstrip(".")
 
     # Encode value curves inline
     for param_name, curve_data in placement.value_curves.items():

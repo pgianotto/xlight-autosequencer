@@ -2918,10 +2918,17 @@ def _place_whole_house_composite(
     variation_seed = assignment.variation_seed
     palette = list(assignment.theme.palette[:2]) or ["#FFFFFF"]
 
+    # All layers in this call share the same start/end (the whole section),
+    # so they render simultaneously -- indexing straight into the repeated
+    # weighted pool let adjacent i's land on the same effect (e.g. the two
+    # "Shader" entries), stacking an effect on top of itself. Rotate through
+    # the distinct effect names instead so the mined frequency ranking is
+    # preserved but a single stack never repeats an effect except in the
+    # rare layer_count=6 case (only 5 distinct effects exist to draw from).
+    distinct_pool = list(dict.fromkeys(_WHOLE_HOUSE_EFFECT_POOL))
+
     for i in range(layer_count):
-        effect_name = _WHOLE_HOUSE_EFFECT_POOL[
-            (variation_seed + i) % len(_WHOLE_HOUSE_EFFECT_POOL)
-        ]
+        effect_name = distinct_pool[(variation_seed + i) % len(distinct_pool)]
         if effect_name == "Shockwave":
             params = {
                 "E_CHECKBOX_Shockwave_Blend_Edges": "1",
