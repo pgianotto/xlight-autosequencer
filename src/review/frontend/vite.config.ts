@@ -27,8 +27,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://127.0.0.1:5000',
-      '/audio': 'http://127.0.0.1:5000',
+      '/api': 'http://0.0.0.0:5000',
+      '/audio': 'http://0.0.0.0:5000',
     },
   },
   build: {

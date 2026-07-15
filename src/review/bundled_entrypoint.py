@@ -1,6 +1,6 @@
 """Entry point used by PyInstaller when the backend runs as a Tauri sidecar.
 
-Binds Flask to an OS-chosen free port on 127.0.0.1, prints the port to
+Binds Flask to an OS-chosen free port on 0.0.0.0, prints the port to
 stdout for the Rust launcher to read (see contracts/sidecar-handshake.md),
 then starts the existing Flask app.
 
@@ -22,7 +22,7 @@ HANDSHAKE_PREFIX = "XLIGHT_BACKEND_PORT="
 
 
 def _pick_free_port() -> int:
-    """Bind/release a socket on 127.0.0.1:0 to get an OS-assigned port.
+    """Bind/release a socket on 0.0.0.0:0 to get an OS-assigned port.
 
     A small race window exists between release and Flask's rebind; on
     localhost it is in practice nil, and no production deployment uses
@@ -30,7 +30,7 @@ def _pick_free_port() -> int:
     """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(("127.0.0.1", 0))
+        sock.bind(("0.0.0.0", 0))
         return sock.getsockname()[1]
 
 
@@ -113,7 +113,7 @@ def main() -> int:
     print(f"{HANDSHAKE_PREFIX}{port}", flush=True)
 
     app = create_app()
-    app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False)
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
     return 0
 
 

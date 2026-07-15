@@ -6,7 +6,7 @@
  * relative URLs like "/api/v1/...". In production (running inside the
  * Tauri shell), the webview origin is `tauri://localhost` so relative
  * URLs do not work — callers must prefix every request with
- * `http://127.0.0.1:<port>` where `<port>` was chosen by the backend
+ * `http://0.0.0.0:<port>` where `<port>` was chosen by the backend
  * sidecar and passed to the frontend via the `backend-ready` Tauri event.
  *
  * Protocol (see specs/052-tauri-desktop-packaging/contracts/sidecar-handshake.md):
@@ -36,7 +36,7 @@ function isTauri(): boolean {
  * Resolve (and cache) the base URL to prepend to API paths.
  *
  * Returns `""` in dev mode so relative URLs work through the Vite proxy.
- * Returns `"http://127.0.0.1:<port>"` in Tauri production builds.
+ * Returns `"http://0.0.0.0:<port>"` in Tauri production builds.
  */
 export async function resolveBackendBase(): Promise<string> {
   if (resolvedBase !== null) return resolvedBase;
@@ -66,7 +66,7 @@ export async function resolveBackendBase(): Promise<string> {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
-        resolvedBase = `http://127.0.0.1:${port}`;
+        resolvedBase = `http://0.0.0.0:${port}`;
         resolve(resolvedBase);
       };
 

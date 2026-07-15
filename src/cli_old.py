@@ -598,12 +598,12 @@ def review_cmd(audio_or_json: str | None) -> None:
 
     if audio_or_json is None:
         app = create_app()
-        url = "http://127.0.0.1:5173/"
+        url = "http://0.0.0.0:5173/"
         click.echo(f"Starting review UI at {url}")
         click.echo("Press Ctrl-C to stop.")
         threading.Timer(0.5, webbrowser.open, args=[url]).start()
         try:
-            app.run(host="127.0.0.1", port=5173, use_reloader=False, debug=False)
+            app.run(host="0.0.0.0", port=5173, use_reloader=False, debug=False)
         except OSError as exc:
             if exc.errno == errno.EADDRINUSE:
                 click.echo(
@@ -620,12 +620,12 @@ def review_cmd(audio_or_json: str | None) -> None:
     # ── Directory: scan for hierarchy files and open library view ─────────────
     if given_path.is_dir():
         app = create_app(scan_dir=str(given_path.resolve()))
-        url = "http://127.0.0.1:5173/library-view"
+        url = "http://0.0.0.0:5173/library-view"
         click.echo(f"Starting library UI at {url} (scanning {given_path})")
         click.echo("Press Ctrl-C to stop.")
         threading.Timer(0.5, webbrowser.open, args=[url]).start()
         try:
-            app.run(host="127.0.0.1", port=5173, use_reloader=False, debug=False)
+            app.run(host="0.0.0.0", port=5173, use_reloader=False, debug=False)
         except OSError as exc:
             if exc.errno == errno.EADDRINUSE:
                 click.echo("ERROR: Port 5173 is already in use.", err=True)
@@ -684,14 +684,14 @@ def review_cmd(audio_or_json: str | None) -> None:
 
     app = create_app(analysis_json_path, audio_path_str)
 
-    url = "http://127.0.0.1:5173/"
+    url = "http://0.0.0.0:5173/"
     click.echo(f"Starting review UI at {url}")
     click.echo("Press Ctrl-C to stop.")
 
     threading.Timer(0.5, webbrowser.open, args=[url]).start()
 
     try:
-        app.run(host="127.0.0.1", port=5173, use_reloader=False, debug=False)
+        app.run(host="0.0.0.0", port=5173, use_reloader=False, debug=False)
     except OSError as exc:
         if exc.errno == errno.EADDRINUSE:
             click.echo(
@@ -2279,7 +2279,7 @@ def grouper_edit_cmd(layout_path: str, port: int, no_browser: bool) -> None:
     if not no_browser:
         threading.Timer(1.0, lambda: webbrowser.open(url)).start()
 
-    app.run(host="127.0.0.1", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -2454,7 +2454,7 @@ def story_review_cmd(story_path: str, port: int, no_browser: bool) -> None:
         sys.exit(4)
 
     app = create_app()
-    url = f"http://127.0.0.1:{port}/story-review?path={story_p}"
+    url = f"http://0.0.0.0:{port}/story-review?path={story_p}"
     click.echo(f"Starting story review UI at {url}")
     click.echo("Press Ctrl-C to stop.")
 
@@ -2462,7 +2462,7 @@ def story_review_cmd(story_path: str, port: int, no_browser: bool) -> None:
         threading.Timer(0.5, webbrowser.open, args=[url]).start()
 
     try:
-        app.run(host="127.0.0.1", port=port, use_reloader=False, debug=False)
+        app.run(host="0.0.0.0", port=port, use_reloader=False, debug=False)
     except OSError as exc:
         if exc.errno == errno.EADDRINUSE:
             click.echo(

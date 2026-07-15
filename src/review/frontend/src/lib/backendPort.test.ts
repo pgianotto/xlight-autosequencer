@@ -61,13 +61,13 @@ describe("resolveBackendBase", () => {
     const promise = mod.resolveBackendBase();
     // Simulate Rust emitting the event after the listener attached.
     setTimeout(() => emit("backend-ready", { port: 54321 }), 0);
-    await expect(promise).resolves.toBe("http://127.0.0.1:54321");
+    await expect(promise).resolves.toBe("http://0.0.0.0:54321");
   });
 
   it("falls back to get_backend_port when event already fired", async () => {
     pendingInvokePort = 61234;
     const mod = await loadFresh();
-    await expect(mod.resolveBackendBase()).resolves.toBe("http://127.0.0.1:61234");
+    await expect(mod.resolveBackendBase()).resolves.toBe("http://0.0.0.0:61234");
   });
 
   it("caches the resolved base for subsequent calls", async () => {
@@ -76,6 +76,6 @@ describe("resolveBackendBase", () => {
     const first = await mod.resolveBackendBase();
     const second = await mod.resolveBackendBase();
     expect(first).toBe(second);
-    expect(mod.getBackendBase()).toBe("http://127.0.0.1:55555");
+    expect(mod.getBackendBase()).toBe("http://0.0.0.0:55555");
   });
 });

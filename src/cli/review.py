@@ -166,11 +166,11 @@ def review_cmd(audio_or_json: str | None) -> None:
     # Docker's -p port mapping only reaches sockets bound to a container's
     # non-loopback interface, so running the review server in a container
     # (e.g. to keep vamp/madmom available for re-analyze) needs 0.0.0.0.
-    review_host = os.environ.get("XLIGHT_REVIEW_HOST", "127.0.0.1")
+    review_host = os.environ.get("XLIGHT_REVIEW_HOST", "0.0.0.0")
 
     if audio_or_json is None:
         app = create_app()
-        url = "http://127.0.0.1:5173/"
+        url = "http://0.0.0.0:5173/"
         click.echo(f"Starting review UI at {url}")
         click.echo("Press Ctrl-C to stop.")
         threading.Timer(0.5, webbrowser.open, args=[url]).start()
@@ -192,7 +192,7 @@ def review_cmd(audio_or_json: str | None) -> None:
     # ── Directory: scan for hierarchy files and open library view ─────────────
     if given_path.is_dir():
         app = create_app(scan_dir=str(given_path.resolve()))
-        url = "http://127.0.0.1:5173/library-view"
+        url = "http://0.0.0.0:5173/library-view"
         click.echo(f"Starting library UI at {url} (scanning {given_path})")
         click.echo("Press Ctrl-C to stop.")
         threading.Timer(0.5, webbrowser.open, args=[url]).start()
@@ -256,7 +256,7 @@ def review_cmd(audio_or_json: str | None) -> None:
 
     app = create_app(analysis_json_path, audio_path_str)
 
-    url = "http://127.0.0.1:5173/"
+    url = "http://0.0.0.0:5173/"
     click.echo(f"Starting review UI at {url}")
     click.echo("Press Ctrl-C to stop.")
 

@@ -5,7 +5,7 @@
  *
  * In dev the base is "", so `apiUrl("/api/v1/foo")` returns "/api/v1/foo"
  * and the Vite proxy handles it. In Tauri production the base is
- * "http://127.0.0.1:<port>", so the same input returns a full URL.
+ * "http://0.0.0.0:<port>", so the same input returns a full URL.
  */
 import { getBackendBase, resolveBackendBase } from "./backendPort";
 

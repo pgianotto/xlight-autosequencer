@@ -7,7 +7,7 @@ import webbrowser
 @click.command()
 @click.option("--dev", is_flag=True, help="Start in dev mode (skip auto-open browser).")
 @click.option("--port", default=5000, show_default=True, help="Port to listen on.")
-@click.option("--host", default="127.0.0.1", show_default=True, help="Host to bind.")
+@click.option("--host", default="0.0.0.0", show_default=True, help="Host to bind.")
 def main(dev: bool, port: int, host: str) -> None:
     """Launch the xOnset review UI."""
     # Windows defaults stdout/stderr to cp1252 unless the console is UTF-8,
