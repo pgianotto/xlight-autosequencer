@@ -21,11 +21,12 @@
 
 ## 🚀 Next phase
 
-**Goal:** none queued — this was a cleanup/consolidation session. Next work starts fresh from whatever the user brings.
+**Goal:** none queued — next work starts fresh from whatever the user brings.
 
 ### Open decisions
 - Whether to re-mine/redo the All-group idiom later as an enhancement on top of today's whole-house composite (volley pacing, color-cycling backbone) — deferred, not decided.
 - Whether to investigate/disable the openwolf hook that auto-generates noisy "auto-detected" buglog.json entries and drastically rewrites anatomy.md on every Read/Edit.
+- **`06_PROP_Horizontal_Lines` investigation closed as a non-issue** (2026-07-15): user reported the group "including way more than it should" on `F:\ShowFolderAI\xlights_rgbeffects.xml`; re-running the classifier against that file reproduced the same 12-member list (Windows Top 1-3, Matrix Top-1/2, Pergola Top x4, Garage Top x3) already present in the file, and the user confirmed via the UI it looks fine — no code change made. **Real finding surfaced along the way, still open**: that layout carries three separate group definitions with byte-identical 12-member lists — the vendor's original `"Horizontal Lines"` (aliased `06_prop_horizontal_lines`), plus our own `03_TYPE_Horizontal` and `06_PROP_Horizontal_Lines`. Worth a follow-up: check whether `group-layout`'s generation should detect/skip re-creating a tier-6 group when a vendor group with the same alias/membership already exists, to avoid three groups rendering the same lines redundantly.
 
 ---
 
