@@ -455,7 +455,15 @@ def write_xsq(
     for group_name in all_placements:
         if group_name not in displayed_models:
             elem = ET.SubElement(display_el, "Element")
-            elem.set("type", "model")
+            # 01_BASE_All(_FADES) are real xLights modelGroups (written by
+            # src/grouper/writer.py), not individual models -- mislabeling
+            # them "model" makes xLights apply per-model buffer-style
+            # semantics regardless of our B_CHOICE_BufferStyle=Default
+            # setting below. Every other group name keeps "model" as-is.
+            elem.set(
+                "type",
+                "modelGroup" if group_name in ("01_BASE_All", "01_BASE_All_FADES") else "model",
+            )
             elem.set("name", group_name)
             elem.set("visible", "1")
             elem.set("collapsed", "0")
@@ -488,7 +496,10 @@ def write_xsq(
     effects_el = ET.SubElement(root, "ElementEffects")
     for group_name, placements in all_placements.items():
         model_el = ET.SubElement(effects_el, "Element")
-        model_el.set("type", "model")
+        model_el.set(
+            "type",
+            "modelGroup" if group_name in ("01_BASE_All", "01_BASE_All_FADES") else "model",
+        )
         model_el.set("name", group_name)
 
         # Group placements by layer index.  Layer 0 = primary effect; layer 1+ = accent overlays.

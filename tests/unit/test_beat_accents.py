@@ -1042,16 +1042,31 @@ class TestWholeHouseCompositePlacement:
 
     def test_layer_indices_start_after_existing_theme_layers(self):
         # A 2-layer theme already occupies xLights layer indices 0-1 on BASE
-        # (see _assign_layers_to_tiers) -- the composite must not collide.
+        # (see _assign_layers_to_tiers) -- the composite must not collide,
+        # and whole_house_layers=5 is the TOTAL simultaneous-layer target
+        # (matching the mined distribution), so only 5-2=3 extra layers are
+        # added on top of the wash's own 2.
         theme = _make_theme()
         theme.layers = [object(), object()]
-        assignment = _make_assignment(energy_score=90, whole_house_layers=3, theme=theme)
+        assignment = _make_assignment(energy_score=90, whole_house_layers=5, theme=theme)
         base = _make_base_group()
         result = _place_whole_house_composite(
             groups=[base], assignment=assignment, variant_library=_make_variant_library(),
         )
         layer_indices = sorted(p.layer for p in result[base.name])
         assert layer_indices == [2, 3, 4]
+
+    def test_layer_count_never_exceeds_total_when_wash_already_covers_it(self):
+        # A 4-layer theme wash already meets/exceeds a whole_house_layers=3
+        # total target -- the composite must add nothing (not go negative).
+        theme = _make_theme()
+        theme.layers = [object(), object(), object(), object()]
+        assignment = _make_assignment(energy_score=90, whole_house_layers=3, theme=theme)
+        base = _make_base_group()
+        result = _place_whole_house_composite(
+            groups=[base], assignment=assignment, variant_library=_make_variant_library(),
+        )
+        assert result == {}
 
     def test_effect_names_come_from_the_mined_pool(self):
         assignment = _make_assignment(energy_score=90, whole_house_layers=7, variation_seed=0)

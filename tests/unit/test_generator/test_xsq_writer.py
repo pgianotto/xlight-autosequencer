@@ -263,6 +263,41 @@ class TestXsqWriter:
                 f"Model '{model}' not found in DisplayElements"
             )
 
+    def test_base_all_marked_as_model_group(self, tmp_path: Path) -> None:
+        """01_BASE_All(_FADES) are real xLights modelGroups (written by
+        src/grouper/writer.py) -- mislabeling them type="model" makes
+        xLights apply per-model buffer-style semantics regardless of the
+        B_CHOICE_BufferStyle=Default setting on the same element."""
+        plan = _make_plan()
+        placement = EffectPlacement(
+            effect_name="On", xlights_id="On", model_or_group="01_BASE_All",
+            start_ms=0, end_ms=5000, parameters={}, color_palette=["#FFFFFF"],
+        )
+        plan.sections[0].group_effects["01_BASE_All"] = [placement]
+        root = _write_and_parse(plan, tmp_path)
+
+        for section_name in ("DisplayElements", "ElementEffects"):
+            section = root.find(section_name)
+            assert section is not None
+            base_all = next(
+                (e for e in section if e.get("name") == "01_BASE_All"), None
+            )
+            assert base_all is not None, f"01_BASE_All missing from {section_name}"
+            assert base_all.get("type") == "modelGroup"
+
+    def test_other_groups_stay_marked_as_model(self, tmp_path: Path) -> None:
+        """Only 01_BASE_All(_FADES) get the modelGroup fix -- every other
+        group name (e.g. tier-6 PROP groups) keeps type="model" as before,
+        since their existing "Per Model Default" buffer-style behavior may
+        already rely on it."""
+        root = _write_and_parse(_make_plan(), tmp_path)
+        for section_name in ("DisplayElements", "ElementEffects"):
+            section = root.find(section_name)
+            assert section is not None
+            for elem in section:
+                if elem.get("name") in ("Model1", "Model2"):
+                    assert elem.get("type") == "model"
+
 
 class TestSpiralsDefaultsMatchCatalogStorageNames:
     """Regression guard for the Spirals_Movement bug: xLights persists a

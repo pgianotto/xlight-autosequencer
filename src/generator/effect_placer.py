@@ -2809,18 +2809,25 @@ def _place_whole_house_composite(
     reference corpus's "All" whole-house group idiom (see _WHOLE_HOUSE_*
     constants above).
 
-    This is additive to BASE's existing quiet theme wash, not a replacement:
-    new layers start at ``len(assignment.theme.layers)`` so they never
-    collide with whatever layer indices the normal per-section theme
-    placement already used on the same group (see _assign_layers_to_tiers --
-    theme layers can land on tier 1 at any index up to n-1).
+    ``assignment.accent_policy.whole_house_layers`` is the mined TOTAL
+    simultaneous-layer target (matching the corpus's own measured
+    distribution on the "All" element as a whole), not an extra count on top
+    of the theme wash. The wash's own layers (``len(assignment.theme.layers)``,
+    typically 1-3, see _assign_layers_to_tiers) are already active for the
+    same section, so the composite only adds however many MORE layers are
+    needed to reach that total -- placing the full target as pure extras
+    would double-count the wash and overshoot the mined distribution (e.g. a
+    2-layer wash + a "4" target composite reads as 6 simultaneous layers,
+    not 4). New layers start at ``len(assignment.theme.layers)`` so they
+    never collide with the wash's own layer indices.
 
     Section-level gating (``assignment.accent_policy.whole_house_layers``)
     is computed once in ``build_plan`` from ``config.whole_house_composite``
     and ``section.energy_score``; this helper is mechanical and trusts it.
     """
     result: dict[str, list[EffectPlacement]] = {}
-    layer_count = assignment.accent_policy.whole_house_layers
+    base_layer = len(assignment.theme.layers)
+    layer_count = max(0, assignment.accent_policy.whole_house_layers - base_layer)
     if layer_count <= 0:
         return result
 
@@ -2830,7 +2837,6 @@ def _place_whole_house_composite(
 
     section = assignment.section
     variation_seed = assignment.variation_seed
-    base_layer = len(assignment.theme.layers)
     palette = list(assignment.theme.palette[:2]) or ["#FFFFFF"]
 
     for i in range(layer_count):
