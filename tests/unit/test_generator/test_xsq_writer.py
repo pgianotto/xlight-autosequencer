@@ -285,6 +285,31 @@ class TestXsqWriter:
             assert base_all is not None, f"01_BASE_All missing from {section_name}"
             assert base_all.get("type") == "modelGroup"
 
+    def test_base_all_sorts_after_every_other_group(self, tmp_path: Path) -> None:
+        """01_BASE_All(_FADES) are whole-house override canvases, not
+        ordinary tier-1 base groups -- the mined corpus names their
+        equivalents "All (Put on bottom for GLOBAL EFFECTS/FADES)" and
+        places them at the END of the element list, after tier 08 HERO.
+        Sorting them with the rest of tier 01 would put them first instead,
+        which does not match that convention."""
+        plan = _make_plan()
+        for name in ("01_BASE_All", "01_BASE_All_FADES", "08_HERO_Star"):
+            plan.sections[0].group_effects[name] = [
+                EffectPlacement(
+                    effect_name="On", xlights_id="On", model_or_group=name,
+                    start_ms=0, end_ms=5000, parameters={},
+                    color_palette=["#FFFFFF"],
+                )
+            ]
+        root = _write_and_parse(plan, tmp_path)
+
+        for section_name in ("DisplayElements", "ElementEffects"):
+            section = root.find(section_name)
+            assert section is not None
+            names = [e.get("name") for e in section]
+            assert names.index("08_HERO_Star") < names.index("01_BASE_All")
+            assert names.index("08_HERO_Star") < names.index("01_BASE_All_FADES")
+
     def test_other_groups_stay_marked_as_model(self, tmp_path: Path) -> None:
         """Only 01_BASE_All(_FADES) get the modelGroup fix -- every other
         group name (e.g. tier-6 PROP groups) keeps type="model" as before,

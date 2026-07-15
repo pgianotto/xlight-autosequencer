@@ -3166,7 +3166,9 @@
         "dead-wiring",
         "regression-surface"
       ],
-      "related_bugs": ["bug-172"],
+      "related_bugs": [
+        "bug-172"
+      ],
       "occurrences": 1,
       "last_seen": "2026-07-14"
     },
@@ -3177,8 +3179,16 @@
       "file": "src/effects/builtin_effects.json, src/generator/xsq_writer.py, src/variants/builtins/{Single Strand,Ripple,Color Wash,Shimmer,Wave,Liquid}.json",
       "root_cause": "Same root cause as the Spirals_Movement fix: xLights migrated these sliders to text controls (E_TEXTCTRL_) in a recent version, but our catalog/writer/variants were seeded from a pre-migration corpus and still carry the stale E_SLIDER_ key (plus, for float-scaled params, the old 10x-integer magnitude instead of the real float value).",
       "fix": "Re-applied the previously-designed fix cleanly on top of current main (not merged from the stale branch, to avoid reverting the video-import feature): Single Strand Chase_Rotations/Chase_Offset, Ripple_Cycles (both catalog entries sharing the key), ColorWash_Cycles, Shimmer_Cycles, Wave_Speed, and 8 Liquid params (Gravity, GravityAngle, LifeTime, X1, Y1, Direction1, Velocity1, Flow1, SourceSize1) all migrated to E_TEXTCTRL_ with corrected float scaling. Re-added TestMigratedSliderKeysAbsent sweeping writer defaults, all builtin variant files, and the catalog text for every migrated bare name.",
-      "tags": ["generator", "effects", "textctrl-migration", "regression-surface", "re-landed"],
-      "related_bugs": ["bug-192"],
+      "tags": [
+        "generator",
+        "effects",
+        "textctrl-migration",
+        "regression-surface",
+        "re-landed"
+      ],
+      "related_bugs": [
+        "bug-192"
+      ],
       "occurrences": 1,
       "last_seen": "2026-07-14"
     },
@@ -3189,8 +3199,17 @@
       "file": "src/effects/builtin_effects.json, src/generator/xsq_writer.py",
       "root_cause": "Same corpus-drift root cause, three distinct symptoms: (1) missing underscores in catalog storage_name strings (Morph_Start_X1 etc, and Meteors_XOffset/YOffset using the wrong SLIDER/TEXTCTRL prefix); (2) wrong default/min/max values with no key error (Circles_Speed/XC/YC/Bounce, Galaxy_Revolutions off by a divisor-360 scale, Garlands_Spacing below its real min); (3) three effects (Garlands, Galaxy, Faces) had no catalog entry at all despite the writer already emitting defaults for two of them.",
       "fix": "Morph: fixed 4 coordinate storage_name typos + Stagger min. Meteors: XOffset/YOffset -> E_TEXTCTRL_. Garlands: added catalog entry, fixed writer's stale Cycles key + Spacing default. Circles: fixed Speed/XC/YC/Bounce values, deleted phantom Circles_Collide, added 3 missing params. Galaxy: added catalog entry, fixed writer's Revolutions scale (3 -> 1440). Text: fixed Text_Line1->Text and Text_Speed prefix (both had no render-side fallback -- would have silently rendered nothing), fixed Text_Dir/Text_Font choice values. Faces: added catalog entry, fixed LeadFrames widget/category validation, added Fade to writer defaults. Pinwheel: cosmetic 'none'->'None' casing + added Style/Rotation params. One scoped regression test class per effect in test_xsq_writer.py.",
-      "tags": ["generator", "effects", "catalog-completeness", "textctrl-migration", "regression-surface"],
-      "related_bugs": ["bug-192", "bug-193"],
+      "tags": [
+        "generator",
+        "effects",
+        "catalog-completeness",
+        "textctrl-migration",
+        "regression-surface"
+      ],
+      "related_bugs": [
+        "bug-192",
+        "bug-193"
+      ],
       "occurrences": 1,
       "last_seen": "2026-07-14"
     },
@@ -3247,7 +3266,9 @@
         "chase-size",
         "corpus-mining-contamination"
       ],
-      "related_bugs": ["bug-199"],
+      "related_bugs": [
+        "bug-199"
+      ],
       "occurrences": 1,
       "last_seen": "2026-07-14"
     },
@@ -3281,7 +3302,26 @@
         "stale-process",
         "workflow"
       ],
-      "related_bugs": ["bug-197"],
+      "related_bugs": [
+        "bug-197"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-07-14"
+    },
+    {
+      "id": "bug-200",
+      "timestamp": "2026-07-14",
+      "error_message": "01_BASE_All / 01_BASE_All_FADES override groups were emitted at the TOP of DisplayElements/ElementEffects (tier-1 sort position), while the mined corpus consistently places their equivalents (\"All (Put on bottom for GLOBAL EFFECTS/FADES)\") at the very BOTTOM of the element list, after every other model/group including tier 08 HERO.",
+      "file": "src/generator/xsq_writer.py",
+      "root_cause": "_tier_sort_key() sorted purely by numeric tier prefix, so 01_BASE_All(_FADES) fell in with ordinary tier-1 base wash groups instead of being treated as a special whole-house override canvas that must render last (on top compositionally, last in element order).",
+      "fix": "Special-cased 01_BASE_All and 01_BASE_All_FADES in _tier_sort_key() to sort key (100, name), placing them after every tier (including 99/unprefixed) in both DisplayElements and ElementEffects.",
+      "tags": [
+        "xsq_writer",
+        "element-ordering",
+        "override-group",
+        "corpus-convention"
+      ],
+      "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-14"
     }

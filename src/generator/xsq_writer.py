@@ -372,7 +372,16 @@ def write_xsq(
 
     # Sort groups by tier prefix so BASE (01) renders behind HERO (08).
     # Groups without a 2-digit tier prefix sort last.
+    #
+    # 01_BASE_All / 01_BASE_All_FADES are whole-house *override* canvases
+    # (not ordinary tier-1 base wash groups): the mined corpus consistently
+    # names their equivalents "All (Put on bottom for GLOBAL EFFECTS)" /
+    # "All (put on bottom for FADES)" and places them at the END of the
+    # DisplayElements/ElementEffects list, after every other model/group —
+    # not with the rest of tier 01. They sort last here to match.
     def _tier_sort_key(name: str) -> tuple[int, str]:
+        if name in ("01_BASE_All", "01_BASE_All_FADES"):
+            return (100, name)
         if len(name) >= 2 and name[:2].isdigit():
             return (int(name[:2]), name)
         return (99, name)
