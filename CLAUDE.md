@@ -199,6 +199,46 @@ preconditions, and 16-song corpus results.
 - Consider per-prop-type affinity: arches look best with Chase/Wave, mini-trees with
   Spirals/Fire, candy canes with Single Strand/Bars.
 
+### Crash/Transient Detector for Whole-House Accent (01_BASE_All_FADES)
+- User request (2026-07-14): identify audible "crash" moments (e.g. a cymbal
+  hit) mid-song — not just at section boundaries — and place a Shockwave on
+  `01_BASE_All_FADES` (a special override canvas that covers the whole
+  layout, currently reserved for the end-of-song dimmer fade only).
+- **Verified gap**: the existing `derive_energy_impacts` (`src/analyzer/derived.py`,
+  1-second window, 1.8x ratio threshold, "validated on a 22-song batch") does
+  NOT catch real, audible crashes. Checked against a real cached hierarchy
+  (Dream On - Aerosmith, 201.9s): two known crash timestamps (50.85s, ~190s)
+  both peak at only ~1.3x ratio using the exact same windowing algorithm —
+  well under the 1.8x threshold. The 1-second window averages out what's
+  likely a brief (sub-second) percussive transient; the existing detector is
+  tuned for broader section-level energy jumps, not brief accent hits.
+- **What's needed**: a genuinely new, separate short-window (~250-300ms)
+  transient detector, distinct from `energy_impacts` (do not lower/change
+  the existing validated threshold — that risks regressing whatever it's
+  currently tuned for). Needs validation against more than one song's two
+  known timestamps before shipping — two points from one song isn't enough
+  to tune a threshold without overfitting. Revisit once more ground-truth
+  crash timestamps (ideally from several different songs/genres) are
+  available. Corroborating signals worth considering once WhisperX word
+  timing is available for the song: a crash landing inside a gap between
+  vocal words is a stronger signal than energy alone (observed, though not
+  used per user instruction, in a third-party lyric-timing reference file
+  for this same song).
+- **User-stated design constraint (2026-07-14): these accents must be rare
+  by design.** Most songs should get zero of them; a handful of the most
+  extreme moments per song is the ceiling, not a per-section or per-beat
+  thing. Tune for high precision over recall — better to miss a real crash
+  than to fire on ordinary loud passages. This should shape the eventual
+  threshold choice (aim conservative) and probably a hard per-song cap on
+  how many can fire regardless of how many pass the ratio test.
+- Placement mechanics note: `01_BASE_All_FADES` is currently a "reserved"
+  single-placement canvas (`if g.name.endswith("_FADES"): continue` blocks
+  all per-section theme/recipe placement in `effect_placer.py`; `plan.py`
+  places exactly one end-of-song fade there). A crash-accent feature would
+  need its own song-scoped placement pass (like `_place_singing_faces`/
+  `_place_video_effect`), not routed through the per-section pipeline, and
+  must not collide in time/layer with the existing end-of-song fade.
+
 ### QM Segmenter Boundary Merging
 - The `_merge_qm_boundaries` function uses a simple 2-second minimum gap to avoid
   micro-sections. A better approach would weight QM boundaries by the energy change
