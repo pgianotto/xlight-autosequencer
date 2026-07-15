@@ -2686,15 +2686,17 @@ def _place_drum_accents(
     # different name prefixes), so we scan individual props instead of groups.
     # Each qualifying prop becomes its own placement target (model name, not group name).
     #
-    # Exception: props whose tier-6 PROP group received placements this section
-    # are skipped — in xLights a model-level effect covers the group's render on
-    # that model, so per-model accents would hide the group effect (e.g. the
-    # corpus snowflake Shockwave). The per-model scan is a fallback for layouts
-    # where no tier-6 group formed around these props, not an additive layer.
+    # Exception: props whose tier-6 PROP or tier-8 HERO group received placements
+    # this section are skipped — in xLights a model-level effect covers the
+    # group's render on that model, so per-model accents would hide the group
+    # effect (e.g. the corpus snowflake Shockwave, or a solo mega-topper HERO
+    # group's own continuous sequence). The per-model scan is a fallback for
+    # layouts where no tier-6/8 group formed around these props, not an
+    # additive layer on top of a group that already covers them.
     covered_by_prop_group: set[str] = {
         member
         for g in groups
-        if g.tier == 6 and assignment.group_effects.get(g.name)
+        if g.tier in (6, 8) and assignment.group_effects.get(g.name)
         for member in g.members
     }
     small_radial_model_names: list[str] = []

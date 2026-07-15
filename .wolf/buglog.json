@@ -3459,6 +3459,25 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-15"
+    },
+    {
+      "id": "bug-208",
+      "timestamp": "2026-07-15",
+      "error_message": "User: 08_HERO_Mega_Tree and 08_HERO_Mega_Topper duplicate the actual props being sequenced.",
+      "file": "src/generator/effect_placer.py",
+      "root_cause": "_place_drum_accents() skips per-model drum-hit accents on props already covered by a placed tier-6 PROP group (covered_by_prop_group, comment: \"a model-level effect covers the group's render on that model\"), but the coverage check was hardcoded to g.tier == 6 only. A radial-shaped prop promoted solo into a tier-8 HERO group (e.g. Mega Topper, radial DisplayAs, into 08_HERO_Mega_Topper) is never in that set, so it always additionally received direct per-model Shockwave/On drum accents on top of the HERO group's own dense continuous sequence. Confirmed in a real exported .xsq: \"Mega Topper\" (raw model) had 48 independent placements while \"08_HERO_Mega_Topper\" (the group) had 594 -- the same physical prop driven by two uncoordinated effect layers simultaneously. Mega Tree did not show this only because its DisplayAs/name never qualifies as \"radial\" in the first place, not because the group-tier check covered it.",
+      "fix": "Widened covered_by_prop_group's tier filter from g.tier == 6 to g.tier in (6, 8), so a radial prop already covered by a placed tier-8 HERO group is skipped the same way a tier-6 PROP group member is. Added test_props_in_placed_tier8_hero_group_get_no_accents to tests/unit/test_beat_accents.py::TestDrumAccentGroupCoverageSkip.",
+      "tags": [
+        "generator",
+        "effect_placer",
+        "drum-accents",
+        "hero-tier",
+        "duplicate-sequencing",
+        "mega-topper"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-15"
     }
   ]
 }

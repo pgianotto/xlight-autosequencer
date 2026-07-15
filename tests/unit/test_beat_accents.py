@@ -795,6 +795,26 @@ class TestDrumAccentGroupCoverageSkip:
         for model_name in group.members:
             assert model_name in result
 
+    def test_props_in_placed_tier8_hero_group_get_no_accents(self):
+        """A radial prop promoted solo into a tier-8 HERO group (e.g. a mega
+        topper) is skipped too -- the HERO group's own continuous sequence
+        already covers the model; a per-model accent on top would double
+        that prop up with two uncoordinated effect layers (bug-208)."""
+        hits = [(1000, "kick"), (2000, "snare")]
+        hierarchy = _make_hierarchy(drum_hits=hits)
+        assignment = _make_assignment(energy_score=80)
+        group = _make_radial_group(
+            name="08_HERO_Mega_Topper", tier=8, members=["Mega Topper"],
+        )
+        assignment.group_effects[group.name] = [MagicMock()]
+        props_by_name = _make_props_by_name(group.members, pixel_count=50)
+
+        result = _place_drum_accents(
+            groups=[group], hierarchy=hierarchy, assignment=assignment,
+            variant_library=_make_variant_library(), props_by_name=props_by_name,
+        )
+        assert result == {}
+
 
 # ---------------------------------------------------------------------------
 # 042B: _place_impact_accent — energy and role gates
