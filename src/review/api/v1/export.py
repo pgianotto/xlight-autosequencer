@@ -53,7 +53,8 @@ def _export_id() -> str:
 
 def _run_export(state: "_ExportState", song: dict, session: dict,
                 layout: dict, destination_name: str, fmt: str,
-                genre: str = "pop", occasion: str = "general") -> None:
+                genre: str = "pop", occasion: str = "general",
+                randomness: float = 0.0) -> None:
     """Run the export in a background thread."""
     try:
         state.push({"stage": "building_plan", "progress": 0.1})
@@ -120,6 +121,7 @@ def _run_export(state: "_ExportState", song: dict, session: dict,
             phonemes=phonemes or None,
             genre=genre,
             occasion=occasion,
+            randomness=randomness,
             video_path=song.get("video_path"),
             progress_cb=_placement_progress,
         )
@@ -202,6 +204,7 @@ def start_export(song_id: str):
     prefs = lib.get("preferences", {}) or {}
     genre = prefs.get("genre") or "pop"
     occasion = prefs.get("occasion") or "general"
+    randomness = prefs.get("randomness", 0.0)
 
     exp_id = _export_id()
     state = _ExportState(exp_id)
@@ -212,7 +215,7 @@ def start_export(song_id: str):
 
     t = threading.Thread(
         target=_run_export,
-        args=(state, song, session, layout, destination_name, fmt, genre, occasion),
+        args=(state, song, session, layout, destination_name, fmt, genre, occasion, randomness),
         daemon=True,
     )
     t.start()

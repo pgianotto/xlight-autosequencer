@@ -27,6 +27,11 @@ _ALLOWED_PROVIDERS = ["lrclib", "musixmatch", "netease", "deezer", "megalobiz", 
 
 _LRC_LINE_RE = re.compile(r"^\[(\d+):(\d+(?:\.\d+)?)\](.*)$")
 
+# syncedlyrics queries multiple providers sequentially with no timeout of
+# its own; 60s is generous for a handful of lyrics-lookup HTTP calls while
+# still bounding a genuinely unresponsive provider (see fetch_synced_lyrics).
+_SEARCH_TIMEOUT_S = 60
+
 
 def parse_lrc(lrc_text: str) -> list[tuple[int, str]]:
     """Parse LRC-format text into a list of ``(start_ms, line_text)`` tuples.
@@ -119,11 +124,66 @@ def find_chorus_body(
     return " ".join(lines[j][1] for j in range(first_idx, first_idx + block_size))
 
 
+_LRC_METADATA_RE = re.compile(r"^\[(ar|ti):(.*)\]$", re.IGNORECASE)
+
+
+def _parse_lrc_metadata(lrc_text: str) -> dict[str, str]:
+    """Extract ``[ar:]``/``[ti:]`` metadata tags from LRC text, if present.
+
+    Coverage varies by provider — some embed these header tags, others
+    don't — so callers must treat an empty result as "nothing to validate
+    against", not as a mismatch.
+    """
+    meta: dict[str, str] = {}
+    for raw_line in lrc_text.splitlines():
+        m = _LRC_METADATA_RE.match(raw_line.strip())
+        if m:
+            meta[m.group(1).lower()] = m.group(2).strip()
+    return meta
+
+
+def _significant_tokens(text: str) -> set[str]:
+    """Lowercase alphanumeric word tokens, dropping 1-2 letter filler words."""
+    tokens = re.findall(r"[a-z0-9]+", text.lower())
+    return {t for t in tokens if len(t) > 2 or t.isdigit()}
+
+
+def _lyrics_match_expected(lrc_text: str, title: str, artist: str) -> bool:
+    """Best-effort check that a fetched lyrics result is for the requested song.
+
+    A fuzzy provider search can confidently return the wrong song for the
+    same artist (e.g. "Blue Christmas" search landing on "Hound Dog" —
+    both Elvis Presley), so artist agreement alone isn't enough; title
+    tokens are checked too. Returns True (accept) whenever the provider's
+    response doesn't include a metadata tag to check against — there's
+    nothing to validate, and providers that omit them shouldn't be
+    penalized versus one that includes an accurate tag.
+    """
+    meta = _parse_lrc_metadata(lrc_text)
+    tag_artist = meta.get("ar")
+    tag_title = meta.get("ti")
+
+    if tag_artist:
+        expected = _significant_tokens(artist)
+        got = _significant_tokens(tag_artist)
+        if expected and got and expected.isdisjoint(got):
+            return False
+
+    if tag_title:
+        expected = _significant_tokens(title)
+        got = _significant_tokens(tag_title)
+        if expected and got and expected.isdisjoint(got):
+            return False
+
+    return True
+
+
 def fetch_synced_lyrics(title: str, artist: str) -> Optional[str]:
     """Search for synced lyrics via ``syncedlyrics``, restricted to non-Genius providers.
 
     Returns raw LRC (or plain, provider-dependent) text, or ``None`` when no
-    match is found, the search fails, or ``syncedlyrics`` isn't installed.
+    match is found, the search fails, the result looks like a mismatch (see
+    ``_lyrics_match_expected``), or ``syncedlyrics`` isn't installed.
     """
     try:
         import syncedlyrics
@@ -135,11 +195,50 @@ def fetch_synced_lyrics(title: str, artist: str) -> Optional[str]:
     if not search_term:
         return None
 
-    try:
-        result = syncedlyrics.search(search_term, providers=list(_ALLOWED_PROVIDERS))
-    except Exception as exc:
-        log.warning("syncedlyrics search failed for %r: %s", search_term, exc)
+    # syncedlyrics queries several third-party providers over HTTP and
+    # doesn't expose a timeout parameter of its own — a slow/unresponsive
+    # provider could otherwise hang analysis indefinitely. Bound it with an
+    # external timeout using a *daemon* thread: concurrent.futures'
+    # ThreadPoolExecutor registers an atexit hook that joins its worker
+    # threads on interpreter shutdown, so it would still block process exit
+    # on a genuinely hung call even after future.result(timeout=...)
+    # returns. A daemon thread is abandoned outright — it dies with the
+    # process instead of blocking it.
+    import threading as _threading
+
+    _outcome: dict[str, object] = {}
+
+    def _do_search() -> None:
+        try:
+            _outcome["result"] = syncedlyrics.search(search_term, providers=list(_ALLOWED_PROVIDERS))
+        except Exception as exc:  # noqa: BLE001 — surfaced via _outcome, not raised across threads
+            _outcome["exc"] = exc
+
+    search_thread = _threading.Thread(target=_do_search, daemon=True)
+    search_thread.start()
+    search_thread.join(timeout=_SEARCH_TIMEOUT_S)
+
+    if search_thread.is_alive():
+        log.warning(
+            "syncedlyrics search timed out after %ds for %r — skipping "
+            "(search thread abandoned, may still be running in background)",
+            _SEARCH_TIMEOUT_S, search_term,
+        )
         return None
+
+    if "exc" in _outcome:
+        log.warning("syncedlyrics search failed for %r: %s", search_term, _outcome["exc"])
+        return None
+
+    result = _outcome.get("result")
+
+    if result and not _lyrics_match_expected(result, title, artist):
+        log.warning(
+            "syncedlyrics result for %r looks like a mismatch (expected "
+            "title=%r artist=%r) — discarding", search_term, title, artist,
+        )
+        return None
+
     return result
 
 

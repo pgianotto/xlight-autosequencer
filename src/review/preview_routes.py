@@ -196,6 +196,7 @@ def start_preview(source_hash: str):
         duration_scaling=bool(brief.get("duration_scaling", True)),
         beat_accent_effects=bool(brief.get("beat_accent_effects", True)),
         tier_selection=bool(brief.get("tier_selection", True)),
+        randomness=float(brief.get("randomness", 0.0)),
     )
 
     # Determine section index — auto-select if null

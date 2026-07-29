@@ -183,6 +183,44 @@ def test_fetch_synced_lyrics_empty_title_and_artist_returns_none():
 
 
 # ---------------------------------------------------------------------------
+# _lyrics_match_expected / fetch_synced_lyrics mismatch rejection
+# ---------------------------------------------------------------------------
+
+def test_lyrics_match_expected_accepts_matching_title_and_artist():
+    lrc = "[ar:Placeholder Artist]\n[ti:Placeholder Title]\n[00:01.00]la la\n"
+    assert sl._lyrics_match_expected(lrc, "Placeholder Title", "Placeholder Artist") is True
+
+
+def test_lyrics_match_expected_rejects_same_artist_different_title():
+    # Same-artist mismatches (e.g. Elvis "Blue Christmas" search landing on
+    # Elvis "Hound Dog") aren't caught by artist agreement alone.
+    lrc = "[ar:Elvis Presley]\n[ti:Hound Dog]\n[00:01.00]placeholder lyric\n"
+    assert sl._lyrics_match_expected(lrc, "Blue Christmas", "Elvis Presley") is False
+
+
+def test_lyrics_match_expected_rejects_different_artist():
+    lrc = "[ar:Someone Else]\n[ti:Placeholder Title]\n[00:01.00]placeholder lyric\n"
+    assert sl._lyrics_match_expected(lrc, "Placeholder Title", "Placeholder Artist") is False
+
+
+def test_lyrics_match_expected_accepts_when_no_metadata_tags_present():
+    # Providers that omit [ar:]/[ti:] headers have nothing to validate
+    # against — accept rather than penalize.
+    lrc = "[00:01.00]placeholder lyric with no header tags\n"
+    assert sl._lyrics_match_expected(lrc, "Anything", "Anyone") is True
+
+
+def test_fetch_synced_lyrics_discards_mismatched_result(monkeypatch):
+    class _FakeSyncedLyrics:
+        @staticmethod
+        def search(term, providers=None, **kwargs):
+            return "[ar:Elvis Presley]\n[ti:Hound Dog]\n[00:01.00]placeholder lyric\n"
+
+    monkeypatch.setitem(__import__("sys").modules, "syncedlyrics", _FakeSyncedLyrics)
+    assert sl.fetch_synced_lyrics("Blue Christmas", "Elvis Presley") is None
+
+
+# ---------------------------------------------------------------------------
 # get_boundary_refinement_inputs — end-to-end wiring
 # ---------------------------------------------------------------------------
 

@@ -139,6 +139,21 @@ def _resolve_bool_field(body: dict, on_disk_brief: dict, field_name: str, defaul
     return default
 
 
+def _resolve_float_field(
+    body: dict, on_disk_brief: dict, field_name: str, default: float
+) -> float:
+    """Resolve a float Brief field with POST body > on-disk Brief > default priority."""
+    val = body.get(field_name)
+    if val is None:
+        val = on_disk_brief.get(field_name)
+    if val is None:
+        return default
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return default
+
+
 def _resolve_theme_overrides(
     body: dict, on_disk_brief: dict, story_path: "Path | None" = None
 ) -> Optional[dict[int, str]]:
@@ -261,6 +276,7 @@ def start_generation(source_hash: str):
     mood_intent = _resolve_brief_field(body, on_disk_brief, "mood_intent", "auto")
     duration_feel = _resolve_brief_field(body, on_disk_brief, "duration_feel", "auto")
     accent_strength = _resolve_brief_field(body, on_disk_brief, "accent_strength", "auto")
+    randomness = _resolve_float_field(body, on_disk_brief, "randomness", 0.0)
 
     focused_vocabulary = _resolve_bool_field(body, on_disk_brief, "focused_vocabulary", True)
     embrace_repetition = _resolve_bool_field(body, on_disk_brief, "embrace_repetition", True)
@@ -286,6 +302,8 @@ def start_generation(source_hash: str):
         return jsonify({"field": "duration_feel", "error": f"Invalid duration_feel: {duration_feel!r}"}), 400
     if accent_strength not in _VALID_ACCENT_STRENGTHS:
         return jsonify({"field": "accent_strength", "error": f"Invalid accent_strength: {accent_strength!r}"}), 400
+    if not 0.0 <= randomness <= 1.0:
+        return jsonify({"field": "randomness", "error": f"Invalid randomness: {randomness!r}. Must be between 0.0 and 1.0"}), 400
 
     # Create job
     job_id = str(uuid.uuid4())
@@ -329,6 +347,7 @@ def start_generation(source_hash: str):
         mood_intent=mood_intent,
         duration_feel=duration_feel,
         accent_strength=accent_strength,
+        randomness=randomness,
     )
     t = threading.Thread(target=_run_generation, args=(job, config), daemon=True)
     t.start()

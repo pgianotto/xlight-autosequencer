@@ -1854,9 +1854,13 @@ def _load_curves_mode_from_config() -> str:
 @click.option("--curves", "curves_mode", default=None,
               type=click.Choice(sorted(_VALID_CURVES_MODES)),
               help="Value curve generation mode (default: all). Overrides config file.")
+@click.option("--randomness", "randomness", default=0.0, type=click.FloatRange(0.0, 1.0),
+              help="Chaos knob (0.0-1.0) for effect variety. 0.0 (default) keeps the "
+                   "deterministic rotation; higher values mix in more randomized "
+                   "effect/motion/color choices per section.")
 def generate_cmd(audio_file, layout_file, output_dir, genre, occasion,
                  fresh, no_wizard, target_section, theme_overrides_raw,
-                 tiers_raw, story_path, transition_mode, curves_mode):
+                 tiers_raw, story_path, transition_mode, curves_mode, randomness):
     """Generate an xLights .xsq sequence from an MP3 and layout file."""
     from src.generator.models import GenerationConfig
     from src.generator.plan import generate_sequence, read_song_metadata
@@ -1920,6 +1924,7 @@ def generate_cmd(audio_file, layout_file, output_dir, genre, occasion,
         story_path=Path(story_path) if story_path else None,
         transition_mode=transition_mode,
         curves_mode=curves_mode,
+        randomness=randomness,
     )
 
     tiers_label = ", ".join(sorted(

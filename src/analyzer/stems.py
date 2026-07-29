@@ -235,11 +235,11 @@ print(json.dumps(result))
             try:
                 proc = _sp.run(
                     [str(vamp_python), "-c", script],
-                    capture_output=True, text=True, timeout=600,
+                    capture_output=True, text=True, timeout=1800,
                 )
             except _sp.TimeoutExpired:
                 raise RuntimeError(
-                    "Demucs stem separation timed out after 10 minutes. "
+                    "Demucs stem separation timed out after 30 minutes. "
                     "This may indicate insufficient memory or CPU. "
                     "Try closing other applications and retrying."
                 )
