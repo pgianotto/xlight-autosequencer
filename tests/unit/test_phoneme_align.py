@@ -91,3 +91,58 @@ class TestWarningsPropagation:
         )
         _, _, warnings = phoneme_align.align_words_and_phonemes("song.mp3")
         assert warnings == []
+
+
+class TestRealignLyricLines:
+    """realign_lyric_lines() corrects the Timeline's per-line lyric
+    timestamps using WhisperX's forced-aligned word marks instead of the
+    lyrics provider's raw (often approximate) line timestamps -- the same
+    alignment pass the Words/Phonemes tracks already use (2026-08-02)."""
+
+    def test_empty_inputs_returned_unchanged(self):
+        assert phoneme_align.realign_lyric_lines([], []) == []
+        lines = [{"t_ms": 0, "duration_ms": 1000, "text": "hello"}]
+        assert phoneme_align.realign_lyric_lines(lines, []) == lines
+        assert phoneme_align.realign_lyric_lines([], [{"label": "HI", "start_ms": 0, "end_ms": 500}]) == []
+
+    def test_splits_aligned_words_back_into_lines_by_word_count(self):
+        lines = [
+            {"t_ms": 0, "duration_ms": 20000, "text": "la la placeholder"},
+            {"t_ms": 20000, "duration_ms": 5000, "text": "line two here"},
+        ]
+        # Aligned word timestamps ground truth is very different from the
+        # provider's original line timestamps above -- that's the point.
+        words = [
+            {"label": "LA", "start_ms": 660, "end_ms": 1000},
+            {"label": "LA", "start_ms": 1000, "end_ms": 1300},
+            {"label": "PLACEHOLDER", "start_ms": 1300, "end_ms": 2500},
+            {"label": "LINE", "start_ms": 14190, "end_ms": 14500},
+            {"label": "TWO", "start_ms": 14500, "end_ms": 14800},
+            {"label": "HERE", "start_ms": 14800, "end_ms": 15200},
+        ]
+        corrected = phoneme_align.realign_lyric_lines(lines, words)
+        assert corrected == [
+            {"t_ms": 660, "duration_ms": 2500 - 660, "text": "la la placeholder"},
+            {"t_ms": 14190, "duration_ms": 15200 - 14190, "text": "line two here"},
+        ]
+
+    def test_word_count_mismatch_returns_lines_unchanged(self):
+        # WhisperX dropped a word during alignment -- total counts disagree,
+        # so don't risk misaligning every subsequent line.
+        lines = [
+            {"t_ms": 0, "duration_ms": 5000, "text": "la la placeholder"},
+            {"t_ms": 5000, "duration_ms": 5000, "text": "line two here"},
+        ]
+        words = [
+            {"label": "LA", "start_ms": 660, "end_ms": 1000},
+            {"label": "PLACEHOLDER", "start_ms": 1000, "end_ms": 2500},
+            {"label": "LINE", "start_ms": 14190, "end_ms": 14500},
+            {"label": "TWO", "start_ms": 14500, "end_ms": 14800},
+            {"label": "HERE", "start_ms": 14800, "end_ms": 15200},
+        ]
+        assert phoneme_align.realign_lyric_lines(lines, words) == lines
+
+    def test_line_with_no_matchable_words_kept_as_is(self):
+        lines = [{"t_ms": 500, "duration_ms": 100, "text": "..."}]
+        words: list[dict] = []
+        assert phoneme_align.realign_lyric_lines(lines, words) == lines

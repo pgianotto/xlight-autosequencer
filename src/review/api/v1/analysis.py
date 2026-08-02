@@ -730,10 +730,17 @@ def _analyze_in_background(state: "_RunState", source_path: str, song_id: str,
             state.push({"detector": "phonemes (whisperx)", "library": "story",
                         "status": "running", "progress": 0.0})
             try:
-                from src.analyzer.phoneme_align import align_words_and_phonemes
+                from src.analyzer.phoneme_align import align_words_and_phonemes, realign_lyric_lines
                 words_list, phonemes_list, lyrics_warnings = align_words_and_phonemes(
                     str(src), lyrics_list or None, cached_lyrics_text,
                 )
+                # The Words/Phonemes tracks above are already grounded in the
+                # real audio via WhisperX's forced alignment; the Timeline's
+                # lyric-line display otherwise still used the lyrics
+                # provider's raw (often approximate) line timestamps.
+                # Regroup the aligned words back into corrected line marks
+                # so both use the same alignment pass.
+                lyrics_list = realign_lyric_lines(lyrics_list, words_list)
                 state.push({"detector": "phonemes (whisperx)", "library": "story",
                             "status": "done", "confidence": None,
                             "marks": len(phonemes_list), "warnings": lyrics_warnings})

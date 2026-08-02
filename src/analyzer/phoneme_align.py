@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -22,6 +23,57 @@ from typing import Optional
 from src.log import get_logger
 
 log = get_logger("xlight.phoneme_align")
+
+_WORD_RE = re.compile(r"[a-zA-Z0-9']+")
+
+
+def realign_lyric_lines(lyric_lines: list[dict], words: list[dict]) -> list[dict]:
+    """Correct each lyric line's (t_ms, duration_ms) with WhisperX's
+    forced-aligned word timestamps instead of the lyrics provider's raw
+    line timestamps.
+
+    ``align_words_and_phonemes`` force-aligns exactly the text ``lyric_lines``
+    supplies (see ``_lyric_lines_to_text`` — one original line per newline),
+    so the total word count across all lines should equal ``len(words)``.
+    This splits the flat aligned-word list back into per-line groups by each
+    original line's own word count, in order, and sets each line's
+    ``t_ms``/``duration_ms`` from its first/last aligned word — grounding the
+    Timeline's lyric-line display in the actual audio instead of trusting
+    the provider's often-approximate line timestamps (which the Words/
+    Phonemes tracks already didn't rely on — this brings the Timeline's
+    line-level display in line with the same alignment pass, 2026-08-02).
+
+    If the total word counts don't match (WhisperX dropped/merged some
+    words during alignment), returns ``lyric_lines`` unchanged rather than
+    risk misaligning every line after the first mismatch.
+    """
+    if not lyric_lines or not words:
+        return lyric_lines
+
+    def _word_count(text: str) -> int:
+        return len(_WORD_RE.findall(text))
+
+    expected_total = sum(_word_count(line.get("text", "")) for line in lyric_lines)
+    if expected_total == 0 or expected_total != len(words):
+        return lyric_lines
+
+    corrected: list[dict] = []
+    idx = 0
+    for line in lyric_lines:
+        n = _word_count(line.get("text", ""))
+        if n == 0:
+            corrected.append(dict(line))
+            continue
+        line_words = words[idx:idx + n]
+        idx += n
+        start_ms = line_words[0]["start_ms"]
+        end_ms = line_words[-1]["end_ms"]
+        corrected.append({
+            "t_ms": start_ms,
+            "duration_ms": max(end_ms - start_ms, 1),
+            "text": line.get("text", ""),
+        })
+    return corrected
 
 _SUBPROCESS_TIMEOUT_S = 600
 
