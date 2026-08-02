@@ -30,10 +30,14 @@ def test_parse_lrc_basic():
     ]
 
 
-def test_parse_lrc_skips_metadata_and_blank_lines():
+def test_parse_lrc_skips_metadata_lines_but_keeps_blank_timestamp_as_gap_marker():
+    # A blank timestamp tag ([00:00.00] with no text) marks an instrumental
+    # gap in many providers' LRC output -- kept as a (start_ms, "") sentinel
+    # rather than dropped, so duration-computing consumers can cap the
+    # preceding line's span at the gap instead of the next sung line.
     lrc = "[ar:Someone]\n\n[00:00.00]\n[00:02.00]only real line\n"
     lines = sl.parse_lrc(lrc)
-    assert lines == [(2000, "only real line")]
+    assert lines == [(0, ""), (2000, "only real line")]
 
 
 def test_parse_lrc_sorts_by_time():
@@ -95,6 +99,17 @@ def test_lines_to_word_marks_empty_lines_returns_empty():
     assert sl.lines_to_word_marks([], duration_ms=10_000) == []
 
 
+def test_lines_to_word_marks_caps_words_at_gap_marker_not_next_sung_line():
+    # Reproduces the 2026-08-02 bug: an instrumental gap marker between two
+    # sung lines must cap the first line's words there, not stretch them to
+    # the next *sung* line's start.
+    lines = [(1000, "la la placeholder"), (3000, ""), (14000, "far later line")]
+    marks = sl.lines_to_word_marks(lines, duration_ms=20_000)
+    assert [m.label for m in marks] == ["LA", "LA", "PLACEHOLDER", "FAR", "LATER", "LINE"]
+    assert all(m.start_ms == 1000 and m.end_ms == 3000 for m in marks[:3])
+    assert all(m.start_ms == 14000 and m.end_ms == 20_000 for m in marks[3:])
+
+
 # ---------------------------------------------------------------------------
 # lines_to_timing_marks
 # ---------------------------------------------------------------------------
@@ -109,6 +124,24 @@ def test_lines_to_timing_marks_one_mark_per_line():
 
 def test_lines_to_timing_marks_empty_lines_returns_empty():
     assert sl.lines_to_timing_marks([], duration_ms=10_000) == []
+
+
+def test_lines_to_timing_marks_caps_bar_at_gap_marker_not_next_sung_line():
+    # Same bug as above, but for the Timeline UI's lyric bars: without the
+    # fix, "la la placeholder" would render as a ~13s bar (1000 -> 14000)
+    # spanning straight through the instrumental gap.
+    lines = [(1000, "la la placeholder"), (3000, ""), (14000, "far later line")]
+    marks = sl.lines_to_timing_marks(lines, duration_ms=20_000)
+    assert [m.label for m in marks] == ["la la placeholder", "far later line"]
+    assert marks[0].time_ms == 1000 and marks[0].duration_ms == 2000  # capped at the gap
+    assert marks[1].time_ms == 14000 and marks[1].duration_ms == 6000
+
+
+def test_lines_to_timing_marks_no_mark_emitted_for_gap_marker_itself():
+    lines = [(1000, "la la placeholder"), (3000, "")]
+    marks = sl.lines_to_timing_marks(lines, duration_ms=10_000)
+    assert len(marks) == 1
+    assert marks[0].label == "la la placeholder"
 
 
 # ---------------------------------------------------------------------------
@@ -153,6 +186,23 @@ def test_find_chorus_body_case_and_punctuation_insensitive_matching():
     chorus = sl.find_chorus_body(lines, block_size=2, min_repeats=2)
     # Returns the original-cased text of the *earliest* occurrence.
     assert chorus == "La La, Placeholder! Line Two."
+
+
+def test_find_chorus_body_ignores_blank_gap_markers():
+    # Blank gap-marker entries (see parse_lrc) must not count as real lyric
+    # lines or shift the block-matching indices.
+    lines = [
+        (0, "la la placeholder line one"),
+        (1500, ""),  # instrumental gap marker
+        (2000, "la la placeholder line two"),
+        (4000, "a completely different verse line"),
+        (6000, "another unique verse line here"),
+        (7500, ""),  # another gap marker
+        (8000, "la la placeholder line one"),
+        (10000, "la la placeholder line two"),
+    ]
+    chorus = sl.find_chorus_body(lines, block_size=2, min_repeats=2)
+    assert chorus == "la la placeholder line one la la placeholder line two"
 
 
 # ---------------------------------------------------------------------------
@@ -456,6 +506,31 @@ def test_get_boundary_refinement_inputs_full_lrc(monkeypatch):
         "la la placeholder line one",
         "la la placeholder line two",
     ]
+
+
+def test_get_boundary_refinement_inputs_caps_line_at_instrumental_gap(monkeypatch):
+    # Reproduces the real-world bug (2026-08-02): a real provider's LRC for
+    # a Christmas song had an instrumental gap marked by a blank timestamp
+    # 7s after the opening line, with the next sung line only starting at
+    # 14.19s. Without the parse_lrc/lines_to_timing_marks fix, the opening
+    # line's Timeline bar stretched across the whole 13.5s gap instead of
+    # stopping ~7s in where the singing actually pauses.
+    lrc = (
+        "[00:00.66]la la placeholder opening line\n"
+        "[00:07.01]\n"
+        "[00:14.19]la la placeholder next line\n"
+    )
+    monkeypatch.setattr(sl, "fetch_synced_lyrics", lambda title, artist: lrc)
+    _forced_words, _chorus_body, line_marks = sl.get_boundary_refinement_inputs(
+        "Title", "Artist", 20_000,
+    )
+    assert [m.label for m in line_marks] == [
+        "la la placeholder opening line",
+        "la la placeholder next line",
+    ]
+    opening = line_marks[0]
+    assert opening.time_ms == 660
+    assert opening.duration_ms == 7010 - 660  # capped at the gap, not 14190 - 660
 
 
 def test_get_boundary_refinement_inputs_no_match(monkeypatch):

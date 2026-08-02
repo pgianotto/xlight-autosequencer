@@ -50,9 +50,18 @@ def _is_credit_line(text: str) -> bool:
 def parse_lrc(lrc_text: str) -> list[tuple[int, str]]:
     """Parse LRC-format text into a list of ``(start_ms, line_text)`` tuples.
 
-    Skips metadata tags (e.g. ``[ar:Artist]``, ``[ti:Title]``), timestamp
-    tags with empty text, blank lines, and credit/attribution lines (see
-    ``_CREDIT_LINE_RE``). Returned in chronological order.
+    Skips metadata tags (e.g. ``[ar:Artist]``, ``[ti:Title]``) and
+    credit/attribution lines (see ``_CREDIT_LINE_RE``), but *keeps* blank
+    timestamp tags (``[MM:SS.ff]`` with no text) as ``(start_ms, "")``
+    entries — many providers emit these to mark instrumental gaps between
+    sung lines. Downstream duration-computing consumers
+    (``lines_to_timing_marks``, ``lines_to_word_marks``) need these to cap
+    a line's rendered/aligned span at the gap instead of stretching it all
+    the way to the next *sung* line's start (bug found 2026-08-02: a 7s
+    instrumental gap after the opening line rendered as a single ~13.5s
+    lyric-track bar since the gap marker was silently dropped here).
+    Callers that don't want blank entries (e.g. ``find_chorus_body``)
+    filter them out themselves. Returned in chronological order.
     """
     lines: list[tuple[int, str]] = []
     for raw_line in lrc_text.splitlines():
@@ -61,7 +70,7 @@ def parse_lrc(lrc_text: str) -> list[tuple[int, str]]:
             continue
         minutes, seconds, text = m.groups()
         text = text.strip()
-        if not text or _is_credit_line(text):
+        if text and _is_credit_line(text):
             continue
         start_ms = int(round((int(minutes) * 60 + float(seconds)) * 1000))
         lines.append((start_ms, text))
@@ -75,9 +84,18 @@ def lines_to_timing_marks(lines: list[tuple[int, str]], duration_ms: int) -> lis
     Used for the lyric timeline track (one labeled, duration-spanning block
     per line), as opposed to ``lines_to_word_marks`` which is per-word for
     boundary-refinement's word-window matching.
+
+    A blank entry (``text == ""`` — an instrumental-gap marker, see
+    ``parse_lrc``) produces no mark of its own, but its timestamp still
+    caps the *previous* line's ``duration_ms`` via the ``lines[i + 1][0]``
+    lookup below — without it, a line right before a gap would stretch all
+    the way to the next *sung* line's start instead of stopping where the
+    singing actually stops.
     """
     marks: list[TimingMark] = []
     for i, (start_ms, text) in enumerate(lines):
+        if not text:
+            continue
         end_ms = lines[i + 1][0] if i + 1 < len(lines) else duration_ms
         end_ms = max(end_ms, start_ms + 1)
         marks.append(TimingMark(time_ms=start_ms, confidence=None, label=text,
@@ -89,7 +107,9 @@ def lines_to_word_marks(lines: list[tuple[int, str]], duration_ms: int) -> list[
     """Expand ``(start_ms, line_text)`` pairs into per-word ``WordMark``s.
 
     Every word in a line inherits that line's start timestamp; a word's
-    end is the next line's start (or ``duration_ms`` for the last line).
+    end is the next line's start (or ``duration_ms`` for the last line) —
+    including a blank gap-marker entry's start, which correctly caps the
+    words at the gap instead of the next sung line (see ``parse_lrc``).
     This is coarser than true per-word alignment, but matches the
     granularity boundary refinement's sliding-window text matching needs —
     it only checks whether a word appears within a window, not its exact
@@ -97,6 +117,8 @@ def lines_to_word_marks(lines: list[tuple[int, str]], duration_ms: int) -> list[
     """
     marks: list[WordMark] = []
     for i, (start_ms, text) in enumerate(lines):
+        if not text:
+            continue
         end_ms = lines[i + 1][0] if i + 1 < len(lines) else duration_ms
         end_ms = max(end_ms, start_ms + 1)
         for word in re.sub(r"[^a-zA-Z0-9\s']", " ", text).split():
@@ -118,7 +140,12 @@ def find_chorus_body(
     a verse doesn't. Returns the original-cased text of the earliest
     occurrence of the most-repeated ``block_size``-line window, or ``None``
     if nothing repeats at least ``min_repeats`` times.
+
+    Blank gap-marker entries (see ``parse_lrc``) are dropped first — a
+    2-line block spanning into an instrumental gap isn't real repeated
+    lyric content and would just add noise to the repetition count.
     """
+    lines = [pair for pair in lines if pair[1]]
     if len(lines) < block_size:
         return None
 
@@ -362,8 +389,10 @@ def check_synced_lyrics_with_text(
         if duration_ms is not None and last_start_ms > duration_ms + _DURATION_MISMATCH_TOLERANCE_MS:
             return {"found": False, "reason": "duration_mismatch", "line_count": 0, "preview": [],
                     "song_duration_ms": duration_ms, "lyrics_duration_ms": last_start_ms}, None
-        preview = [text for _, text in lines[:3]]
-        return {"found": True, "reason": None, "line_count": len(lines), "preview": preview,
+        # Blank gap-marker entries (see parse_lrc) aren't real lyric lines —
+        # exclude them from the count/preview shown to the user.
+        sung_lines = [text for _, text in lines if text]
+        return {"found": True, "reason": None, "line_count": len(sung_lines), "preview": sung_lines[:3],
                 "song_duration_ms": duration_ms, "lyrics_duration_ms": last_start_ms}, result
 
     plain_lines = [
