@@ -129,9 +129,11 @@ class TestRealignLyricLines:
             {"t_ms": 14190, "duration_ms": 15200 - 14190, "text": "line two here"},
         ]
 
-    def test_word_count_mismatch_returns_lines_unchanged(self):
-        # WhisperX dropped a word during alignment -- total counts disagree,
-        # so don't risk misaligning every subsequent line.
+    def test_word_count_mismatch_still_corrects_matched_lines(self):
+        # WhisperX dropped one "LA" during alignment -- total counts
+        # disagree, but each line still has matched words and should still
+        # be corrected from them (2026-08-03: an exact-count requirement
+        # here meant any dropped word silently discarded every alignment).
         lines = [
             {"t_ms": 0, "duration_ms": 5000, "text": "la la placeholder"},
             {"t_ms": 5000, "duration_ms": 5000, "text": "line two here"},
@@ -143,7 +145,30 @@ class TestRealignLyricLines:
             {"label": "TWO", "start_ms": 14500, "end_ms": 14800},
             {"label": "HERE", "start_ms": 14800, "end_ms": 15200},
         ]
-        assert phoneme_align.realign_lyric_lines(lines, words) == lines
+        corrected = phoneme_align.realign_lyric_lines(lines, words)
+        assert corrected == [
+            {"t_ms": 660, "duration_ms": 2500 - 660, "text": "la la placeholder"},
+            {"t_ms": 14190, "duration_ms": 15200 - 14190, "text": "line two here"},
+        ]
+
+    def test_line_with_zero_matched_words_keeps_original_timing(self):
+        # A line whose words never got aligned at all (e.g. drowned out by
+        # instrumentation) shouldn't be guessed at -- keep its provider
+        # timestamp instead of e.g. collapsing to a neighboring line's time.
+        lines = [
+            {"t_ms": 0, "duration_ms": 5000, "text": "la la placeholder"},
+            {"t_ms": 5000, "duration_ms": 5000, "text": "unheard line here"},
+        ]
+        words = [
+            {"label": "LA", "start_ms": 660, "end_ms": 1000},
+            {"label": "LA", "start_ms": 1000, "end_ms": 1300},
+            {"label": "PLACEHOLDER", "start_ms": 1300, "end_ms": 2500},
+        ]
+        corrected = phoneme_align.realign_lyric_lines(lines, words)
+        assert corrected == [
+            {"t_ms": 660, "duration_ms": 2500 - 660, "text": "la la placeholder"},
+            {"t_ms": 5000, "duration_ms": 5000, "text": "unheard line here"},
+        ]
 
     def test_line_with_no_matchable_words_kept_as_is(self):
         lines = [{"t_ms": 500, "duration_ms": 100, "text": "..."}]

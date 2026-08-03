@@ -33,46 +33,67 @@ def realign_lyric_lines(lyric_lines: list[dict], words: list[dict]) -> list[dict
     line timestamps.
 
     ``align_words_and_phonemes`` force-aligns exactly the text ``lyric_lines``
-    supplies (see ``_lyric_lines_to_text`` — one original line per newline),
-    so the total word count across all lines should equal ``len(words)``.
-    This splits the flat aligned-word list back into per-line groups by each
-    original line's own word count, in order, and sets each line's
-    ``t_ms``/``duration_ms`` from its first/last aligned word — grounding the
-    Timeline's lyric-line display in the actual audio instead of trusting
-    the provider's often-approximate line timestamps (which the Words/
-    Phonemes tracks already didn't rely on — this brings the Timeline's
-    line-level display in line with the same alignment pass, 2026-08-02).
+    supplies (see ``_lyric_lines_to_text`` — one original line per newline).
+    WhisperX doesn't always return timing for every reference word though —
+    low-confidence words are dropped from its output entirely (see
+    ``PhonemeAnalyzer.analyze``'s ``word_marks`` filter), so ``words`` is
+    typically a *subsequence* of the full reference text, not a 1:1 match
+    (found 2026-08-03: only 97 of 184 words aligned on one song — an exact
+    total-count match, the original approach here, essentially never holds
+    in practice and silently discarded every alignment).
 
-    If the total word counts don't match (WhisperX dropped/merged some
-    words during alignment), returns ``lyric_lines`` unchanged rather than
-    risk misaligning every line after the first mismatch.
+    Aligns the flattened reference words against ``words`` by text (via
+    :class:`difflib.SequenceMatcher`, which finds the matching blocks of an
+    ordered subsequence — exactly what a forced aligner that only *drops*
+    words, never reorders or invents them, produces) to recover which
+    aligned word belongs to which original line despite the drops. Each
+    line whose text matched at least one aligned word gets its
+    ``t_ms``/``duration_ms`` set from that line's earliest/latest matched
+    word; a line with zero matches keeps its original (provider) timing
+    rather than guessing.
     """
     if not lyric_lines or not words:
         return lyric_lines
 
-    def _word_count(text: str) -> int:
-        return len(_WORD_RE.findall(text))
+    def _tokens(text: str) -> list[str]:
+        return [t.upper() for t in _WORD_RE.findall(text)]
 
-    expected_total = sum(_word_count(line.get("text", "")) for line in lyric_lines)
-    if expected_total == 0 or expected_total != len(words):
+    orig_tokens: list[str] = []
+    orig_line_of: list[int] = []
+    for li, line in enumerate(lyric_lines):
+        for tok in _tokens(line.get("text", "")):
+            orig_tokens.append(tok)
+            orig_line_of.append(li)
+
+    aligned_tokens = [w["label"] for w in words]
+    if not orig_tokens or not aligned_tokens:
         return lyric_lines
 
+    import difflib
+    matcher = difflib.SequenceMatcher(a=orig_tokens, b=aligned_tokens, autojunk=False)
+
+    line_start: dict[int, int] = {}
+    line_end: dict[int, int] = {}
+    for block in matcher.get_matching_blocks():
+        for k in range(block.size):
+            li = orig_line_of[block.a + k]
+            w = words[block.b + k]
+            start_ms, end_ms = w["start_ms"], w["end_ms"]
+            if li not in line_start or start_ms < line_start[li]:
+                line_start[li] = start_ms
+            if li not in line_end or end_ms > line_end[li]:
+                line_end[li] = end_ms
+
     corrected: list[dict] = []
-    idx = 0
-    for line in lyric_lines:
-        n = _word_count(line.get("text", ""))
-        if n == 0:
+    for li, line in enumerate(lyric_lines):
+        if li in line_start:
+            corrected.append({
+                "t_ms": line_start[li],
+                "duration_ms": max(line_end[li] - line_start[li], 1),
+                "text": line.get("text", ""),
+            })
+        else:
             corrected.append(dict(line))
-            continue
-        line_words = words[idx:idx + n]
-        idx += n
-        start_ms = line_words[0]["start_ms"]
-        end_ms = line_words[-1]["end_ms"]
-        corrected.append({
-            "t_ms": start_ms,
-            "duration_ms": max(end_ms - start_ms, 1),
-            "text": line.get("text", ""),
-        })
     return corrected
 
 _SUBPROCESS_TIMEOUT_S = 600
