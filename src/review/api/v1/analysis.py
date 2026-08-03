@@ -730,7 +730,9 @@ def _analyze_in_background(state: "_RunState", source_path: str, song_id: str,
             state.push({"detector": "phonemes (whisperx)", "library": "story",
                         "status": "running", "progress": 0.0})
             try:
-                from src.analyzer.phoneme_align import align_words_and_phonemes, realign_lyric_lines
+                from src.analyzer.phoneme_align import (
+                    align_words_and_phonemes, ctc_fallback_words, realign_lyric_lines,
+                )
                 words_list, phonemes_list, lyrics_warnings = align_words_and_phonemes(
                     str(src), lyrics_list or None, cached_lyrics_text,
                 )
@@ -740,7 +742,25 @@ def _analyze_in_background(state: "_RunState", source_path: str, song_id: str,
                 # provider's raw (often approximate) line timestamps.
                 # Regroup the aligned words back into corrected line marks
                 # so both use the same alignment pass.
-                lyrics_list = realign_lyric_lines(lyrics_list, words_list)
+                original_lyrics_list = lyrics_list
+                lyrics_list = realign_lyric_lines(original_lyrics_list, words_list)
+                # WhisperX drops words it can't confidently align rather
+                # than timing them, so some lines can end up with zero
+                # matched words even when the song overall aligned well.
+                # ctc-forced-aligner never drops words (it force-places
+                # every one, via <star> tokens for gaps), so it's a good
+                # fallback specifically for those lines -- only worth its
+                # own full model pass when such a gap actually exists.
+                gap_lines = [
+                    orig for orig, corr in zip(original_lyrics_list, lyrics_list)
+                    if orig == corr
+                ]
+                if gap_lines and words_list:
+                    fallback_words = ctc_fallback_words(str(src), original_lyrics_list)
+                    if fallback_words:
+                        lyrics_list = realign_lyric_lines(
+                            original_lyrics_list, words_list, fallback_words,
+                        )
                 state.push({"detector": "phonemes (whisperx)", "library": "story",
                             "status": "done", "confidence": None,
                             "marks": len(phonemes_list), "warnings": lyrics_warnings})

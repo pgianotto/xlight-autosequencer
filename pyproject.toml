@@ -56,6 +56,12 @@ essentia = ["essentia==2.1b6.dev1389"]
 # above for demucs -- the model files ship inside the wheel, no network
 # download needed at runtime.
 vad = ["silero-vad>=5.0"]
+# Second-opinion lyric word alignment (src/analyzer/ctc_align.py) -- used as
+# a fallback by phoneme_align.realign_lyric_lines for lyric lines WhisperX
+# matched zero words on. Not on PyPI under this import name (the PyPI
+# "ctc-forced-aligner" package is an unrelated, less actively maintained
+# fork by deskpai) -- installed straight from the upstream repo, which is.
+ctc_align = ["ctc_forced_aligner @ git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git"]
 # Install everything: pip install -e ".[all]"
 all = [
     "demucs>=4.0",
@@ -68,6 +74,7 @@ all = [
     "syncedlyrics>=1.0",
     "essentia==2.1b6.dev1389",
     "silero-vad>=5.0",
+    "ctc_forced_aligner @ git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git",
 ]
 dev = [
     "pytest>=7.4",

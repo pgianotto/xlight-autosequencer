@@ -174,3 +174,73 @@ class TestRealignLyricLines:
         lines = [{"t_ms": 500, "duration_ms": 100, "text": "..."}]
         words: list[dict] = []
         assert phoneme_align.realign_lyric_lines(lines, words) == lines
+
+    def test_fallback_words_cover_line_whisperx_missed_entirely(self):
+        # WhisperX matched line 1 but found nothing at all for line 2 (e.g.
+        # drowned out); the ctc-forced-aligner fallback (which never drops
+        # words) still covers it.
+        lines = [
+            {"t_ms": 0, "duration_ms": 5000, "text": "la la placeholder"},
+            {"t_ms": 5000, "duration_ms": 5000, "text": "unheard line here"},
+        ]
+        words = [
+            {"label": "LA", "start_ms": 660, "end_ms": 1000},
+            {"label": "LA", "start_ms": 1000, "end_ms": 1300},
+            {"label": "PLACEHOLDER", "start_ms": 1300, "end_ms": 2500},
+        ]
+        fallback_words = [
+            {"label": "LA", "start_ms": 500, "end_ms": 900},
+            {"label": "LA", "start_ms": 900, "end_ms": 1200},
+            {"label": "PLACEHOLDER", "start_ms": 1200, "end_ms": 2400},
+            {"label": "UNHEARD", "start_ms": 14190, "end_ms": 14500},
+            {"label": "LINE", "start_ms": 14500, "end_ms": 14800},
+            {"label": "HERE", "start_ms": 14800, "end_ms": 15200},
+        ]
+        corrected = phoneme_align.realign_lyric_lines(lines, words, fallback_words)
+        assert corrected == [
+            # Primary (WhisperX) match still wins over the fallback for the
+            # line it did cover.
+            {"t_ms": 660, "duration_ms": 2500 - 660, "text": "la la placeholder"},
+            {"t_ms": 14190, "duration_ms": 15200 - 14190, "text": "unheard line here"},
+        ]
+
+    def test_fallback_words_ignored_when_line_still_unmatched(self):
+        lines = [{"t_ms": 500, "duration_ms": 100, "text": "silence"}]
+        words = [{"label": "OTHER", "start_ms": 0, "end_ms": 100}]
+        fallback_words = [{"label": "ALSO-UNRELATED", "start_ms": 0, "end_ms": 100}]
+        assert phoneme_align.realign_lyric_lines(lines, words, fallback_words) == lines
+
+
+class TestCtcFallbackWords:
+    def test_no_text_returns_none(self, monkeypatch):
+        monkeypatch.setattr(phoneme_align, "_discover_vocals_stem", lambda p: Path("vocals.mp3"))
+        assert phoneme_align.ctc_fallback_words("song.mp3", []) is None
+        assert phoneme_align.ctc_fallback_words("song.mp3", [{"text": ""}]) is None
+
+    def test_no_vocals_stem_returns_none(self, monkeypatch):
+        monkeypatch.setattr(phoneme_align, "_discover_vocals_stem", lambda p: None)
+        lines = [{"t_ms": 0, "duration_ms": 1000, "text": "hello"}]
+        assert phoneme_align.ctc_fallback_words("song.mp3", lines) is None
+
+    def test_delegates_to_ctc_align_with_joined_text(self, monkeypatch, tmp_path):
+        vocals = tmp_path / "vocals.mp3"
+        vocals.touch()
+        monkeypatch.setattr(phoneme_align, "_discover_vocals_stem", lambda p: vocals)
+        captured = {}
+
+        def _fake_align_words(audio_path, text, **kwargs):
+            captured["audio_path"] = audio_path
+            captured["text"] = text
+            return [{"label": "HI", "start_ms": 0, "end_ms": 500}]
+
+        import src.analyzer.ctc_align as ctc_align
+        monkeypatch.setattr(ctc_align, "align_words", _fake_align_words)
+
+        lines = [
+            {"t_ms": 0, "duration_ms": 1000, "text": "first line"},
+            {"t_ms": 1000, "duration_ms": 1000, "text": "second line"},
+        ]
+        result = phoneme_align.ctc_fallback_words("song.mp3", lines)
+        assert captured["audio_path"] == str(vocals)
+        assert captured["text"] == "first line second line"
+        assert result == [{"label": "HI", "start_ms": 0, "end_ms": 500}]

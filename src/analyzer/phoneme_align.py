@@ -27,37 +27,23 @@ log = get_logger("xlight.phoneme_align")
 _WORD_RE = re.compile(r"[a-zA-Z0-9']+")
 
 
-def realign_lyric_lines(lyric_lines: list[dict], words: list[dict]) -> list[dict]:
-    """Correct each lyric line's (t_ms, duration_ms) with WhisperX's
-    forced-aligned word timestamps instead of the lyrics provider's raw
-    line timestamps.
+def _tokens(text: str) -> list[str]:
+    return [t.upper() for t in _WORD_RE.findall(text)]
 
-    ``align_words_and_phonemes`` force-aligns exactly the text ``lyric_lines``
-    supplies (see ``_lyric_lines_to_text`` — one original line per newline).
-    WhisperX doesn't always return timing for every reference word though —
-    low-confidence words are dropped from its output entirely (see
-    ``PhonemeAnalyzer.analyze``'s ``word_marks`` filter), so ``words`` is
-    typically a *subsequence* of the full reference text, not a 1:1 match
-    (found 2026-08-03: only 97 of 184 words aligned on one song — an exact
-    total-count match, the original approach here, essentially never holds
-    in practice and silently discarded every alignment).
 
-    Aligns the flattened reference words against ``words`` by text (via
-    :class:`difflib.SequenceMatcher`, which finds the matching blocks of an
-    ordered subsequence — exactly what a forced aligner that only *drops*
-    words, never reorders or invents them, produces) to recover which
-    aligned word belongs to which original line despite the drops. Each
-    line whose text matched at least one aligned word gets its
-    ``t_ms``/``duration_ms`` set from that line's earliest/latest matched
-    word; a line with zero matches keeps its original (provider) timing
-    rather than guessing.
+def _match_lines_to_words(
+    lyric_lines: list[dict], words: list[dict],
+) -> tuple[dict[int, int], dict[int, int]]:
+    """Return ``(line_start_ms, line_end_ms)`` dicts keyed by line index,
+    covering only lines with at least one word in ``words`` matched by text.
+
+    Aligns the flattened reference words (from ``lyric_lines``) against
+    ``words`` by text via :class:`difflib.SequenceMatcher`, which finds the
+    matching blocks of an ordered subsequence — exactly what a forced
+    aligner that only *drops* words (never reorders or invents them)
+    produces. This recovers which aligned word belongs to which original
+    line even when ``words`` is missing entries.
     """
-    if not lyric_lines or not words:
-        return lyric_lines
-
-    def _tokens(text: str) -> list[str]:
-        return [t.upper() for t in _WORD_RE.findall(text)]
-
     orig_tokens: list[str] = []
     orig_line_of: list[int] = []
     for li, line in enumerate(lyric_lines):
@@ -67,7 +53,7 @@ def realign_lyric_lines(lyric_lines: list[dict], words: list[dict]) -> list[dict
 
     aligned_tokens = [w["label"] for w in words]
     if not orig_tokens or not aligned_tokens:
-        return lyric_lines
+        return {}, {}
 
     import difflib
     matcher = difflib.SequenceMatcher(a=orig_tokens, b=aligned_tokens, autojunk=False)
@@ -83,6 +69,41 @@ def realign_lyric_lines(lyric_lines: list[dict], words: list[dict]) -> list[dict
                 line_start[li] = start_ms
             if li not in line_end or end_ms > line_end[li]:
                 line_end[li] = end_ms
+    return line_start, line_end
+
+
+def realign_lyric_lines(
+    lyric_lines: list[dict], words: list[dict], fallback_words: Optional[list[dict]] = None,
+) -> list[dict]:
+    """Correct each lyric line's (t_ms, duration_ms) with forced-aligned
+    word timestamps instead of the lyrics provider's raw line timestamps.
+
+    ``align_words_and_phonemes`` force-aligns exactly the text ``lyric_lines``
+    supplies (see ``_lyric_lines_to_text`` — one original line per newline).
+    WhisperX doesn't always return timing for every reference word though —
+    low-confidence words are dropped from its output entirely (see
+    ``PhonemeAnalyzer.analyze``'s ``word_marks`` filter), so ``words`` is
+    typically a *subsequence* of the full reference text, not a 1:1 match
+    (found 2026-08-03: only 97 of 184 words aligned on one song — an exact
+    total-count match, the original approach here, essentially never holds
+    in practice and silently discarded every alignment).
+
+    Each line whose text matched at least one word in ``words`` gets its
+    ``t_ms``/``duration_ms`` set from that line's earliest/latest matched
+    word. A line with zero matches in ``words`` falls back to
+    ``fallback_words`` (typically ``ctc_align.align_words`` — a forced
+    aligner that never drops words, so it can cover lines WhisperX skipped
+    entirely, at the cost of being a general-purpose, non-singing-adapted
+    model) when given, and otherwise keeps its original (provider) timing
+    rather than guessing.
+    """
+    if not lyric_lines or not words:
+        return lyric_lines
+
+    line_start, line_end = _match_lines_to_words(lyric_lines, words)
+    fb_start, fb_end = (
+        _match_lines_to_words(lyric_lines, fallback_words) if fallback_words else ({}, {})
+    )
 
     corrected: list[dict] = []
     for li, line in enumerate(lyric_lines):
@@ -90,6 +111,12 @@ def realign_lyric_lines(lyric_lines: list[dict], words: list[dict]) -> list[dict
             corrected.append({
                 "t_ms": line_start[li],
                 "duration_ms": max(line_end[li] - line_start[li], 1),
+                "text": line.get("text", ""),
+            })
+        elif li in fb_start:
+            corrected.append({
+                "t_ms": fb_start[li],
+                "duration_ms": max(fb_end[li] - fb_start[li], 1),
                 "text": line.get("text", ""),
             })
         else:
@@ -264,6 +291,31 @@ def align_words_and_phonemes(
         words = [{**w, "speaker": 0} for w in words]
 
     return words, phonemes, warnings
+
+
+def ctc_fallback_words(audio_path: str, lyric_lines: list[dict]) -> Optional[list[dict]]:
+    """Force-align ``lyric_lines``' full text against the audio with
+    ``ctc_align`` (MMS/Wav2Vec2 CTC), for ``realign_lyric_lines``'
+    ``fallback_words`` — a forced aligner that never drops words, unlike
+    WhisperX (see ``realign_lyric_lines``), so it can recover timing for
+    lines WhisperX matched zero words on. Callers should only bother
+    invoking this when such lines actually exist — it's a second full model
+    pass over the song, not cheap.
+
+    Returns ``None`` when there's no text to align, no vocals stem is
+    available, or ``ctc_align`` itself returns ``None`` (unavailable/failed
+    — never raises).
+    """
+    text = " ".join(
+        line.get("text", "") for line in lyric_lines if line.get("text")
+    ).strip()
+    if not text:
+        return None
+    vocals = _discover_vocals_stem(audio_path)
+    if vocals is None:
+        return None
+    from src.analyzer.ctc_align import align_words
+    return align_words(str(vocals), text)
 
 
 def _run_alignment(
