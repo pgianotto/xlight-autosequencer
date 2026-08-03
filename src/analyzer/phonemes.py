@@ -10,6 +10,42 @@ from src.log import get_logger
 
 log = get_logger("xlight.phonemes")
 
+_vad_load_patched = False
+
+
+def _allow_pyannote_vad_checkpoint_load() -> None:
+    """Make ``torch.load`` accept WhisperX's bundled VAD checkpoint.
+
+    PyTorch 2.6 flipped ``torch.load``'s default from ``weights_only=False``
+    to ``True``. WhisperX's VAD model load (via pyannote's
+    ``Model.from_pretrained``) doesn't pass ``weights_only=False`` itself, so
+    without this the checkpoint's ``omegaconf`` config objects fail to
+    unpickle and phoneme/word alignment silently falls back to unrefined
+    lyric-provider timestamps (no exception surfaces past the analysis
+    pipeline's broad except-and-warn). Same workaround already used for the
+    ``.venv-vamp`` sidecar subprocess path in
+    ``phoneme_align._run_in_sidecar`` — mirrored here for the in-process
+    path. Safe: the checkpoint ships with whisperx/pyannote themselves, not
+    user-supplied input.
+    """
+    global _vad_load_patched
+    if _vad_load_patched:
+        return
+    try:
+        import torch
+
+        _orig_torch_load = torch.load
+
+        def _torch_load_compat(*args, **kwargs):
+            kwargs["weights_only"] = False
+            return _orig_torch_load(*args, **kwargs)
+
+        torch.load = _torch_load_compat
+    except Exception as exc:
+        log.warning("could not patch torch.load for VAD checkpoint: %s", exc)
+    else:
+        _vad_load_patched = True
+
 
 # ── Data Classes ──────────────────────────────────────────────────────────────
 
@@ -382,6 +418,8 @@ class PhonemeAnalyzer:
                 "whisperx is required for phoneme analysis. "
                 "Install it with: pip install whisperx"
             )
+
+        _allow_pyannote_vad_checkpoint_load()
 
         cmu_dict = self._get_cmu_dict()
 
