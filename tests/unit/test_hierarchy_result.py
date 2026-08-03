@@ -90,7 +90,7 @@ class TestHierarchyResultSchema:
             "energy_impacts", "energy_drops", "gaps", "crash_accents",
             "ending_punches", "riff_bursts", "kick_pulses", "kick_hits", "snare_hits", "hihat_hits",
             "sections",
-            "bars", "beats", "half_bars", "eighth_notes", "events", "solos",
+            "bars", "time_signature", "beats", "half_bars", "eighth_notes", "events", "solos",
             "energy_curves", "spectral_flux",
             "chords", "key_changes", "chroma_curve", "interactions", "essentia_features",
             "stems_available", "capabilities", "algorithms_run", "warnings", "validation",
@@ -112,6 +112,21 @@ class TestHierarchyResultSchema:
         json_str = json.dumps(d)
         data = json.loads(json_str)
         assert data["schema_version"] == "2.0.0"
+
+    def test_time_signature_round_trip(self):
+        r = _make_full_result()
+        r.time_signature = {"beats_per_bar": 3, "confidence": 0.9, "detected": True, "source": "madmom_downbeats"}
+        d = r.to_dict()
+        assert d["time_signature"] == r.time_signature
+        r2 = HierarchyResult.from_dict(d)
+        assert r2.time_signature == r.time_signature
+
+    def test_time_signature_defaults_to_none(self):
+        r = _make_minimal_result()
+        d = r.to_dict()
+        assert d["time_signature"] is None
+        r2 = HierarchyResult.from_dict(d)
+        assert r2.time_signature is None
 
     def test_kick_snare_hihat_hits_round_trip(self):
         r = _make_full_result()

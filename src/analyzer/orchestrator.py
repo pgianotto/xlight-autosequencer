@@ -694,9 +694,18 @@ def run_orchestrator(
     # ── Stage 7b: Beat position labels, half-bars, eighth notes ─────────────
     half_bars: "TimingTrack | None" = None
     eighth_notes: "TimingTrack | None" = None
+    time_signature: dict | None = None
     if beats and bars:
         import copy as _copy
         _label_beats(beats, bars)
+        time_signature = _detect_time_signature(bars, beats)
+        if time_signature:
+            print(
+                f"L2 Meter: {time_signature['beats_per_bar']}/4 "
+                f"({'detected' if time_signature['detected'] else 'assumed'}, "
+                f"confidence={time_signature['confidence']:.2f}, "
+                f"source={time_signature['source']})"
+            )
 
         # Half-bars: beats at positions 1 and 3
         hb_marks = [_copy.copy(m) for m in beats.marks if m.label in ("1", "3")]
@@ -928,6 +937,7 @@ def run_orchestrator(
         sections=sections,
         bars=bars,
         beats=beats,
+        time_signature=time_signature,
         half_bars=half_bars,
         eighth_notes=eighth_notes,
         events=events,
@@ -1492,20 +1502,70 @@ def _label_beats(beats: "TimingTrack", bars: "TimingTrack") -> None:
         beat_interval = 500
 
     # For each bar, find the beats that fall within it and label them 1-N
+    first_bar_beat_count = 4  # fallback if the first bar is empty
     for i, bar_start in enumerate(bar_times):
         bar_end = bar_times[i + 1] if i + 1 < len(bar_times) else bar_start + beat_interval * 8
         bar_beats = [m for m in beat_marks if bar_start <= m.time_ms < bar_end]
         for pos, mark in enumerate(bar_beats, 1):
             mark.label = str(pos)
+        if i == 0 and bar_beats:
+            first_bar_beat_count = len(bar_beats)
 
-    # Label beats before the first bar by counting back from bar position 1
+    # Label beats before the first bar by counting back from bar position 1,
+    # using the first bar's own beat count (not a hardcoded 4) so this stays
+    # correct for 3-beat bars too.
     first_bar = bar_times[0]
     pre_beats = sorted((m for m in beat_marks if m.time_ms < first_bar),
                        key=lambda m: m.time_ms, reverse=True)
     for i, mark in enumerate(pre_beats):
-        # Count backwards: if first bar beat is "1", beat before it is "4", etc.
-        pos = ((-(i + 1)) % 4) or 4
+        # pre_beats[0] is the beat immediately before the downbeat, which
+        # should get the *last* position in the bar (e.g. "4", or "3" for a
+        # 3-beat bar), then counts down and wraps: pre_beats[1] -> "3" (or
+        # "2"), ..., wrapping back to the last position every
+        # first_bar_beat_count beats. (The previous hardcoded-%4 version of
+        # this formula was off by one -- e.g. it labelled the beat right
+        # before the downbeat "3" instead of "4" -- fixed here while adding
+        # meter-awareness.)
+        pos = first_bar_beat_count - (i % first_bar_beat_count)
         mark.label = str(pos)
+
+
+def _detect_time_signature(bars: "TimingTrack", beats: "TimingTrack") -> dict | None:
+    """Aggregate per-bar beat counts (set by ``_label_beats``, or carried
+    directly on ``bars.marks`` labels by ``madmom_downbeats`` — see
+    ``algorithms/madmom_beat.py``) into one beats-per-bar estimate.
+
+    Only ``madmom_downbeats`` actually measures meter per song (its DBN
+    tracker tests both 3- and 4-beat-per-bar hypotheses). ``qm_bars`` and
+    ``librosa_bars`` both structurally assume a fixed 4 beats/bar by
+    construction — if either won L2's bar-track selection, every bar would
+    trivially count out to 4 beats with misleading 100% "confidence" despite
+    that being an assumption, not a measurement. ``detected`` distinguishes
+    the two so callers don't treat an assumption as equally reliable as a
+    real per-song inference.
+    """
+    if not bars or not bars.marks or not beats or not beats.marks:
+        return None
+    bar_times = sorted(m.time_ms for m in bars.marks)
+    if len(bar_times) < 2:
+        return None
+
+    counts: list[int] = []
+    for i in range(len(bar_times) - 1):
+        n = sum(1 for m in beats.marks if bar_times[i] <= m.time_ms < bar_times[i + 1])
+        if n > 0:
+            counts.append(n)
+    if not counts:
+        return None
+
+    from collections import Counter
+    mode_count, mode_freq = Counter(counts).most_common(1)[0]
+    return {
+        "beats_per_bar": mode_count,
+        "confidence": round(mode_freq / len(counts), 4),
+        "detected": bars.algorithm_name == "madmom_downbeats",
+        "source": bars.algorithm_name,
+    }
 
 
 def _derive_eighth_notes(beats: "TimingTrack") -> "list":

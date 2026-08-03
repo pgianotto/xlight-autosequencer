@@ -91,12 +91,26 @@ class MadmomDownbeatAlgorithm(Algorithm):
         proc = DBNDownBeatTrackingProcessor(beats_per_bar=[3, 4], fps=100)
         act = RNNDownBeatProcessor()(audio.astype(np.float32))
         downbeats = proc(act)
-        # downbeats is Nx2 array: [time, beat_number]; keep beat_number==1 (downbeats)
-        marks = [
-            TimingMark(time_ms=int(round(float(row[0]) * 1000)), confidence=None)
-            for row in downbeats
-            if int(row[1]) == 1
-        ]
+        # downbeats is Nx2 array: [time, beat_number]; keep beat_number==1
+        # (downbeats). The DBN tested both 3- and 4-beat-per-bar hypotheses
+        # to produce this, so the highest beat_number reached within each
+        # bar (before it resets to 1 at the next downbeat) is real per-song
+        # meter evidence -- stash it as that bar's mark label (e.g. "4")
+        # rather than discarding it, so orchestrator.py's meter detection
+        # (_detect_time_signature) can use it. Unlike qm_bars and
+        # librosa_bars, which both assume a fixed 4 beats/bar by
+        # construction, this is the only bar tracker here that actually
+        # measures it.
+        beat_numbers = [int(row[1]) for row in downbeats]
+        downbeat_idxs = [i for i, n in enumerate(beat_numbers) if n == 1]
+        marks = []
+        for j, i in enumerate(downbeat_idxs):
+            bar_end = downbeat_idxs[j + 1] if j + 1 < len(downbeat_idxs) else len(beat_numbers)
+            bar_length = max(beat_numbers[i:bar_end])
+            marks.append(TimingMark(
+                time_ms=int(round(float(downbeats[i][0]) * 1000)), confidence=None,
+                label=str(bar_length),
+            ))
         return TimingTrack(
             name=self.name,
             algorithm_name=self.name,

@@ -600,6 +600,14 @@ class HierarchyResult:
     # L2: Bars (single best track)
     bars: Optional["TimingTrack"] = None
 
+    # L2: Detected meter -- {"beats_per_bar": int, "confidence": float,
+    # "detected": bool, "source": str}. "detected" is True only when `bars`
+    # came from madmom_downbeats, the only bar tracker that actually infers
+    # meter per song (tests 3- vs 4-beat-per-bar hypotheses) rather than
+    # assuming a fixed 4 beats/bar by construction -- see
+    # orchestrator._detect_time_signature. None when bars/beats are missing.
+    time_signature: Optional[dict] = None
+
     # L3: Beats (single best track) — marks carry label="1"|"2"|"3"|"4" (beat position in bar)
     beats: Optional["TimingTrack"] = None
 
@@ -682,6 +690,7 @@ class HierarchyResult:
             "hihat_hits": [self._mark_to_dict(m) for m in self.hihat_hits],
             "sections": [self._mark_to_dict(m) for m in self.sections],
             "bars": self.bars.to_dict() if self.bars else None,
+            "time_signature": self.time_signature,
             "beats": self.beats.to_dict() if self.beats else None,
             "half_bars": self.half_bars.to_dict() if self.half_bars else None,
             "eighth_notes": self.eighth_notes.to_dict() if self.eighth_notes else None,
@@ -778,6 +787,7 @@ class HierarchyResult:
         ]
         bars_data = d.get("bars")
         obj.bars = TimingTrack.from_dict(bars_data) if bars_data else None
+        obj.time_signature = d.get("time_signature")
         beats_data = d.get("beats")
         obj.beats = TimingTrack.from_dict(beats_data) if beats_data else None
         hb_data = d.get("half_bars")
