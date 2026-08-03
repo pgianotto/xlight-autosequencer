@@ -37,7 +37,10 @@ class TestReferenceTextSelection:
                  {"t_ms": 1000, "duration_ms": 1000, "text": "second line"}]
         phoneme_align.align_words_and_phonemes("song.mp3", lines)
         assert captured["lyrics_path"] is not None
-        assert captured["content"] == "first line\nsecond line"
+        # Timestamped format ([t_ms]text) carries each line's approximate
+        # start as a per-line segment boundary hint for WhisperX alignment
+        # -- see _lyric_lines_to_text.
+        assert captured["content"] == "[0]first line\n[1000]second line"
 
     def test_lyrics_text_alone_forces_alignment(self, monkeypatch, tmp_path):
         # The bug this fixes: a user-pasted lyrics fallback has no timed
@@ -59,7 +62,7 @@ class TestReferenceTextSelection:
         captured = _capture_run_in_process(monkeypatch, tmp_path)
         lines = [{"t_ms": 0, "duration_ms": 1000, "text": "timed line"}]
         phoneme_align.align_words_and_phonemes("song.mp3", lines, "should not be used")
-        assert captured["content"] == "timed line"
+        assert captured["content"] == "[0]timed line"
 
     def test_blank_lyrics_text_means_free_transcription(self, monkeypatch, tmp_path):
         captured = _capture_run_in_process(monkeypatch, tmp_path)

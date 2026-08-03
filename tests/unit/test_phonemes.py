@@ -15,10 +15,41 @@ from src.analyzer.phonemes import (
     WordMark,
     WordTrack,
     _ARPABET_TO_PAPAGAYO,
+    _parse_timed_lyrics,
     arpabet_to_papagayo,
     distribute_phoneme_timing,
     word_to_papagayo,
 )
+
+
+# ── _parse_timed_lyrics: per-line WhisperX alignment segment hints ───────────
+
+class TestParseTimedLyrics:
+    def test_parses_timed_lines(self):
+        raw = "[660]It's the most wonderful time\n[14190]next line here"
+        assert _parse_timed_lyrics(raw) == [
+            (660, "It's the most wonderful time"),
+            (14190, "next line here"),
+        ]
+
+    def test_plain_untimed_text_returns_none(self):
+        # No "[<t_ms>]" prefix -- e.g. a user-pasted lyrics fallback with
+        # no per-line timing available at all.
+        assert _parse_timed_lyrics("verse line one\nverse line two") is None
+
+    def test_mixed_timed_and_untimed_lines_returns_none(self):
+        # Any non-conforming line means the whole file isn't trustworthy
+        # as per-line timing -- fall back entirely rather than guess.
+        raw = "[0]first line\nsecond line with no timestamp"
+        assert _parse_timed_lyrics(raw) is None
+
+    def test_skips_blank_lines(self):
+        raw = "[0]first line\n\n\n[1000]second line"
+        assert _parse_timed_lyrics(raw) == [(0, "first line"), (1000, "second line")]
+
+    def test_all_blank_text_returns_none(self):
+        assert _parse_timed_lyrics("") is None
+        assert _parse_timed_lyrics("   \n  \n") is None
 
 
 # ── T008: ARPAbet → Papagayo mapping ─────────────────────────────────────────

@@ -273,6 +273,42 @@ def distribute_phoneme_timing(
     return marks
 
 
+# ── Timed lyrics parsing (per-line WhisperX alignment segment hints) ──────────
+
+_TIMED_LINE_RE = re.compile(r"^\[(\d+)\](.*)$")
+
+# Slack applied around each line's provider-supplied timestamp when it
+# becomes a WhisperX alignment segment boundary (see _align_with_lyrics) --
+# absorbs the provider's own small timing error without reverting to the
+# "one segment spans the whole song" behavior this whole mechanism exists
+# to avoid.
+_SEGMENT_PAD_S = 1.5
+
+
+def _parse_timed_lyrics(raw: str) -> Optional[list[tuple[int, str]]]:
+    """Parse the ``[<t_ms>]<text>`` format written by
+    ``phoneme_align._lyric_lines_to_text``.
+
+    Returns ``None`` (not an empty list) when the text doesn't look like
+    this format at all — e.g. plain user-pasted lyrics with no timing —
+    so callers can distinguish "no timing available, fall back to a
+    single whole-song segment" from "timed, but every line was blank".
+    """
+    lines: list[tuple[int, str]] = []
+    for raw_line in raw.splitlines():
+        raw_line = raw_line.strip()
+        if not raw_line:
+            continue
+        m = _TIMED_LINE_RE.match(raw_line)
+        if not m:
+            return None
+        t_ms, text = m.groups()
+        text = text.strip()
+        if text:
+            lines.append((int(t_ms), text))
+    return lines if lines else None
+
+
 # ── PhonemeAnalyzer ───────────────────────────────────────────────────────────
 
 class PhonemeAnalyzer:
@@ -453,11 +489,63 @@ class PhonemeAnalyzer:
             warnings.append(f"Cannot read lyrics file: {exc}. Falling back to audio-only.")
             return self._transcribe_and_align(audio, audio_path, model, warnings)
 
-        # Normalize lyrics: strip punctuation, uppercase, flatten to one line
-        normalized = re.sub(r"[^a-zA-Z\s']", " ", raw).strip()
-        words = normalized.split()
-        log.info("_align_with_lyrics: %d words from lyrics file, duration=%.1fs",
-                 len(words), duration_s)
+        # phoneme_align._lyric_lines_to_text emits "[<t_ms>]<text>" lines
+        # when it has real per-line timing (session lyric_lines); a plain
+        # user-pasted/untimed lyrics_text has no such prefix. When timed,
+        # use each line's approximate timestamp as a per-line WhisperX
+        # alignment segment boundary instead of one segment spanning the
+        # whole song -- without this, a long instrumental intro before the
+        # first sung line can make naive whole-song forced alignment
+        # anchor early words near the start of the song instead of where
+        # the singing actually begins (found 2026-08-03).
+        timed_lines = _parse_timed_lyrics(raw)
+
+        words: list[str]
+        segments: list[dict]
+        if timed_lines is not None:
+            # Clamp every raw timestamp to duration_s up front -- a
+            # lyrics-provider timestamp past the actual audio length
+            # (bad/stale provider data) must not produce a segment
+            # boundary outside the audio WhisperX is aligning against.
+            raw_starts = [min(t_ms / 1000.0, duration_s) for t_ms, _ in timed_lines]
+
+            words = []
+            segments = []
+            for i, (_t_ms, text) in enumerate(timed_lines):
+                line_words = re.sub(r"[^a-zA-Z\s']", " ", text).split()
+                if not line_words:
+                    continue
+                raw_start_s = raw_starts[i]
+                raw_end_s = raw_starts[i + 1] if i + 1 < len(raw_starts) else duration_s
+
+                # Non-overlapping boundary: split the gap to the adjacent
+                # line's raw timestamp at the midpoint first, THEN apply
+                # padding within that half -- padding independently from
+                # each line's own timestamp (without this) can push a
+                # segment's end past the *next* segment's padded start
+                # when two lines are close together, silently overlapping
+                # them (caught by test_timed_lyrics_build_per_line_
+                # segments_not_one_whole_song_segment). For a large gap
+                # (the actual bug this whole mechanism fixes) the pad is
+                # the tighter bound instead, giving a small buffer around
+                # the line's own timestamp rather than half the gap.
+                left_boundary = 0.0 if i == 0 else (raw_starts[i - 1] + raw_start_s) / 2.0
+                right_boundary = duration_s if i == len(raw_starts) - 1 else (raw_start_s + raw_end_s) / 2.0
+
+                start_s = max(left_boundary, raw_start_s - _SEGMENT_PAD_S, 0.0)
+                end_s = min(right_boundary, raw_end_s + _SEGMENT_PAD_S, duration_s)
+                end_s = max(end_s, start_s + 0.05)
+                segments.append({"text": " ".join(line_words), "start": start_s, "end": end_s})
+                words.extend(line_words)
+        else:
+            # Untimed plain text (e.g. user-pasted fallback) -- no per-line
+            # hints available, fall back to one segment spanning the audio.
+            normalized = re.sub(r"[^a-zA-Z\s']", " ", raw).strip()
+            words = normalized.split()
+            segments = [{"text": " ".join(words), "start": 0.0, "end": duration_s}] if words else []
+
+        log.info("_align_with_lyrics: %d words from lyrics file (%d segments), duration=%.1fs",
+                 len(words), len(segments), duration_s)
         log.debug("_align_with_lyrics: first 20 words: %s", words[:20])
         if not words:
             warnings.append("Lyrics file is empty. Falling back to audio-only.")
@@ -471,10 +559,6 @@ class PhonemeAnalyzer:
             quick_result = model.transcribe(audio, batch_size=4)
             language = quick_result.get("language", "en")
         log.info("_align_with_lyrics: using language=%s", language)
-
-        # Create synthetic segment spanning full audio
-        lyrics_text = " ".join(words)
-        segments = [{"text": lyrics_text, "start": 0.0, "end": duration_s}]
 
         align_model, metadata = whisperx.load_align_model(
             language_code=language, device=self.device

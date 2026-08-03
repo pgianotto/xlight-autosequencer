@@ -127,6 +127,42 @@ class TestLyricsAssistedAlignment:
         assert result.word_track.lyrics_source == "auto"
         assert any("Cannot read lyrics" in w for w in a.warnings)
 
+    def test_timed_lyrics_build_per_line_segments_not_one_whole_song_segment(
+        self, fixture_wav, tiny_cmu, tmp_path
+    ):
+        """A gap before the first sung line must not smear into a single
+        whole-song alignment segment (found 2026-08-03: "It's the Most
+        Wonderful Time of the Year" has an instrumental lead-in before Andy
+        Williams starts singing; the Timeline's first lyric line rendered at
+        t=0 instead of where the vocals audibly enter)."""
+        lyrics_file = tmp_path / "lyrics.txt"
+        # fixture_wav's mocked audio is 10s (see _make_aligned_wx's
+        # load_audio.return_value of 160_000 samples @ 16kHz).
+        lyrics_file.write_text("[3500]hello\n[6000]world")
+
+        word_segs = [
+            {"word": "hello", "start": 3.6, "end": 4.0, "score": 0.9},
+            {"word": "world", "start": 6.1, "end": 6.5, "score": 0.85},
+        ]
+        mock_wx = _make_aligned_wx(word_segs)
+
+        from src.analyzer.phonemes import PhonemeAnalyzer
+        a = PhonemeAnalyzer()
+        a._cmu_dict = tiny_cmu
+
+        with patch.dict("sys.modules", {"whisperx": mock_wx}):
+            a.analyze(fixture_wav, "song.mp3", lyrics_path=str(lyrics_file))
+
+        # whisperx.align(segments, align_model, metadata, audio, device) --
+        # segments is the first positional arg.
+        segments = mock_wx.align.call_args[0][0]
+        assert [s["text"] for s in segments] == ["hello", "world"]
+        # The bug this fixes: the first segment must NOT start at 0.0 (the
+        # whole-song-segment behavior) -- it should sit close to the line's
+        # own timestamp (with padding slack), not the start of the song.
+        assert 0.0 < segments[0]["start"] < 3.5
+        assert segments[0]["end"] <= segments[1]["start"] + 1e-9  # no overlap
+
 
 # ── T020: Mismatch detection ───────────────────────────────────────────────────
 

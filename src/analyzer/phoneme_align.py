@@ -112,8 +112,29 @@ def _sidecar_python() -> Path | None:
 
 
 def _lyric_lines_to_text(lyric_lines: list[dict]) -> str:
-    """Flatten session lyric lines (``{t_ms, duration_ms, text}``) to plain text."""
-    return "\n".join(line.get("text", "") for line in lyric_lines if line.get("text"))
+    """Flatten session lyric lines (``{t_ms, duration_ms, text}``) to a
+    timestamped reference text WhisperX alignment can use as per-line
+    segment boundary hints (see ``PhonemeAnalyzer._align_with_lyrics``)
+    instead of one segment spanning the whole song. Without per-line
+    hints, a long instrumental intro before the first sung line can make
+    naive whole-song forced alignment anchor early words near the start
+    of the song instead of where the singing actually begins (found
+    2026-08-03: "It's the Most Wonderful Time of the Year" has a lead-in
+    before Andy Williams starts singing; the Timeline's first lyric line
+    rendered at t=0 instead of where the vocals audibly enter).
+
+    Format: one ``[<t_ms>]<text>`` per line, e.g. ``[660]It's the most
+    wonderful time of the year``. Deliberately not real LRC format (which
+    uses ``MM:SS.ff``, not raw milliseconds) — this is a private
+    interchange format between this function and
+    ``_align_with_lyrics``/``_parse_timed_lyrics``, not meant to be
+    confused with the LRC handling in ``synced_lyrics.py``.
+    """
+    return "\n".join(
+        f"[{line['t_ms']}]{line['text']}"
+        for line in lyric_lines
+        if line.get("text") and line.get("t_ms") is not None
+    )
 
 
 def _run_in_process(
