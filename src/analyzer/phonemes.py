@@ -309,6 +309,29 @@ def _parse_timed_lyrics(raw: str) -> Optional[list[tuple[int, str]]]:
     return lines if lines else None
 
 
+def _refine_boundary_with_vad(
+    estimate: float, raw_value: float, floor: float, ceiling: float,
+    candidates: list[float],
+) -> float:
+    """Snap a padding-based segment boundary ``estimate`` to real VAD
+    evidence (a speech onset/offset timestamp) when one exists nearby.
+
+    ``candidates`` is every VAD speech-region start (for a segment's start)
+    or end (for a segment's end) across the whole song. Restricted to
+    ``[floor, ceiling]`` (the same non-overlapping half used to build
+    ``estimate``) so a refinement can never cross into a neighboring
+    segment's territory; among those, picks whichever is closest to
+    ``raw_value`` (the lyrics provider's own approximate timestamp) rather
+    than just the first/last, since a gap can contain more than one VAD
+    region (e.g. a brief non-vocal break within the same line's span).
+    Returns ``estimate`` unchanged when no candidate qualifies.
+    """
+    in_range = [c for c in candidates if floor <= c <= ceiling]
+    if not in_range:
+        return estimate
+    return min(in_range, key=lambda c: abs(c - raw_value))
+
+
 # ── PhonemeAnalyzer ───────────────────────────────────────────────────────────
 
 class PhonemeAnalyzer:
@@ -509,6 +532,16 @@ class PhonemeAnalyzer:
             # boundary outside the audio WhisperX is aligning against.
             raw_starts = [min(t_ms / 1000.0, duration_s) for t_ms, _ in timed_lines]
 
+            # Real acoustic evidence of where singing actually starts/stops,
+            # when available -- strictly better than the fixed padding
+            # tolerance below, which is just a blind guess around the
+            # provider's own approximate timestamp. Computed once for the
+            # whole song (Silero VAD is fast) rather than per line.
+            from src.analyzer.vad import detect_speech_regions
+            vad_regions = detect_speech_regions(audio, sample_rate=16000)
+            vad_starts = [s for s, _e in vad_regions] if vad_regions else []
+            vad_ends = [e for _s, e in vad_regions] if vad_regions else []
+
             words = []
             segments = []
             for i, (_t_ms, text) in enumerate(timed_lines):
@@ -535,6 +568,19 @@ class PhonemeAnalyzer:
                 start_s = max(left_boundary, raw_start_s - _SEGMENT_PAD_S, 0.0)
                 end_s = min(right_boundary, raw_end_s + _SEGMENT_PAD_S, duration_s)
                 end_s = max(end_s, start_s + 0.05)
+
+                # VAD refinement: if real speech onset/offset evidence
+                # exists within this segment's non-overlapping half, snap
+                # to whichever one sits closest to the provider's own
+                # timestamp instead of the blind padding estimate.
+                start_s = _refine_boundary_with_vad(
+                    start_s, raw_start_s, left_boundary, right_boundary, vad_starts,
+                )
+                end_s = _refine_boundary_with_vad(
+                    end_s, raw_end_s, left_boundary, right_boundary, vad_ends,
+                )
+                end_s = max(end_s, start_s + 0.05)
+
                 segments.append({"text": " ".join(line_words), "start": start_s, "end": end_s})
                 words.extend(line_words)
         else:

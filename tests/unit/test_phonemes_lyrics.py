@@ -1,20 +1,22 @@
 """T019-T020: US2 tests for lyrics-assisted alignment and mismatch detection."""
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 
 
-def _make_aligned_wx(word_segments):
+def _make_aligned_wx(word_segments, audio=None):
     """Factory for a whisperx mock with the given word_segments."""
     mock_wx = MagicMock()
     mock_wx.load_model.return_value.transcribe.return_value = {
         "segments": [{"text": "hello world", "start": 0.0, "end": 3.0}],
         "language": "en",
     }
-    mock_wx.load_audio.return_value = [0.0] * 160000
+    mock_wx.load_audio.return_value = audio if audio is not None else [0.0] * 160000
     mock_wx.load_align_model.return_value = (MagicMock(), MagicMock())
     mock_wx.align.return_value = {"word_segments": word_segments}
     return mock_wx
@@ -162,6 +164,43 @@ class TestLyricsAssistedAlignment:
         # own timestamp (with padding slack), not the start of the song.
         assert 0.0 < segments[0]["start"] < 3.5
         assert segments[0]["end"] <= segments[1]["start"] + 1e-9  # no overlap
+
+    def test_vad_evidence_overrides_padding_estimate(
+        self, fixture_wav, tiny_cmu, tmp_path
+    ):
+        """When Silero VAD confidently detects where singing actually
+        starts, that real evidence wins over the blind padding-tolerance
+        guess around the lyrics provider's own timestamp."""
+        lyrics_file = tmp_path / "lyrics.txt"
+        lyrics_file.write_text("[3500]hello\n[6000]world")
+
+        word_segs = [
+            {"word": "hello", "start": 2.85, "end": 3.2, "score": 0.9},
+            {"word": "world", "start": 6.1, "end": 6.5, "score": 0.85},
+        ]
+        audio = np.zeros(160_000, dtype=np.float32)  # 10s @ 16kHz
+        mock_wx = _make_aligned_wx(word_segs, audio=audio)
+
+        # VAD detects real speech starting at 2.8s -- inside the padding
+        # window [2.0, 4.75] the code would otherwise use 2.0 (the blind
+        # estimate) for, but closer to the provider's own 3.5s timestamp
+        # than the padding estimate is.
+        fake_silero = MagicMock()
+        fake_silero.load_silero_vad.return_value = MagicMock(name="vad_model")
+        fake_silero.get_speech_timestamps.return_value = [
+            {"start": 2.8, "end": 4.6}, {"start": 6.05, "end": 6.8},
+        ]
+
+        from src.analyzer.phonemes import PhonemeAnalyzer
+        a = PhonemeAnalyzer()
+        a._cmu_dict = tiny_cmu
+
+        with patch.dict("sys.modules", {"whisperx": mock_wx, "silero_vad": fake_silero}):
+            a.analyze(fixture_wav, "song.mp3", lyrics_path=str(lyrics_file))
+
+        segments = mock_wx.align.call_args[0][0]
+        assert segments[0]["start"] == 2.8  # VAD onset, not the 2.0 padding estimate
+        assert segments[0]["end"] == 4.6    # VAD offset, not the padding-based end
 
 
 # ── T020: Mismatch detection ───────────────────────────────────────────────────

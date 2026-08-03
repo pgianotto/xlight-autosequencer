@@ -49,6 +49,13 @@ lyrics = ["syncedlyrics>=1.0"]
 # leaving this unbounded, which can resolve to a snapshot with no cp312
 # wheel and force a slow, unreliable from-source build.
 essentia = ["essentia==2.1b6.dev1389"]
+# Voice activity detection (src/analyzer/vad.py) -- refines WhisperX forced-
+# alignment segment boundaries with real vocal-onset/offset evidence instead
+# of a blind padding tolerance around the lyrics provider's own approximate
+# timestamps. Only real dependencies are torch/torchaudio, already required
+# above for demucs -- the model files ship inside the wheel, no network
+# download needed at runtime.
+vad = ["silero-vad>=5.0"]
 # Install everything: pip install -e ".[all]"
 all = [
     "demucs>=4.0",
@@ -60,6 +67,7 @@ all = [
     "zstandard>=0.21",
     "syncedlyrics>=1.0",
     "essentia==2.1b6.dev1389",
+    "silero-vad>=5.0",
 ]
 dev = [
     "pytest>=7.4",

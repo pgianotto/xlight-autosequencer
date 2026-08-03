@@ -16,10 +16,48 @@ from src.analyzer.phonemes import (
     WordTrack,
     _ARPABET_TO_PAPAGAYO,
     _parse_timed_lyrics,
+    _refine_boundary_with_vad,
     arpabet_to_papagayo,
     distribute_phoneme_timing,
     word_to_papagayo,
 )
+
+
+# ── _refine_boundary_with_vad: snap padding estimate to real VAD evidence ────
+
+class TestRefineBoundaryWithVad:
+    def test_snaps_to_closest_candidate_in_range(self):
+        # 3.4 is closer to raw_value=3.5 than 6.0 is -- and both are within
+        # [floor, ceiling] -- so 3.4 wins over the padding estimate.
+        got = _refine_boundary_with_vad(
+            estimate=2.0, raw_value=3.5, floor=0.0, ceiling=4.75, candidates=[3.4, 6.0],
+        )
+        assert got == 3.4
+
+    def test_returns_estimate_unchanged_when_no_candidates(self):
+        got = _refine_boundary_with_vad(
+            estimate=2.0, raw_value=3.5, floor=0.0, ceiling=4.75, candidates=[],
+        )
+        assert got == 2.0
+
+    def test_ignores_candidates_outside_floor_ceiling_range(self):
+        # 10.0 is outside [0.0, 4.75] -- must not be picked even though
+        # it's the only candidate offered.
+        got = _refine_boundary_with_vad(
+            estimate=2.0, raw_value=3.5, floor=0.0, ceiling=4.75, candidates=[10.0],
+        )
+        assert got == 2.0
+
+    def test_picks_closest_among_multiple_in_range_candidates(self):
+        got = _refine_boundary_with_vad(
+            estimate=2.0, raw_value=3.5, floor=0.0, ceiling=4.75,
+            candidates=[0.5, 3.6, 4.7],
+        )
+        assert got == 3.6
+
+    def test_candidate_exactly_at_floor_or_ceiling_is_usable(self):
+        assert _refine_boundary_with_vad(2.0, 3.5, 0.0, 4.75, [0.0]) == 0.0
+        assert _refine_boundary_with_vad(2.0, 3.5, 0.0, 4.75, [4.75]) == 4.75
 
 
 # ── _parse_timed_lyrics: per-line WhisperX alignment segment hints ───────────
