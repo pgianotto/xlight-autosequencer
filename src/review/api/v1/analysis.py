@@ -742,25 +742,22 @@ def _analyze_in_background(state: "_RunState", source_path: str, song_id: str,
                 # provider's raw (often approximate) line timestamps.
                 # Regroup the aligned words back into corrected line marks
                 # so both use the same alignment pass.
+                #
+                # Always also run the ctc-forced-aligner second opinion
+                # (rather than only when a line has zero WhisperX matches):
+                # WhisperX drops low-confidence words instead of timing
+                # them, so a line can "match" on just 1 of 8 words and get
+                # a badly-off timestamp from that one word alone even
+                # though it's not a full gap (found 2026-08-05, "It's the
+                # Most Wonderful Time of the Year" — 52.7% overall word
+                # coverage, several lines under-matched but not zero-
+                # matched). realign_lyric_lines() picks whichever source
+                # covers each individual line better, so running both
+                # unconditionally costs one extra full model pass per song
+                # but never makes any single line's timing worse.
                 original_lyrics_list = lyrics_list
-                lyrics_list = realign_lyric_lines(original_lyrics_list, words_list)
-                # WhisperX drops words it can't confidently align rather
-                # than timing them, so some lines can end up with zero
-                # matched words even when the song overall aligned well.
-                # ctc-forced-aligner never drops words (it force-places
-                # every one, via <star> tokens for gaps), so it's a good
-                # fallback specifically for those lines -- only worth its
-                # own full model pass when such a gap actually exists.
-                gap_lines = [
-                    orig for orig, corr in zip(original_lyrics_list, lyrics_list)
-                    if orig == corr
-                ]
-                if gap_lines and words_list:
-                    fallback_words = ctc_fallback_words(str(src), original_lyrics_list)
-                    if fallback_words:
-                        lyrics_list = realign_lyric_lines(
-                            original_lyrics_list, words_list, fallback_words,
-                        )
+                fallback_words = ctc_fallback_words(str(src), original_lyrics_list) if words_list else None
+                lyrics_list = realign_lyric_lines(original_lyrics_list, words_list, fallback_words)
                 state.push({"detector": "phonemes (whisperx)", "library": "story",
                             "status": "done", "confidence": None,
                             "marks": len(phonemes_list), "warnings": lyrics_warnings})

@@ -210,6 +210,46 @@ class TestRealignLyricLines:
         fallback_words = [{"label": "ALSO-UNRELATED", "start_ms": 0, "end_ms": 100}]
         assert phoneme_align.realign_lyric_lines(lines, words, fallback_words) == lines
 
+    def test_fallback_wins_when_it_covers_more_of_a_partially_matched_line(self):
+        # WhisperX matched only 1 of 4 words in the line (a real, non-empty
+        # match -- the old "any match wins" rule would keep this), but the
+        # fallback matched all 4. The fallback should win since it covers
+        # more of the line, not just "matched something".
+        lines = [{"t_ms": 0, "duration_ms": 5000, "text": "one two three four"}]
+        words = [{"label": "TWO", "start_ms": 9000, "end_ms": 9300}]
+        fallback_words = [
+            {"label": "ONE", "start_ms": 100, "end_ms": 300},
+            {"label": "TWO", "start_ms": 300, "end_ms": 500},
+            {"label": "THREE", "start_ms": 500, "end_ms": 700},
+            {"label": "FOUR", "start_ms": 700, "end_ms": 900},
+        ]
+        corrected = phoneme_align.realign_lyric_lines(lines, words, fallback_words)
+        assert corrected == [{"t_ms": 100, "duration_ms": 900 - 100, "text": "one two three four"}]
+
+    def test_primary_wins_on_equal_coverage_even_with_fallback_present(self):
+        lines = [{"t_ms": 0, "duration_ms": 5000, "text": "one two"}]
+        words = [
+            {"label": "ONE", "start_ms": 100, "end_ms": 300},
+            {"label": "TWO", "start_ms": 300, "end_ms": 500},
+        ]
+        fallback_words = [
+            {"label": "ONE", "start_ms": 9000, "end_ms": 9200},
+            {"label": "TWO", "start_ms": 9200, "end_ms": 9400},
+        ]
+        corrected = phoneme_align.realign_lyric_lines(lines, words, fallback_words)
+        assert corrected == [{"t_ms": 100, "duration_ms": 500 - 100, "text": "one two"}]
+
+    def test_primary_wins_when_it_covers_more_than_fallback(self):
+        lines = [{"t_ms": 0, "duration_ms": 5000, "text": "one two three four"}]
+        words = [
+            {"label": "ONE", "start_ms": 100, "end_ms": 300},
+            {"label": "TWO", "start_ms": 300, "end_ms": 500},
+            {"label": "THREE", "start_ms": 500, "end_ms": 700},
+        ]
+        fallback_words = [{"label": "FOUR", "start_ms": 9000, "end_ms": 9300}]
+        corrected = phoneme_align.realign_lyric_lines(lines, words, fallback_words)
+        assert corrected == [{"t_ms": 100, "duration_ms": 700 - 100, "text": "one two three four"}]
+
 
 class TestCtcFallbackWords:
     def test_no_text_returns_none(self, monkeypatch):

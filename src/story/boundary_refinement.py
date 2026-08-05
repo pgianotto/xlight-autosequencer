@@ -1,6 +1,6 @@
 """Lyric-anchored boundary refinement.
 
-Three small, targeted refinements applied after the existing section-boundary
+Four small, targeted refinements applied after the existing section-boundary
 derivation in the story builder. Consumes WhisperX forced-alignment word marks
 (already produced for vocal sections) and a free-transcription word stream
 (``src.analyzer.free_transcription.transcribe_free``) for ground-truth
@@ -8,10 +8,14 @@ derivation in the story builder. Consumes WhisperX forced-alignment word marks
 
 OpenSpec change: ``lyric-anchored-boundary-refinement``.
 
-Empirical record: 16-song corpus run produced 8 fires, 0 false positives —
-Cher (Fix 1 + Fix 2 full + Fix 3), Crazy Train (Fix 2 split + Fix 3),
-Ghostbusters (Fix 2 full), Hoist the Colours (Fix 3), Down with the Sickness
-(Fix 3); 11 others zero fires.
+Empirical record (Fix 1-3 only): 16-song corpus run produced 8 fires, 0
+false positives — Cher (Fix 1 + Fix 2 full + Fix 3), Crazy Train (Fix 2
+split + Fix 3), Ghostbusters (Fix 2 full), Hoist the Colours (Fix 3), Down
+with the Sickness (Fix 3); 11 others zero fires. Fix 4 (``split_on_
+repeated_hook``, added 2026-08-05) hasn't been run against this corpus yet
+— it only *splits* on repeated-hook evidence, never relabels role, so a
+wrong fire is a spurious boundary rather than a wrong role, but treat it as
+less battle-tested than Fix 1-3 until it has its own corpus record.
 
 Section dict shape (per ``src/story/builder.py``)
 -------------------------------------------------
@@ -141,6 +145,47 @@ def _hook_matches(targets: list[str], words: list[WordMark]) -> bool:
         return False
     threshold = max(2, len(targets) - 1)
     return _consecutive_in_order_count(targets, words) >= threshold
+
+
+def _find_all_hook_occurrences(
+    targets: list[str], words: list[WordMark], window: int = 12,
+) -> list[int]:
+    """Return the ``start_ms`` of each non-overlapping in-order occurrence
+    of ``targets`` within ``words``, scanning the whole list (not just the
+    first match — see ``_hook_matches``/``_consecutive_in_order_count``,
+    which both stop at the first).
+
+    Same ``max(2, len(targets) - 1)`` tolerance per occurrence. After a
+    match, scanning resumes right after its last matched word so the same
+    words can't be counted into two occurrences.
+    """
+    if len(targets) < 2 or not words:
+        return []
+    word_labels = [_norm(w.label) for w in words]
+    threshold = max(2, len(targets) - 1)
+
+    occurrences: list[int] = []
+    search_start = 0
+    while search_start < len(word_labels):
+        cursor = search_start
+        matched = 0
+        first_idx: Optional[int] = None
+        for target in targets:
+            end = min(len(word_labels), cursor + window) if matched > 0 else len(word_labels)
+            try:
+                idx = word_labels.index(target, cursor, end)
+            except ValueError:
+                continue
+            if first_idx is None:
+                first_idx = idx
+            matched += 1
+            cursor = idx + 1
+        if matched >= threshold and first_idx is not None:
+            occurrences.append(words[first_idx].start_ms)
+            search_start = cursor
+        else:
+            break
+    return occurrences
 
 
 def _words_in_span(
@@ -441,6 +486,94 @@ def split_pre_vocal_instrumental(
     return out, notes
 
 
+# ── Fix 4: split a section at internal chorus-hook repeats ───────────────────
+
+
+MIN_HOOK_SPLIT_PIECE_MS = 3000
+
+
+def split_on_repeated_hook(
+    sections: list[dict],
+    forced_words: list[WordMark],
+    chorus_body: Optional[str],
+    *,
+    min_piece_ms: int = MIN_HOOK_SPLIT_PIECE_MS,
+) -> tuple[list[dict], list[str]]:
+    """Split a section wherever the chorus hook line repeats inside it.
+
+    Some songs (through-composed pop/holiday songs without a clean
+    verse/chorus alternation — e.g. "It's the Most Wonderful Time of the
+    Year", user-reported 2026-08-05: "one big long verse in the middle")
+    repeat the same hook line multiple times within what audio-only
+    structure detection (segmentino/qm_segmenter) keeps as a single long
+    section, because there's no strong timbral/spectral change between
+    repeats for a pure-audio detector to key off. Lyric repetition is
+    stronger evidence of a real structural boundary than the absence of an
+    audio change is evidence there ISN'T one.
+
+    Deliberately only splits — it does not relabel role to "chorus" (that's
+    Fix 2's narrower, corpus-validated bridge-specific job; this fires on
+    any non-chorus, non-instrumental role and a wrong role guess would be
+    worse than no guess). Each resulting piece keeps the original role.
+    Skips sections already labelled "chorus" (nothing to split against
+    itself) and instrumental sections. Only fires on *interior* repeats —
+    an occurrence within ``min_piece_ms`` of the section start isn't split
+    off (there'd be nothing meaningful before it), and every resulting
+    piece must be at least ``min_piece_ms`` long, so a spurious rapid
+    double-match can't produce a sliver section.
+    """
+    notes: list[str] = []
+    targets = _chorus_first_line_distinctives(chorus_body or "")
+    if len(targets) < 2:
+        return [copy.deepcopy(s) for s in sections], notes
+
+    out: list[dict] = []
+    for sec in sections:
+        role = sec.get("role")
+        if role == "chorus" or _is_instrumental_role(role):
+            out.append(copy.deepcopy(sec))
+            continue
+
+        words = _words_in_span(forced_words, sec["start"], sec["end"])
+        occurrences = _find_all_hook_occurrences(targets, words)
+        if len(occurrences) < 2:
+            out.append(copy.deepcopy(sec))
+            continue
+
+        sec_start_ms = int(round(sec["start"] * 1000))
+        sec_end_ms = int(round(sec["end"] * 1000))
+
+        split_points: list[int] = []
+        last = sec_start_ms
+        for occ_ms in occurrences:
+            split_ms = occ_ms - 250
+            if split_ms - last >= min_piece_ms and sec_end_ms - split_ms >= min_piece_ms:
+                split_points.append(split_ms)
+                last = split_ms
+
+        if not split_points:
+            out.append(copy.deepcopy(sec))
+            continue
+
+        boundaries = [sec_start_ms] + split_points + [sec_end_ms]
+        note = (
+            f"split {role} at {len(split_points)} internal chorus-hook "
+            f"repeat(s) (targets={targets[:4]})"
+        )
+        for i in range(len(boundaries) - 1):
+            piece = copy.deepcopy(sec)
+            piece["start"] = round(boundaries[i] / 1000.0, 3)
+            piece["end"] = round(boundaries[i + 1] / 1000.0, 3)
+            piece["duration"] = round(piece["end"] - piece["start"], 3)
+            refs = list(piece.get("boundary_refinements") or [])
+            refs.append(note)
+            piece["boundary_refinements"] = refs
+            out.append(piece)
+        notes.append(note)
+
+    return out, notes
+
+
 # ── Orchestrator ──────────────────────────────────────────────────────────────
 
 
@@ -462,14 +595,14 @@ def refine_section_boundaries(
     free_words: Iterable[WordMark] = (),
     chorus_body: Optional[str] = None,
 ) -> tuple[list[dict], list[str]]:
-    """Run the three boundary-refinement passes in fixed order 1 → 2 → 3.
+    """Run the four boundary-refinement passes in fixed order 1 → 2 → 3 → 4.
 
     Each pass operates on the previous pass's output. Every section in the
     returned list has a ``boundary_refinements: list[str]`` field, present
     even when empty.
 
     Returns ``(refined_sections, all_notes)``. ``all_notes`` is a flat list
-    of every note emitted across the three passes, suitable for logging.
+    of every note emitted across the four passes, suitable for logging.
     """
     forced_list = list(forced_words)
     free_list = list(free_words)
@@ -479,6 +612,7 @@ def refine_section_boundaries(
     refined, notes_1 = merge_short_post_chorus_tail(refined, forced_list)
     refined, notes_2 = relabel_or_split_bridge(refined, free_list, chorus_body)
     refined, notes_3 = split_pre_vocal_instrumental(refined, free_list)
+    refined, notes_4 = split_on_repeated_hook(refined, forced_list, chorus_body)
 
     refined = _ensure_refinements_field(refined)
 
@@ -486,11 +620,12 @@ def refine_section_boundaries(
     all_notes.extend(notes_1)
     all_notes.extend(notes_2)
     all_notes.extend(notes_3)
+    all_notes.extend(notes_4)
 
     if all_notes:
         log.info(
-            "refine_section_boundaries: %d total fires (Fix1=%d, Fix2=%d, Fix3=%d)",
-            len(all_notes), len(notes_1), len(notes_2), len(notes_3),
+            "refine_section_boundaries: %d total fires (Fix1=%d, Fix2=%d, Fix3=%d, Fix4=%d)",
+            len(all_notes), len(notes_1), len(notes_2), len(notes_3), len(notes_4),
         )
 
     return refined, all_notes

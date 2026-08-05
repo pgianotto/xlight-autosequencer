@@ -15,10 +15,12 @@ from src.analyzer.phonemes import WordMark
 from src.story.boundary_refinement import (
     _chorus_first_line_distinctives,
     _consecutive_in_order_count,
+    _find_all_hook_occurrences,
     _hook_matches,
     merge_short_post_chorus_tail,
     refine_section_boundaries,
     relabel_or_split_bridge,
+    split_on_repeated_hook,
     split_pre_vocal_instrumental,
 )
 
@@ -368,4 +370,116 @@ def test_refine_orchestrator_with_no_chorus_body_skips_fix2() -> None:
     )
     assert out[0]["role"] == "bridge"
     # No Fix-2 fire on this section.
+
+
+# ── _find_all_hook_occurrences ────────────────────────────────────────────────
+
+
+def test_find_all_hook_occurrences_finds_every_non_overlapping_repeat() -> None:
+    targets = ["most", "wonderful", "time"]
+    words = (
+        _words_at(5.0, ["most", "wonderful", "time"])
+        + _words_at(25.0, ["most", "wonderful", "time"])
+        + _words_at(45.0, ["most", "wonderful", "time"])
+    )
+    occurrences = _find_all_hook_occurrences(targets, words)
+    assert occurrences == [5000, 25000, 45000]
+
+
+def test_find_all_hook_occurrences_single_hit_returns_one() -> None:
+    targets = ["most", "wonderful", "time"]
+    words = _words_at(5.0, ["most", "wonderful", "time"])
+    assert _find_all_hook_occurrences(targets, words) == [5000]
+
+
+def test_find_all_hook_occurrences_empty_words_returns_empty() -> None:
+    assert _find_all_hook_occurrences(["most", "wonderful"], []) == []
+
+
+# ── Fix 4: split_on_repeated_hook ─────────────────────────────────────────────
+
+
+def _hook_words(*start_seconds: float) -> list[WordMark]:
+    words: list[WordMark] = []
+    for s in start_seconds:
+        words += _words_at(s, ["most", "wonderful", "time"])
+    return words
+
+
+def test_split_on_repeated_hook_splits_long_verse_into_pieces() -> None:
+    verse = _section("verse", 0.0, 60.0)
+    words = _hook_words(5.0, 25.0, 45.0)
+    out, notes = split_on_repeated_hook(
+        [verse], words, "It's the most wonderful time",
+    )
+    assert [s["role"] for s in out] == ["verse", "verse", "verse", "verse"]
+    starts = [s["start"] for s in out]
+    ends = [s["end"] for s in out]
+    assert starts[0] == 0.0
+    assert ends[-1] == 60.0
+    assert starts[1:] == ends[:-1]  # contiguous, no gaps/overlaps
+    assert len(notes) == 1
+    assert "3 internal chorus-hook" in notes[0]
+    assert all("split verse at 3 internal chorus-hook" in s["boundary_refinements"][-1] for s in out)
+
+
+def test_split_on_repeated_hook_skips_occurrence_too_close_to_start() -> None:
+    verse = _section("verse", 0.0, 60.0)
+    words = _hook_words(0.2, 30.0)
+    out, notes = split_on_repeated_hook([verse], words, "It's the most wonderful time")
+    assert [s["start"] for s in out] == [0.0, 29.75]
+    assert [s["end"] for s in out] == [29.75, 60.0]
+    assert len(notes) == 1
+
+
+def test_split_on_repeated_hook_single_occurrence_no_split() -> None:
+    verse = _section("verse", 0.0, 60.0)
+    words = _hook_words(5.0)
+    out, notes = split_on_repeated_hook([verse], words, "It's the most wonderful time")
+    assert out == [verse]
+    assert notes == []
+
+
+def test_split_on_repeated_hook_skips_chorus_role() -> None:
+    chorus = _section("chorus", 0.0, 60.0)
+    words = _hook_words(5.0, 25.0, 45.0)
+    out, notes = split_on_repeated_hook([chorus], words, "It's the most wonderful time")
+    assert out == [chorus]
+    assert notes == []
+
+
+def test_split_on_repeated_hook_skips_instrumental_role() -> None:
+    instrumental = _section("instrumental", 0.0, 60.0)
+    words = _hook_words(5.0, 25.0, 45.0)
+    out, notes = split_on_repeated_hook([instrumental], words, "It's the most wonderful time")
+    assert out == [instrumental]
+    assert notes == []
+
+
+def test_split_on_repeated_hook_no_chorus_body_no_op() -> None:
+    verse = _section("verse", 0.0, 60.0)
+    words = _hook_words(5.0, 25.0, 45.0)
+    out, notes = split_on_repeated_hook([verse], words, None)
+    assert out == [verse]
+    assert notes == []
+
+
+def test_split_on_repeated_hook_pieces_too_short_are_not_split() -> None:
+    # Both occurrences sit close together, well inside the 3s minimum piece
+    # length from BOTH the section start and each other -- neither qualifies.
+    verse = _section("verse", 0.0, 10.0)
+    words = _hook_words(1.0, 1.8)
+    out, notes = split_on_repeated_hook([verse], words, "It's the most wonderful time")
+    assert out == [verse]
+    assert notes == []
+
+
+def test_refine_section_boundaries_runs_fix4() -> None:
+    verse = _section("verse", 0.0, 60.0)
+    words = _hook_words(5.0, 25.0, 45.0)
+    out, notes = refine_section_boundaries(
+        [verse], forced_words=words, free_words=[], chorus_body="It's the most wonderful time",
+    )
+    assert len(out) == 4
+    assert any("internal chorus-hook" in n for n in notes)
     assert not any("relabel" in n for n in notes)

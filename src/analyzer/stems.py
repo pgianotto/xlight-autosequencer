@@ -35,6 +35,16 @@ class StemSet:
 
 _STEM_NAMES = ["drums", "bass", "vocals", "guitar", "piano", "other"]
 
+# Demucs "shift trick" (Défossez et al.): run separation N extra times on
+# randomly time-shifted copies of the audio and average the results, which
+# measurably improves separation quality (cleaner vocals stem -> more
+# reliable WhisperX/CTC lyric alignment and vocal diarization downstream)
+# at a roughly (N+1)x inference-time cost. 0 disables it entirely; demucs'
+# own docs cite 5-10 as a good quality ceiling with diminishing returns
+# beyond that. Chosen deliberately over the previous 0 (2026-08-05, user:
+# "I would rather a longer analysis time than sacrifice quality").
+_DEMUCS_SHIFTS = 5
+
 
 class StemCache:
     """
@@ -153,7 +163,7 @@ class StemSeparator:
             return cache.load()
 
         print("Stem separation: checking cache...", file=sys.stderr)
-        print("  → No cache found. Separating (this may take 1-2 minutes)...", file=sys.stderr)
+        print("  → No cache found. Separating (this may take several minutes)...", file=sys.stderr)
 
         stem_set = self._run_demucs(audio_path, cache.source_hash, progress_cb)
 
@@ -252,7 +262,7 @@ class StemSeparator:
 
         with torch.no_grad():
             out = apply_model(
-                model, wav.unsqueeze(0), device="cpu", shifts=0, progress=False,
+                model, wav.unsqueeze(0), device="cpu", shifts=_DEMUCS_SHIFTS, progress=False,
                 callback=demucs_callback,
             )
         out = out[0]
@@ -320,7 +330,9 @@ elif wav.shape[0] > 2:
     wav = wav[:2]
 
 with torch.no_grad():
-    out = apply_model(model, wav.unsqueeze(0), device="cpu", shifts=0, progress=False)
+    out = apply_model(
+        model, wav.unsqueeze(0), device="cpu", shifts={_DEMUCS_SHIFTS!r}, progress=False,
+    )
 out = out[0]
 
 stem_names = ["drums", "bass", "vocals", "guitar", "piano", "other"]
@@ -344,14 +356,19 @@ print(json.dumps(result))
 '''
             print("  → htdemucs_6s (drums, bass, vocals, guitar, piano, other)...",
                   file=sys.stderr)
+            # shifts=_DEMUCS_SHIFTS multiplies demucs' own compute by
+            # roughly (shifts+1)x -- the old 600s (10 min) budget here
+            # assumed shifts=0 and would false-positive-timeout a slow but
+            # otherwise-fine run now. Scaled proportionally with headroom.
+            demucs_timeout_s = 600 * (_DEMUCS_SHIFTS + 1)
             try:
                 proc = _sp.run(
                     [str(vamp_python), "-c", script],
-                    capture_output=True, text=True, timeout=600,
+                    capture_output=True, text=True, timeout=demucs_timeout_s,
                 )
             except _sp.TimeoutExpired:
                 raise RuntimeError(
-                    "Demucs stem separation timed out after 10 minutes. "
+                    f"Demucs stem separation timed out after {demucs_timeout_s // 60} minutes. "
                     "This may indicate insufficient memory or CPU. "
                     "Try closing other applications and retrying."
                 )

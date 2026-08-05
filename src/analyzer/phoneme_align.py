@@ -26,23 +26,41 @@ log = get_logger("xlight.phoneme_align")
 
 _WORD_RE = re.compile(r"[a-zA-Z0-9']+")
 
+# WhisperX model size for forced alignment. "small" (244M params) over the
+# default "base" (74M) for real accuracy on lyric alignment reliability
+# (2026-08-05, user: "I would rather a longer analysis time than sacrifice
+# quality") -- meaningfully better than base at a bounded extra CPU cost per
+# song; "medium"/"large" exist as further dials if this still isn't enough,
+# at a much steeper time cost on this project's weak (Atom) deployment
+# hardware.
+_WHISPERX_MODEL = "small"
+
 
 def _tokens(text: str) -> list[str]:
     return [t.upper() for t in _WORD_RE.findall(text)]
 
 
+def _line_token_counts(lyric_lines: list[dict]) -> dict[int, int]:
+    return {li: len(_tokens(line.get("text", ""))) for li, line in enumerate(lyric_lines)}
+
+
 def _match_lines_to_words(
     lyric_lines: list[dict], words: list[dict],
-) -> tuple[dict[int, int], dict[int, int]]:
-    """Return ``(line_start_ms, line_end_ms)`` dicts keyed by line index,
-    covering only lines with at least one word in ``words`` matched by text.
+) -> tuple[dict[int, int], dict[int, int], dict[int, int]]:
+    """Return ``(line_start_ms, line_end_ms, line_matched_word_count)`` dicts
+    keyed by line index, covering only lines with at least one word in
+    ``words`` matched by text.
 
     Aligns the flattened reference words (from ``lyric_lines``) against
     ``words`` by text via :class:`difflib.SequenceMatcher`, which finds the
     matching blocks of an ordered subsequence — exactly what a forced
     aligner that only *drops* words (never reorders or invents them)
     produces. This recovers which aligned word belongs to which original
-    line even when ``words`` is missing entries.
+    line even when ``words`` is missing entries. ``line_matched_word_count``
+    lets a caller judge *how well* a line matched, not just whether it did
+    (see ``realign_lyric_lines``, which uses this to pick between two
+    candidate word sources per line rather than treating any nonzero match
+    as good enough).
     """
     orig_tokens: list[str] = []
     orig_line_of: list[int] = []
@@ -53,13 +71,14 @@ def _match_lines_to_words(
 
     aligned_tokens = [w["label"] for w in words]
     if not orig_tokens or not aligned_tokens:
-        return {}, {}
+        return {}, {}, {}
 
     import difflib
     matcher = difflib.SequenceMatcher(a=orig_tokens, b=aligned_tokens, autojunk=False)
 
     line_start: dict[int, int] = {}
     line_end: dict[int, int] = {}
+    line_matches: dict[int, int] = {}
     for block in matcher.get_matching_blocks():
         for k in range(block.size):
             li = orig_line_of[block.a + k]
@@ -69,7 +88,8 @@ def _match_lines_to_words(
                 line_start[li] = start_ms
             if li not in line_end or end_ms > line_end[li]:
                 line_end[li] = end_ms
-    return line_start, line_end
+            line_matches[li] = line_matches.get(li, 0) + 1
+    return line_start, line_end, line_matches
 
 
 def realign_lyric_lines(
@@ -88,26 +108,36 @@ def realign_lyric_lines(
     total-count match, the original approach here, essentially never holds
     in practice and silently discarded every alignment).
 
-    Each line whose text matched at least one word in ``words`` gets its
-    ``t_ms``/``duration_ms`` set from that line's earliest/latest matched
-    word. A line with zero matches in ``words`` falls back to
-    ``fallback_words`` (typically ``ctc_align.align_words`` — a forced
+    Each line's ``t_ms``/``duration_ms`` is set from whichever of ``words``
+    or ``fallback_words`` (typically ``ctc_align.align_words`` — a forced
     aligner that never drops words, so it can cover lines WhisperX skipped
-    entirely, at the cost of being a general-purpose, non-singing-adapted
-    model) when given, and otherwise keeps its original (provider) timing
+    or under-matched, at the cost of being a general-purpose,
+    non-singing-adapted model) matched a *larger fraction of that line's own
+    words* — not just whichever matched any word at all (found 2026-08-05:
+    a line with only 1 of 8 words matched by WhisperX still "won" under the
+    old any-match-wins rule even when the fallback matched 7 of 8, because
+    the old rule only checked for a completely unmatched line). A line with
+    zero matches from both sources keeps its original (provider) timing
     rather than guessing.
     """
     if not lyric_lines or not words:
         return lyric_lines
 
-    line_start, line_end = _match_lines_to_words(lyric_lines, words)
-    fb_start, fb_end = (
-        _match_lines_to_words(lyric_lines, fallback_words) if fallback_words else ({}, {})
+    token_counts = _line_token_counts(lyric_lines)
+    line_start, line_end, line_matches = _match_lines_to_words(lyric_lines, words)
+    fb_start, fb_end, fb_matches = (
+        _match_lines_to_words(lyric_lines, fallback_words) if fallback_words else ({}, {}, {})
     )
 
     corrected: list[dict] = []
     for li, line in enumerate(lyric_lines):
-        if li in line_start:
+        n = token_counts.get(li, 0) or 1
+        primary_coverage = line_matches.get(li, 0) / n
+        fallback_coverage = fb_matches.get(li, 0) / n
+        # Ties (including both zero) favor primary: WhisperX is
+        # singing-adapted and already used for the Words/Phonemes tracks, so
+        # prefer it whenever the fallback isn't a clear improvement.
+        if li in line_start and (li not in fb_start or primary_coverage >= fallback_coverage):
             corrected.append({
                 "t_ms": line_start[li],
                 "duration_ms": max(line_end[li] - line_start[li], 1),
@@ -190,7 +220,7 @@ def _run_in_process(
 ) -> tuple[list[dict], list[dict], list[str]]:
     from src.analyzer.phonemes import PhonemeAnalyzer
 
-    analyzer = PhonemeAnalyzer(model_name="base", device="cpu", language="en")
+    analyzer = PhonemeAnalyzer(model_name=_WHISPERX_MODEL, device="cpu", language="en")
     result = analyzer.analyze(audio_path, source_file=audio_path, lyrics_path=lyrics_path)
     warnings = list(getattr(analyzer, "warnings", []) or [])
     if result is None:
@@ -217,7 +247,7 @@ try:
 except Exception:
     pass
 from src.analyzer.phonemes import PhonemeAnalyzer
-analyzer = PhonemeAnalyzer(model_name="base", device="cpu", language="en")
+analyzer = PhonemeAnalyzer(model_name={_WHISPERX_MODEL!r}, device="cpu", language="en")
 result = analyzer.analyze({audio_path!r}, source_file={audio_path!r}, lyrics_path={lyrics_path!r})
 warnings = list(getattr(analyzer, "warnings", []) or [])
 if result is None:

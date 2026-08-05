@@ -18,6 +18,8 @@ log = get_logger("xlight.free_transcription")
 
 _HF_ALIGN_FALLBACK = "jonatasgrosman/wav2vec2-large-xlsr-53-english"
 
+# See src.analyzer.phoneme_align._WHISPERX_MODEL for why "small" over "base".
+
 
 def _load_align_model(language: str, device: str) -> tuple:
     """Load whisperx alignment model, falling back to HF if torchaudio download fails."""
@@ -62,7 +64,7 @@ def transcribe_free(
     audio = whisperx.load_audio(str(p))
 
     log.info("transcribe_free: loading whisper model (device=%s, language=%s)", device, language)
-    model = whisperx.load_model("base", device, compute_type="float32", language=language)
+    model = whisperx.load_model("small", device, compute_type="float32", language=language)
     transcribed = model.transcribe(audio, batch_size=8)
     raw_segments = transcribed.get("segments", [])
     log.info("transcribe_free: %d raw segments", len(raw_segments))
