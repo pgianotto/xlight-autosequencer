@@ -168,6 +168,15 @@ def review_cmd(audio_or_json: str | None) -> None:
     # (e.g. to keep vamp/madmom available for re-analyze) needs 0.0.0.0.
     review_host = os.environ.get("XLIGHT_REVIEW_HOST", "127.0.0.1")
 
+    # threaded=True on every app.run() below: Werkzeug's dev server is
+    # single-threaded by default, so the SSE analysis-progress stream (held
+    # open for the whole analysis -- many minutes, longer still since the
+    # WhisperX/demucs quality changes) blocks every other request until it
+    # finishes, including a new song's file upload. User-reported 2026-08-06:
+    # a large import "failed to fetch" -- root cause was the browser's
+    # upload request queuing behind an in-flight SSE stream with no free
+    # worker thread to accept it, until the browser gave up.
+
     if audio_or_json is None:
         app = create_app()
         url = "http://127.0.0.1:5173/"
@@ -175,7 +184,7 @@ def review_cmd(audio_or_json: str | None) -> None:
         click.echo("Press Ctrl-C to stop.")
         threading.Timer(0.5, webbrowser.open, args=[url]).start()
         try:
-            app.run(host=review_host, port=5173, use_reloader=False, debug=False)
+            app.run(host=review_host, port=5173, use_reloader=False, debug=False, threaded=True)
         except OSError as exc:
             if exc.errno == errno.EADDRINUSE:
                 click.echo(
@@ -197,7 +206,7 @@ def review_cmd(audio_or_json: str | None) -> None:
         click.echo("Press Ctrl-C to stop.")
         threading.Timer(0.5, webbrowser.open, args=[url]).start()
         try:
-            app.run(host=review_host, port=5173, use_reloader=False, debug=False)
+            app.run(host=review_host, port=5173, use_reloader=False, debug=False, threaded=True)
         except OSError as exc:
             if exc.errno == errno.EADDRINUSE:
                 click.echo("ERROR: Port 5173 is already in use.", err=True)
@@ -263,7 +272,7 @@ def review_cmd(audio_or_json: str | None) -> None:
     threading.Timer(0.5, webbrowser.open, args=[url]).start()
 
     try:
-        app.run(host=review_host, port=5173, use_reloader=False, debug=False)
+        app.run(host=review_host, port=5173, use_reloader=False, debug=False, threaded=True)
     except OSError as exc:
         if exc.errno == errno.EADDRINUSE:
             click.echo(

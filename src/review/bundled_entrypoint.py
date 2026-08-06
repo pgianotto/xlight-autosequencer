@@ -166,7 +166,10 @@ def main() -> int:
     print(f"{HANDSHAKE_PREFIX}{port}", flush=True)
 
     app = create_app()
-    app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False)
+    # threaded=True: see src/cli/review.py's review_cmd for why (single-
+    # threaded dev server + long-lived SSE analysis stream blocks every
+    # other request, including new file uploads, until analysis finishes).
+    app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False, threaded=True)
     return 0
 
 

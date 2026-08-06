@@ -23,4 +23,7 @@ def main(dev: bool, port: int, host: str) -> None:
     if not dev:
         webbrowser.open(url)
     click.echo(f"xOnset running at {url}")
-    app.run(host=host, port=port, debug=False)
+    # threaded=True: see src/cli/review.py's review_cmd for why (single-
+    # threaded dev server + long-lived SSE analysis stream blocks every
+    # other request, including new file uploads, until analysis finishes).
+    app.run(host=host, port=port, debug=False, threaded=True)
