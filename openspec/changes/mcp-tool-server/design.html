@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design: MCP tool server</title>
+<link rel="stylesheet" href="../_design.css">
+</head>
+<body>
+<div class="layout">
+
+<nav class="toc">
+  <h2>Sections</h2>
+  <ol>
+    <li><a href="#goal">Goal</a></li>
+    <li><a href="#approach">Approach</a></li>
+    <li><a href="#alternative">Alternative considered</a></li>
+    <li><a href="#tools">Tool surface</a></li>
+    <li><a href="#files">Files touched</a></li>
+    <li><a href="#regression">Regression surface</a></li>
+    <li><a href="#echoes">Historical echoes</a></li>
+    <li><a href="#scope">Out of scope</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="doc-header">
+  <p class="kicker">OpenSpec design · mcp-tool-server</p>
+  <h1>Design: MCP tool server</h1>
+  <div class="goal" id="goal">
+    Give a remote Claude client typed tool access to the existing xLightsAI pipeline
+    &mdash; library, analysis, song story, themes/effects/variants, sequence generation,
+    layout &mdash; over MCP's Streamable HTTP transport, served from the same Flask
+    process already running at <code>http://&lt;nas-host&gt;:5173</code> on the Synology.
+    Every tool is a thin wrapper around an existing function; no analysis, generation,
+    or export logic is reimplemented.
+  </div>
+</header>
+
+<section class="block" id="approach">
+  <h2>Approach</h2>
+
+  <article class="card">
+    <div class="card-head">
+      <span class="pill pill-info">Piece 1</span>
+      <h4>Pin the real mcp 2.x API</h4>
+    </div>
+    <p>Installed <code>mcp</code> fresh in a scratch venv rather than assuming the 1.x
+      <code>FastMCP</code> shape. Confirmed version <strong>2.2.0</strong>:</p>
+    <pre><code>from mcp.server.mcpserver import MCPServer
+
+mcp = MCPServer(name="xonset", version="0.1.0")
+
+@mcp.tool()
+async def list_library() -> dict:
+    """List songs in the library, with folders and staleness info."""
+    ...</code></pre>
+    <p><code>mcp.server.fastmcp</code> is not silently gone &mdash; importing it raises
+      <code>ModuleNotFoundError</code> with a message pointing at the rename
+      (<code>mcp/server/fastmcp.py</code> is a 7-line shim that exists only to produce
+      that error). <code>pyproject.toml</code> pins <code>mcp&gt;=2.2,&lt;3</code>.</p>
+  </article>
+
+  <article class="card">
+    <div class="card-head">
+      <span class="pill pill-info">Piece 2</span>
+      <h4>Merge Flask (WSGI) and MCPServer (ASGI) into one process</h4>
+    </div>
+    <p><code>MCPServer.streamable_http_app()</code> returns a <strong>Starlette</strong>
+      app &mdash; ASGI, not WSGI. Flask's <code>app.run(...)</code> in
+      <a href="../../../src/cli/review.py#L187"><code>src/cli/review.py:187</code></a>
+      (and its two sibling call sites in the same file) is replaced by a single ASGI
+      launch:</p>
+    <pre><code>from asgiref.wsgi import WsgiToAsgi
+from starlette.applications import Starlette
+from starlette.routing import Mount
+
+flask_app = create_app(...)          # unchanged
+mcp_app = mcp.streamable_http_app()  # /mcp handled internally
+
+asgi_app = Starlette(routes=[
+    Mount("/mcp", app=mcp_app),
+    Mount("/", app=WsgiToAsgi(flask_app)),
+])
+
+import uvicorn
+uvicorn.run(asgi_app, host=review_host, port=5173)</code></pre>
+    <p>Route order matters &mdash; <code>/mcp</code> must be mounted before the catch-all
+      <code>/</code> Flask mount or Starlette never reaches it.</p>
+  </article>
+
+  <article class="card">
+    <div class="card-head">
+      <span class="pill pill-warn">Piece 3 · the real risk</span>
+      <h4>SSE under uvicorn + WsgiToAsgi</h4>
+    </div>
+    <p>This app leans on long-lived Server-Sent-Event streams for progress
+      (<code>/api/v1/songs/&lt;id&gt;/analyze/status</code>,
+      <code>/api/v1/songs/&lt;id&gt;/export/status</code>, legacy <code>/progress</code>),
+      all implemented as Flask generator responses with
+      <code>stream_with_context</code>. <code>WsgiToAsgi</code> supports streaming WSGI
+      responses, but the concurrency model changes: Flask's own dev server needed
+      <code>threaded=True</code> for exactly this reason (see
+      <a href="#echoes">Historical echoes</a>) &mdash; under uvicorn, the equivalent
+      knob is running enough worker threads/tasks that one open SSE stream doesn't
+      starve other requests. Mitigation: explicit test
+      (<code>tests/integration/test_mcp_asgi_sse.py</code>) that opens an SSE stream
+      and, while it's open, makes a second unrelated request (e.g. <code>GET
+      /api/v1/library</code>) and asserts it doesn't block behind the stream. This is
+      exactly the failure mode <code>624214c</code> fixed once already; it must not
+      regress silently under a different server.</p>
+  </article>
+
+  <article class="card">
+    <div class="card-head">
+      <span class="pill pill-info">Piece 4</span>
+      <h4>Tool implementations stay in <code>src/review/mcp_server.py</code>, thin</h4>
+    </div>
+    <p>Each tool function imports and calls the same helper the corresponding
+      <code>api/v1</code> route calls (see <a href="#tools">tool surface</a>). No route
+      re-implements request parsing that already exists &mdash; where a route function
+      itself contains the logic inline (e.g. <code>export.py::start_export</code>),
+      the tool extracts the same call sequence rather than making an HTTP
+      self-request, since both processes are already in the same Python
+      process/import space.</p>
+  </article>
+</section>
+
+<section class="block" id="alternative">
+  <h2>Alternative considered</h2>
+  <p>Run the MCP server as a second lightweight process on its own port (e.g.
+    <code>8765</code>), started via a new <code>xlight-mcp</code> entry point, alongside
+    the unmodified Flask process. Rejected per explicit user decision: fewer moving
+    parts to keep alive beats avoiding the WSGI/ASGI bridge, and the user wants it
+    "integrated into the x-onset software" rather than bolted on as a sibling
+    process. Recorded here because it's the safer option from a pure
+    blast-radius standpoint &mdash; if the SSE-under-uvicorn risk above proves hard to
+    resolve cleanly, this is the fallback.</p>
+</section>
+
+<section class="block" id="tools">
+  <h2>Tool surface</h2>
+  <table>
+    <thead><tr><th>Tool</th><th>Wraps</th></tr></thead>
+    <tbody>
+      <tr><td><code>list_library</code></td><td><code>src/review/storage/library.py::load_library()</code></td></tr>
+      <tr><td><code>import_song(path, folder_id=None)</code></td><td><code>src/review/api/v1/import_by_path.py</code> (<code>finalize_audio_import</code> / <code>finalize_video_import</code>)</td></tr>
+      <tr><td><code>analyze_song(song_id, force=False)</code></td><td><code>src/review/api/v1/analysis.py</code> analyze-start logic (<code>run_orchestrator</code>); progress via <code>Context.report_progress</code></td></tr>
+      <tr><td><code>get_song_story(song_id)</code></td><td><code>src/review/api/v1/sections.py::get_sections()</code> + on-disk <code>_story.json</code></td></tr>
+      <tr><td><code>list_themes</code></td><td><code>src/themes/library.py::load_theme_library()</code></td></tr>
+      <tr><td><code>list_effects</code></td><td><code>src/effects/library.py::load_effect_library()</code></td></tr>
+      <tr><td><code>list_variants</code></td><td><code>src/variants/library.py::load_variant_library()</code></td></tr>
+      <tr><td><code>generate_sequence(song_id, ...)</code></td><td><code>src/review/api/v1/export.py::start_export()</code> (<code>src.evaluation.generator_runner.run</code>) &mdash; <strong>not</strong> the legacy <code>src/generator/plan.py::generate_sequence</code> path, which is dead code from the dashboard's perspective (see proposal.md)</td></tr>
+      <tr><td><code>get_layout_info</code></td><td><code>src/review/api/v1/layout.py::get_committed_layout()</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="block" id="files">
+  <h2>Files touched</h2>
+  <ul class="tight">
+    <li><strong>Added</strong>: <code>src/review/mcp_server.py</code>, <code>tests/unit/test_mcp_server.py</code>, <code>tests/integration/test_mcp_asgi_sse.py</code></li>
+    <li><strong>Modified</strong>: <code>src/cli/review.py</code> (launch mechanism only &mdash; all three <code>app.run(...)</code> call sites), <code>pyproject.toml</code> (new deps: <code>mcp&gt;=2.2,&lt;3</code>, <code>uvicorn[standard]</code>, <code>asgiref</code>), <code>README.md</code> (new "Connecting an MCP client" section)</li>
+    <li><strong>Unmodified</strong>: <code>src/review/server.py</code>, every <code>src/review/api/v1/*.py</code> route, <code>src/analyzer/</code>, <code>src/generator/</code>, <code>src/effects/</code>, <code>src/themes/</code>, <code>src/variants/</code></li>
+  </ul>
+</section>
+
+<section class="block" id="regression">
+  <h2>Regression surface</h2>
+  <p><code>app.run(...)</code> in <code>src/cli/review.py</code> is called from three
+    branches of <code>review_cmd</code> (no-arg / directory / file-or-JSON). Grepped
+    <code>src/</code> and <code>tests/</code> for other <code>create_app(</code> +
+    <code>.run(</code> pairs &mdash; none found; <code>src/review/cli.py</code>'s own
+    <code>main()</code> (the separate <code>xlight-review</code> entry point, port 5000,
+    unaffected by this change) is the only other caller of <code>create_app</code>,
+    and is out of scope since it's a different deployment (see proposal.md).
+    Existing tests under <code>tests/review/</code> that exercise routes directly via
+    Flask's test client are unaffected &mdash; they don't go through
+    <code>app.run</code>/uvicorn at all.</p>
+</section>
+
+<section class="block" id="echoes">
+  <h2>Historical echoes</h2>
+  <p>Scanned <code>.wolf/buglog.json</code> and <code>.wolf/cerebrum.md</code>
+    Do-Not-Repeat for entries touching <code>src/cli/review.py</code>,
+    <code>server.py</code>, or SSE/threading. One direct match: commit
+    <code>624214c</code>, "Enable threaded Flask dev server — single-threaded server
+    was blocking new requests during analysis" (also documented inline in
+    <code>src/cli/review.py</code>'s comments). The failure mode: a long-lived SSE
+    analysis-progress stream held the dev server's one worker thread for the
+    entire analysis run, so a concurrent file upload silently queued behind it
+    until the browser gave up ("failed to fetch"). This change swaps the serving
+    stack under the same routes, so the same class of bug is directly in scope
+    again under different mechanics &mdash; addressed by the explicit SSE-under-uvicorn
+    test in <a href="#approach">Piece 3</a> rather than assumed away.</p>
+</section>
+
+<section class="block" id="scope">
+  <h2>Out of scope</h2>
+  <ul class="tight">
+    <li>Any new analysis, generation, or export capability. Every tool reads or
+      triggers something the app can already do through the UI/CLI.</li>
+    <li>Auth/access control on the MCP endpoint. This is a single-user local-network
+      server today (same trust model as the existing CORS policy in
+      <code>server.py</code>, which reflects any Origin) &mdash; if the Synology is ever
+      exposed past the LAN, that's a separate change.</li>
+    <li>Wiring the legacy hash-keyed routes (<code>/upload</code>, <code>/analysis</code>,
+      <code>/library</code>, etc.) or <code>src/review/generate_routes.py</code> into
+      MCP tools. They back a different, older deployment mode (see proposal.md) and
+      aren't part of the live x-onset dashboard's data model.</li>
+    <li>Migrating <code>xlight-review</code>'s (port 5000) launch mechanism. Untouched.</li>
+  </ul>
+</section>
+
+</main>
+</div>
+</body>
+</html>
