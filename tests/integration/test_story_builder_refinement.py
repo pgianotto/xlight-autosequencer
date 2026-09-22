@@ -43,7 +43,7 @@ def test_no_free_words_emits_empty_boundary_refinements_field(hierarchy, monkeyp
     monkeypatch.setattr(builder_mod, "_try_free_transcription", lambda *a, **kw: [])
 
     story = build_song_story(hierarchy, AUDIO_PATH)
-    assert story["schema_version"] == "1.1.0"
+    assert story["schema_version"] == "1.2.0"
     for sec in story["sections"]:
         assert "boundary_refinements" in sec
         assert sec["boundary_refinements"] == []

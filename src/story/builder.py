@@ -26,7 +26,11 @@ from src.story.lighting_mapper import map_lighting
 from src.story.stem_curves import extract_stem_curves
 from src.song_identity import split_title_artist
 
-SCHEMA_VERSION = "1.1.0"
+SCHEMA_VERSION = "1.2.0"
+
+# Step 4b consecutive-same-role merge cap — see openspec/changes/
+# segmentino-label-extraction/ and the comment at that merge's call site.
+_MAX_MERGED_SECTION_FRACTION = 0.5
 
 
 def _portable_audio_path(audio_path: str | Path) -> str:
@@ -184,7 +188,7 @@ def build_song_story(
 
     Returns
     -------
-    A complete song story dict matching schema_version 1.1.0.
+    A complete song story dict matching schema_version 1.2.0.
 
     Changes since 1.0.0 (additive only — readers SHALL default missing
     fields per the conventions in
@@ -193,6 +197,14 @@ def build_song_story(
     - Each ``sections[i]`` gains an optional ``boundary_refinements:
       list[str]`` field describing any lyric-anchored refinements applied
       to that section's boundaries (or ``[]`` when none fired).
+
+    1.2.0 (see ``openspec/changes/segmentino-label-extraction/``): no field
+    shape change — Step 4b's consecutive-same-role merge is now capped at
+    ``_MAX_MERGED_SECTION_FRACTION`` of the song, so section boundaries for
+    songs affected by the segmentino label-loss bug (or any other total
+    role-classification failure) differ from what this same code would have
+    produced before. Bumped for the same reason every entry above was:
+    downstream consumers keying off content, not just field presence.
     """
     # ── Step 1: Extract metadata from hierarchy ────────────────────────────────
     source_hash: str = hierarchy.get("source_hash", "")
@@ -247,11 +259,24 @@ def build_song_story(
     roles = classify_section_roles(sections_ms, hierarchy, section_labels)
 
     # ── Step 4b: Merge consecutive same-role sections ─────────────────────
+    # Capped at _MAX_MERGED_SECTION_FRACTION of the song: without this, a
+    # total role-classification failure (e.g. every segmentino label lost --
+    # see openspec/changes/segmentino-label-extraction/) can collapse most of
+    # a song into one section via this merge, same failure shape already
+    # logged once on a different song/trigger in
+    # docs/segment-classification-changelog.md (2026-03-31, Ghostbusters,
+    # "93-second s09 'verse'... swallowed 6 sections"). This is defense in
+    # depth against that collapse shape regardless of what triggers it, not
+    # a fix for any one upstream cause.
     merged_sections: list[tuple[int, int]] = []
     merged_roles: list[dict] = []
     for sec, role in zip(sections_ms, roles):
-        if merged_sections and merged_roles[-1]["role"] == role["role"]:
-            prev_start = merged_sections[-1][0]
+        prev_start = merged_sections[-1][0] if merged_sections else None
+        would_exceed_cap = (
+            prev_start is not None and duration_ms > 0
+            and (sec[1] - prev_start) > _MAX_MERGED_SECTION_FRACTION * duration_ms
+        )
+        if merged_sections and merged_roles[-1]["role"] == role["role"] and not would_exceed_cap:
             merged_sections[-1] = (prev_start, sec[1])
             if role["confidence"] > merged_roles[-1]["confidence"]:
                 merged_roles[-1] = role
