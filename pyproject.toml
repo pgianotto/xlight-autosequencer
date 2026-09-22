@@ -18,6 +18,20 @@ dependencies = [
     "questionary>=2.0",
     "rich>=13.0",
     "mutagen>=1.47",
+    # MCP tool server (src/review/mcp_server.py) exposing the pipeline to a
+    # remote Claude client. Pinned to the 2.x major version deliberately --
+    # 1.x's `mcp.server.fastmcp.FastMCP` was renamed to
+    # `mcp.server.mcpserver.MCPServer` with other API changes in 2.x, and
+    # importing the old path now raises ModuleNotFoundError rather than
+    # silently resolving to the wrong API.
+    "mcp>=2.2,<3",
+    # ASGI server + WSGI-to-ASGI bridge: MCPServer's Streamable HTTP
+    # transport is a Starlette (ASGI) app, but the existing review server
+    # (src/review/server.py) is Flask (WSGI). src/cli/review.py mounts both
+    # under one Starlette app and serves it with uvicorn instead of Flask's
+    # own dev server.
+    "uvicorn[standard]>=0.30",
+    "asgiref>=3.8",
 ]
 
 [project.scripts]

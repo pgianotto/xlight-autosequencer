@@ -1051,25 +1051,26 @@ def upload_xtiming(song_id: str):
     }), 200
 
 
-@api_v1.route("/songs/<song_id>/analyze", methods=["POST"])
-def start_analyze(song_id: str):
+def _start_analyze(song_id: str, force: bool = False) -> tuple[dict, int]:
+    """Start (or return the already-running/done) analysis run for a song.
+
+    Shared by ``POST /api/v1/songs/<song_id>/analyze`` and the
+    ``analyze_song`` MCP tool (src/review/mcp_server.py).
+    """
     lib = load_library()
     song = next((s for s in lib["songs"] if s["song_id"] == song_id), None)
     if song is None:
-        return jsonify({"error": {"code": "song_not_found",
-                                   "message": "Song not found"}}), 404
+        return {"error": {"code": "song_not_found",
+                           "message": "Song not found"}}, 404
 
     source_paths = song.get("source_paths") or []
     source_path = source_paths[0] if source_paths else ""
     if not source_path:
-        return jsonify({"error": {"code": "source_file_missing",
-                                   "message": "No audio file — please re-import the song"}}), 409
+        return {"error": {"code": "source_file_missing",
+                           "message": "No audio file — please re-import the song"}}, 409
     if not Path(source_path).exists():
-        return jsonify({"error": {"code": "source_file_missing",
-                                   "message": "Audio source not found on disk"}}), 409
-
-    body = request.get_json(silent=True) or {}
-    force = bool(body.get("force", False))
+        return {"error": {"code": "source_file_missing",
+                           "message": "Audio source not found on disk"}}, 409
 
     with _runs_lock:
         existing = _runs.get(song_id)
@@ -1078,8 +1079,7 @@ def start_analyze(song_id: str):
         # after the first has already finished, e.g. the fast test stub)
         # spawns a duplicate concurrent analysis with a different run_id.
         if existing and not force and existing.status in ("running", "done"):
-            return jsonify({"run_id": existing.run_id,
-                            "started_at": existing.started_at}), 202
+            return {"run_id": existing.run_id, "started_at": existing.started_at}, 202
         # Start new run
         state = _RunState(_run_id(), song_id, force=force)
         _runs[song_id] = state
@@ -1094,25 +1094,35 @@ def start_analyze(song_id: str):
         _active_threads.append(t)
     t.start()
 
-    return jsonify({"run_id": state.run_id, "started_at": state.started_at}), 202
+    return {"run_id": state.run_id, "started_at": state.started_at}, 202
 
 
-@api_v1.route("/songs/<song_id>/analyze/commit", methods=["POST"])
-def commit_analyze(song_id: str):
-    """Apply a pending force re-analysis result after user confirms the mapping (FR-013a)."""
+@api_v1.route("/songs/<song_id>/analyze", methods=["POST"])
+def start_analyze(song_id: str):
+    body = request.get_json(silent=True) or {}
+    response_body, status = _start_analyze(song_id, force=bool(body.get("force", False)))
+    return jsonify(response_body), status
+
+
+def _commit_analyze(song_id: str, run_id: str | None, assignment_mapping: list | None = None) -> tuple[dict, int]:
+    """Apply a pending (force) re-analysis result after the mapping is confirmed (FR-013a).
+
+    Shared by ``POST /api/v1/songs/<song_id>/analyze/commit`` and the
+    ``analyze_song`` MCP tool (src/review/mcp_server.py) -- the tool always
+    commits with an empty ``assignment_mapping`` (no old-assignment
+    carry-forward review, since there's no UI diff step in a tool call),
+    which reproduces this endpoint's own default when nothing maps.
+    """
+    assignment_mapping = assignment_mapping or []
     lib = load_library()
     song = next((s for s in lib["songs"] if s["song_id"] == song_id), None)
     if song is None:
-        return jsonify({"error": {"code": "song_not_found",
-                                   "message": "Song not found"}}), 404
+        return {"error": {"code": "song_not_found",
+                           "message": "Song not found"}}, 404
 
-    body = request.get_json(silent=True) or {}
-    run_id = body.get("run_id")
     if not run_id:
-        return jsonify({"error": {"code": "missing_field",
-                                   "message": "run_id is required"}}), 400
-
-    assignment_mapping = body.get("assignment_mapping", [])
+        return {"error": {"code": "missing_field",
+                           "message": "run_id is required"}}, 400
 
     # Find the run
     with _runs_lock:
@@ -1129,12 +1139,12 @@ def commit_analyze(song_id: str):
         state = matching
 
     if state is None:
-        return jsonify({"error": {"code": "run_not_found",
-                                   "message": "No run found with this run_id"}}), 404
+        return {"error": {"code": "run_not_found",
+                           "message": "No run found with this run_id"}}, 404
 
     if state.committed:
-        return jsonify({"error": {"code": "already_committed",
-                                   "message": "This run has already been committed"}}), 409
+        return {"error": {"code": "already_committed",
+                           "message": "This run has already been committed"}}, 409
 
     with state.lock:
         pending_sections = state.pending_sections
@@ -1148,8 +1158,8 @@ def commit_analyze(song_id: str):
         pending_assignments = _auto_assign_defaults(song_id, pending_sections)
 
     if pending_sections is None:
-        return jsonify({"error": {"code": "run_not_found",
-                                   "message": "Run result not yet available"}}), 404
+        return {"error": {"code": "run_not_found",
+                           "message": "Run result not yet available"}}, 404
 
     # Apply assignment_mapping: carry over themes from old assignments where specified
     session = load_session(song_id)
@@ -1195,7 +1205,7 @@ def commit_analyze(song_id: str):
             "image_topics": image_topics,
         })
     except Exception as exc:
-        return jsonify({"error": {"code": "internal_error", "message": str(exc)}}), 500
+        return {"error": {"code": "internal_error", "message": str(exc)}}, 500
 
     if pending_story is not None:
         source_paths = song.get("source_paths") or []
@@ -1217,10 +1227,19 @@ def commit_analyze(song_id: str):
     with state.lock:
         state.committed = True
 
-    return jsonify({
+    return {
         "sections": pending_sections,
         "assignments": final_assignments,
-    }), 200
+    }, 200
+
+
+@api_v1.route("/songs/<song_id>/analyze/commit", methods=["POST"])
+def commit_analyze(song_id: str):
+    body = request.get_json(silent=True) or {}
+    response_body, status = _commit_analyze(
+        song_id, body.get("run_id"), body.get("assignment_mapping", []),
+    )
+    return jsonify(response_body), status
 
 
 @api_v1.route("/songs/<song_id>/analyze/status", methods=["GET"])

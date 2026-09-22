@@ -236,19 +236,25 @@ def _run_export(state: "_ExportState", song: dict, session: dict,
         state.push({"stage": "failed", "error": str(exc)})
 
 
-@api_v1.route("/songs/<song_id>/export", methods=["POST"])
-def start_export(song_id: str):
+def _start_export(song_id: str, body: dict) -> tuple[dict, int]:
+    """Start a sequence-export job for a song.
+
+    Shared by ``POST /api/v1/songs/<song_id>/export`` and the
+    ``generate_sequence`` MCP tool (src/review/mcp_server.py). ``body`` is
+    the already-parsed JSON body (route parses it from the request; the
+    tool builds it directly from its own arguments).
+    """
     lib = load_library()
     song = next((s for s in lib["songs"] if s["song_id"] == song_id), None)
     if song is None:
-        return jsonify({"error": {"code": "song_not_found",
-                                   "message": "Song not found"}}), 404
+        return {"error": {"code": "song_not_found",
+                           "message": "Song not found"}}, 404
 
     # Layout is a fixed file committed to the repo (layout/xlights_rgbeffects.xml)
     layout = get_committed_layout()
     if layout is None:
-        return jsonify({"error": {"code": "layout_missing",
-                                   "message": "layout/xlights_rgbeffects.xml is missing from the repo"}}), 409
+        return {"error": {"code": "layout_missing",
+                           "message": "layout/xlights_rgbeffects.xml is missing from the repo"}}, 409
 
     # Check theming complete
     if song.get("status") not in ("themed",):
@@ -260,25 +266,24 @@ def start_export(song_id: str):
                     missing.append(a["section_index"])
         else:
             missing = []
-        return jsonify({"error": {
+        return {"error": {
             "code": "incomplete_theming",
             "message": f"{len(missing)} sections still need a theme.",
             "details": {"missing_sections": missing},
-        }}), 409
+        }}, 409
 
     # Check source file
     source_paths = song.get("source_paths") or []
     source_path = source_paths[0] if source_paths else ""
     if source_path and not Path(source_path).exists():
-        return jsonify({"error": {"code": "source_file_missing",
-                                   "message": "Audio source not found on disk"}}), 409
+        return {"error": {"code": "source_file_missing",
+                           "message": "Audio source not found on disk"}}, 409
 
     session = load_session(song_id)
     if session is None:
-        return jsonify({"error": {"code": "incomplete_theming",
-                                   "message": "No session data"}}), 409
+        return {"error": {"code": "incomplete_theming",
+                           "message": "No session data"}}, 409
 
-    body = request.get_json(silent=True) or {}
     fmt = body.get("format", "xsq")
     include_extra_timing = bool(body.get("include_extra_timing", True))
     # Default True per explicit user request (2026-07-21, see
@@ -292,14 +297,14 @@ def start_export(song_id: str):
     # for sections without a user override ("pop"/"general" = generator
     # defaults when unset).
     prefs = lib.get("preferences", {}) or {}
-    genre = prefs.get("genre") or "pop"
-    occasion = prefs.get("occasion") or "general"
+    genre = body.get("genre") or prefs.get("genre") or "pop"
+    occasion = body.get("occasion") or prefs.get("occasion") or "general"
     randomness = prefs.get("randomness", 0.0)
 
     try:
         variation_seed = _resolve_variation_seed(body)
     except InvalidVariationSeed as exc:
-        return jsonify({"error": {"code": "invalid_variation_seed", "message": str(exc)}}), 400
+        return {"error": {"code": "invalid_variation_seed", "message": str(exc)}}, 400
 
     if variation_seed is None:
         # No explicit/reroll seed -- report the same deterministic default
@@ -325,11 +330,18 @@ def start_export(song_id: str):
     )
     t.start()
 
-    return jsonify({
+    return {
         "export_id": exp_id,
         "started_at": state.started_at,
         "variation_seed": variation_seed,
-    }), 202
+    }, 202
+
+
+@api_v1.route("/songs/<song_id>/export", methods=["POST"])
+def start_export(song_id: str):
+    body = request.get_json(silent=True) or {}
+    response_body, status = _start_export(song_id, body)
+    return jsonify(response_body), status
 
 
 @api_v1.route("/songs/<song_id>/export/status", methods=["GET"])

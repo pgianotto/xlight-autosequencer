@@ -4,6 +4,7 @@ from __future__ import annotations
 import errno
 import json
 import os
+import socket
 import sys
 import threading
 import webbrowser
@@ -15,6 +16,117 @@ from src import export as export_mod
 from src.analyzer.result import AnalysisResult
 from src.cli import cli
 from src.cli.helpers import _format_duration, _print_summary_table, _print_breakdown, _rich_error
+
+
+def _port_in_use(host: str, port: int) -> bool:
+    """Pre-flight check so a taken port fails the same way before uvicorn
+    even starts, instead of relying on catching whatever uvicorn's own
+    bind-failure behavior happens to be (it exits the process itself on
+    a bind error rather than raising Python's usual OSError/EADDRINUSE
+    the way Werkzeug's dev server did -- see the Piece 2 note in
+    openspec/changes/mcp-tool-server/design.html)."""
+    probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        probe.bind((host, port))
+    except OSError as exc:
+        return exc.errno == errno.EADDRINUSE
+    else:
+        return False
+    finally:
+        probe.close()
+
+
+class _PerRequestThreadContext:
+    """Give every request its own asgiref thread-sensitive context.
+
+    Without this, WsgiToAsgi's synchronous Flask calls funnel through
+    asgiref's single shared fallback thread (asgiref.sync.SyncToAsync.
+    single_thread_executor is a *class-level*, one-worker ThreadPoolExecutor
+    used whenever no ThreadSensitiveContext has been established) --
+    meaning literally every Flask request in the whole process serializes
+    onto one thread regardless of how many concurrent connections uvicorn
+    accepts. Confirmed with a real server + real concurrent sockets: an
+    open SSE stream blocked an unrelated /api/v1/library request for the
+    SSE stream's entire duration without this wrapper, and didn't with it
+    (0.00s vs. fully serialized). This is the actual fix for the Piece 3
+    risk in openspec/changes/mcp-tool-server/design.html -- uvicorn alone
+    does not solve it; Django's own ASGI handler uses this exact pattern
+    for the same reason.
+    """
+
+    def __init__(self, inner_app):
+        self.inner_app = inner_app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.inner_app(scope, receive, send)
+            return
+        from asgiref.sync import ThreadSensitiveContext
+        async with ThreadSensitiveContext():
+            await self.inner_app(scope, receive, send)
+
+
+def _build_asgi_app(flask_app):
+    """Merge the Flask review server with the MCP tool server into one ASGI app.
+
+    MCPServer's Streamable HTTP transport (src/review/mcp_server.py) is a
+    Starlette (ASGI) app; the existing review server is Flask (WSGI). Both
+    are served together with uvicorn instead of Flask's own dev server --
+    MCP at /mcp, everything else falling through to Flask via asgiref's
+    WsgiToAsgi (wrapped in _PerRequestThreadContext -- see its docstring).
+    See openspec/changes/mcp-tool-server/ for why this was chosen over
+    running MCP as a second process/port.
+
+    Deliberately built from a bare starlette.routing.Router (not
+    Starlette(routes=[Mount(...), Mount("/", ...)])) -- verified empirically
+    that two sibling Mounts don't compose the way "mount MCP at a prefix,
+    fall through to Flask for everything else" suggests: a bare "/mcp"
+    request (no trailing slash) doesn't redirect to "/mcp/" when a second
+    Mount("/", ...) is present, because Starlette's redirect-slash retry
+    only fires when *no* route in the list gives a full match, and
+    Mount("/", ...) always does. Router's own `default=` fallback (used
+    for "nothing else matched", not a competing prefix route) sidesteps
+    that entirely and lets /mcp's own built-in redirect-slash handling
+    work correctly on its own. See tests/integration/test_mcp_asgi_sse.py.
+    """
+    from asgiref.wsgi import WsgiToAsgi
+    from mcp.server.transport_security import TransportSecuritySettings
+    from starlette.routing import Mount, Router
+
+    from src.review.mcp_server import mcp as mcp_server
+
+    mcp_app = mcp_server.streamable_http_app(
+        streamable_http_path="/",
+        # Single-user, local-network server with no auth today -- same
+        # trust model as the existing CORS policy in server.py, which
+        # reflects any Origin. Without this, the MCP transport's DNS-
+        # rebinding protection rejects every request whose Host header
+        # isn't localhost/127.0.0.1, which is exactly how a remote client
+        # reaches this container (http://<nas-host>:5173/mcp).
+        transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
+    )
+    return Router(
+        routes=[Mount("/mcp", app=mcp_app)],
+        default=_PerRequestThreadContext(WsgiToAsgi(flask_app)),
+        lifespan=mcp_app.router.lifespan_context,
+    )
+
+
+def _serve(flask_app, host: str, port: int, open_url: str | None,
+           port_in_use_message: str) -> None:
+    """Build the merged ASGI app and serve it with uvicorn (blocking)."""
+    if _port_in_use(host, port):
+        click.echo(port_in_use_message, err=True)
+        sys.exit(5)
+
+    import uvicorn
+
+    asgi_app = _build_asgi_app(flask_app)
+
+    if open_url:
+        threading.Timer(0.5, webbrowser.open, args=[open_url]).start()
+
+    uvicorn.run(asgi_app, host=host, port=port, log_level="warning")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -168,32 +280,26 @@ def review_cmd(audio_or_json: str | None) -> None:
     # (e.g. to keep vamp/madmom available for re-analyze) needs 0.0.0.0.
     review_host = os.environ.get("XLIGHT_REVIEW_HOST", "127.0.0.1")
 
-    # threaded=True on every app.run() below: Werkzeug's dev server is
-    # single-threaded by default, so the SSE analysis-progress stream (held
-    # open for the whole analysis -- many minutes, longer still since the
-    # WhisperX/demucs quality changes) blocks every other request until it
-    # finishes, including a new song's file upload. User-reported 2026-08-06:
-    # a large import "failed to fetch" -- root cause was the browser's
-    # upload request queuing behind an in-flight SSE stream with no free
-    # worker thread to accept it, until the browser gave up.
+    # Served via uvicorn (see _serve), not Flask's own dev server: the SSE
+    # analysis-progress stream (held open for the whole analysis -- many
+    # minutes, longer still since the WhisperX/demucs quality changes) must
+    # not block other requests, including a new song's file upload.
+    # User-reported 2026-08-06: a large import "failed to fetch" -- root
+    # cause was the browser's upload request queuing behind an in-flight
+    # SSE stream with no free worker thread to accept it, until the browser
+    # gave up. Werkzeug's dev server needed threaded=True for this; _serve's
+    # merged ASGI app is covered by an explicit SSE-under-uvicorn test
+    # instead (tests/integration/test_mcp_asgi_sse.py) rather than assumed
+    # equivalent -- see openspec/changes/mcp-tool-server/design.html.
 
     if audio_or_json is None:
         app = create_app()
         url = "http://127.0.0.1:5173/"
         click.echo(f"Starting review UI at {url}")
         click.echo("Press Ctrl-C to stop.")
-        threading.Timer(0.5, webbrowser.open, args=[url]).start()
-        try:
-            app.run(host=review_host, port=5173, use_reloader=False, debug=False, threaded=True)
-        except OSError as exc:
-            if exc.errno == errno.EADDRINUSE:
-                click.echo(
-                    "ERROR: Port 5173 is already in use.\n"
-                    "Kill the process using that port and try again.",
-                    err=True,
-                )
-                sys.exit(5)
-            raise
+        _serve(app, review_host, 5173, url,
+               "ERROR: Port 5173 is already in use.\n"
+               "Kill the process using that port and try again.")
         return
 
     given_path = Path(audio_or_json)
@@ -204,14 +310,7 @@ def review_cmd(audio_or_json: str | None) -> None:
         url = "http://127.0.0.1:5173/library-view"
         click.echo(f"Starting library UI at {url} (scanning {given_path})")
         click.echo("Press Ctrl-C to stop.")
-        threading.Timer(0.5, webbrowser.open, args=[url]).start()
-        try:
-            app.run(host=review_host, port=5173, use_reloader=False, debug=False, threaded=True)
-        except OSError as exc:
-            if exc.errno == errno.EADDRINUSE:
-                click.echo("ERROR: Port 5173 is already in use.", err=True)
-                sys.exit(5)
-            raise
+        _serve(app, review_host, 5173, url, "ERROR: Port 5173 is already in use.")
         return
 
     # ── Audio file path: look up via library ──────────────────────────────────
@@ -269,19 +368,9 @@ def review_cmd(audio_or_json: str | None) -> None:
     click.echo(f"Starting review UI at {url}")
     click.echo("Press Ctrl-C to stop.")
 
-    threading.Timer(0.5, webbrowser.open, args=[url]).start()
-
-    try:
-        app.run(host=review_host, port=5173, use_reloader=False, debug=False, threaded=True)
-    except OSError as exc:
-        if exc.errno == errno.EADDRINUSE:
-            click.echo(
-                "ERROR: Port 5173 is already in use.\n"
-                "Kill the process using that port and try again.",
-                err=True,
-            )
-            sys.exit(5)
-        raise
+    _serve(app, review_host, 5173, url,
+           "ERROR: Port 5173 is already in use.\n"
+           "Kill the process using that port and try again.")
 
 
 # ──────────────────────────────────────────────────────────────────────────────

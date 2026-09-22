@@ -92,24 +92,45 @@ uvicorn.run(asgi_app, host=review_host, port=5173)</code></pre>
 
   <article class="card">
     <div class="card-head">
-      <span class="pill pill-warn">Piece 3 · the real risk</span>
+      <span class="pill pill-warn">Piece 3 · confirmed real, not hypothetical</span>
       <h4>SSE under uvicorn + WsgiToAsgi</h4>
     </div>
     <p>This app leans on long-lived Server-Sent-Event streams for progress
       (<code>/api/v1/songs/&lt;id&gt;/analyze/status</code>,
       <code>/api/v1/songs/&lt;id&gt;/export/status</code>, legacy <code>/progress</code>),
       all implemented as Flask generator responses with
-      <code>stream_with_context</code>. <code>WsgiToAsgi</code> supports streaming WSGI
-      responses, but the concurrency model changes: Flask's own dev server needed
+      <code>stream_with_context</code>. Flask's own dev server needed
       <code>threaded=True</code> for exactly this reason (see
-      <a href="#echoes">Historical echoes</a>) &mdash; under uvicorn, the equivalent
-      knob is running enough worker threads/tasks that one open SSE stream doesn't
-      starve other requests. Mitigation: explicit test
-      (<code>tests/integration/test_mcp_asgi_sse.py</code>) that opens an SSE stream
-      and, while it's open, makes a second unrelated request (e.g. <code>GET
-      /api/v1/library</code>) and asserts it doesn't block behind the stream. This is
-      exactly the failure mode <code>624214c</code> fixed once already; it must not
-      regress silently under a different server.</p>
+      <a href="#echoes">Historical echoes</a>).</p>
+    <p><strong>Verified against a real uvicorn server with real concurrent sockets</strong>
+      (not Starlette's <code>TestClient</code>, which has its own portal-serialization
+      quirks and would have hidden this): a naive <code>WsgiToAsgi(flask_app)</code>
+      reproduced the exact same bug uvicorn was supposed to fix. Root cause,
+      found by reading <code>asgiref</code>'s source after the symptom didn't
+      match "uvicorn just needs more workers": <code>WsgiToAsgi</code> calls Flask
+      via <code>@sync_to_async</code> with its default <code>thread_sensitive=True</code>,
+      and with no <code>asgiref.sync.ThreadSensitiveContext</code> established (which
+      Django's own ASGI handler sets up per-request, but a bare Starlette/uvicorn
+      app doesn't), every thread-sensitive call in the whole process falls back to
+      <code>SyncToAsync.single_thread_executor</code> &mdash; a
+      <strong>class-level, one-worker <code>ThreadPoolExecutor</code> shared by the
+      entire process</strong>. Every Flask request, SSE stream included, was
+      serializing onto that one thread regardless of how many concurrent
+      connections uvicorn accepted. Measured: a concurrent
+      <code>GET /api/v1/library</code> issued while an SSE stream backed by a
+      2-second stub analysis was open took 2.48s (fully serialized) with a bare
+      <code>WsgiToAsgi</code>, and 0.00s once fixed.</p>
+    <p><strong>Fix:</strong> <code>_PerRequestThreadContext</code> in
+      <code>src/cli/review.py</code> wraps <code>WsgiToAsgi(flask_app)</code>,
+      opening a fresh <code>async with ThreadSensitiveContext():</code> for every
+      incoming HTTP request before delegating to it &mdash; the same pattern Django's
+      ASGI handler uses, applied here by hand since nothing wires it up
+      automatically outside a Django app. Verified with an explicit test
+      (<code>tests/integration/test_mcp_asgi_sse.py::TestSSEDoesNotBlockConcurrentRequests</code>)
+      that opens a real SSE stream and, while it's open, makes a second unrelated
+      request and asserts it completes promptly rather than queuing &mdash; this is
+      exactly the failure mode <code>624214c</code> fixed once already, now pinned
+      against regressing silently under a different server.</p>
   </article>
 
   <article class="card">

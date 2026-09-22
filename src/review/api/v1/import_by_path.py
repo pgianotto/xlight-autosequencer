@@ -21,38 +21,47 @@ from src.review.api.v1.import_video import (
 )
 
 
-@api_v1.route("/import/by-path", methods=["POST"])
-def import_by_path():
-    body = request.get_json(silent=True) or {}
-    path = body.get("path")
+def _import_by_path(path: str | None, folder_id: str | None = None) -> tuple[dict, int]:
+    """Import a local audio/video file by absolute path.
+
+    Shared by the ``POST /api/v1/import/by-path`` route and the
+    ``import_song`` MCP tool (src/review/mcp_server.py) -- both need the
+    exact same validation/dedup/song-schema behavior, so the route below is
+    a thin wrapper around this rather than the other way around.
+    """
     if not path:
-        return jsonify({"error": {"code": "missing_path", "message": "No path provided"}}), 400
+        return {"error": {"code": "missing_path", "message": "No path provided"}}, 400
 
     source = Path(path)
     if not source.is_file():
-        return jsonify({"error": {"code": "file_not_found",
-                                   "message": f"File not found: {path}"}}), 404
+        return {"error": {"code": "file_not_found",
+                           "message": f"File not found: {path}"}}, 404
 
     ext = source.suffix.lower()
-    folder_id = body.get("folder_id") or "unfiled"
+    folder_id = folder_id or "unfiled"
     size = source.stat().st_size
 
     if ext in _ALLOWED_EXTENSIONS:
         if size > _AUDIO_MAX_BYTES:
-            return jsonify({"error": {"code": "audio_too_large",
-                                       "message": "File exceeds 200 MB limit"}}), 413
+            return {"error": {"code": "audio_too_large",
+                               "message": "File exceeds 200 MB limit"}}, 413
         audio_bytes = source.read_bytes()
-        response_body, status = finalize_audio_import(
+        return finalize_audio_import(
             audio_bytes, source.name, ext, folder_id, extra_source_path=str(source),
         )
-        return jsonify(response_body), status
 
     if ext in _ALLOWED_VIDEO_EXTENSIONS:
         if size > _VIDEO_MAX_BYTES:
-            return jsonify({"error": {"code": "video_too_large",
-                                       "message": "File exceeds 1 GB limit"}}), 413
-        response_body, status = finalize_video_import(source, source.name, folder_id)
-        return jsonify(response_body), status
+            return {"error": {"code": "video_too_large",
+                               "message": "File exceeds 1 GB limit"}}, 413
+        return finalize_video_import(source, source.name, folder_id)
 
-    return jsonify({"error": {"code": "unsupported_format",
-                               "message": f"Unsupported file type: {ext}"}}), 400
+    return {"error": {"code": "unsupported_format",
+                       "message": f"Unsupported file type: {ext}"}}, 400
+
+
+@api_v1.route("/import/by-path", methods=["POST"])
+def import_by_path():
+    body = request.get_json(silent=True) or {}
+    response_body, status = _import_by_path(body.get("path"), body.get("folder_id"))
+    return jsonify(response_body), status
