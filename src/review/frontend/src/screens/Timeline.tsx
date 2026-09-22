@@ -10,6 +10,8 @@ import { AlgoTrack } from '../components/AlgoTrack/AlgoTrack';
 import { StemWaveforms } from '../components/StemWaveforms/StemWaveforms';
 import { usePlaybackStore } from '../store/playback';
 import { useSectionsStore } from '../store/sections';
+import type { Song } from '../store/library';
+import type { Assignment } from '../store/assignments';
 
 interface Section {
   index: number;
@@ -17,13 +19,6 @@ interface Section {
   end_ms: number;
   kind: string;
   label: string;
-}
-
-interface Assignment {
-  section_index: number;
-  theme_id: string | null;
-  overrides: Record<string, number>;
-  user_confirmed: boolean;
 }
 
 interface Analysis {
@@ -48,15 +43,6 @@ interface Analysis {
   value_curves?: Record<string, { fps: number; values: number[] }>;
   detectors: { name: string; library: string; status: string; confidence: number | null; error: string | null; marks?: number; kind?: string }[];
   completed_at: string;
-  [key: string]: unknown;
-}
-
-interface Song {
-  song_id: string;
-  title: string;
-  status: string;
-  duration_ms: number;
-  source_paths: string[];
   [key: string]: unknown;
 }
 

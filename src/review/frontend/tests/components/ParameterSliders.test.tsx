@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { ParameterSliders } from '../../src/components/ParameterSliders/ParameterSliders';
 
 const mockFetch = vi.fn();

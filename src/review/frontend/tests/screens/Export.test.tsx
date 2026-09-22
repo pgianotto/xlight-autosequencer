@@ -8,8 +8,16 @@ vi.stubGlobal('fetch', mockFetch);
 const song = {
   song_id: 'abc123',
   title: 'Test Song',
-  status: 'themed',
+  artist: null,
+  status: 'themed' as const,
   duration_ms: 60000,
+  bpm: null,
+  key: null,
+  time_signature: null,
+  folder_id: 'unfiled',
+  imported_at: '2026-01-01T00:00:00Z',
+  source_paths: [] as string[],
+  last_opened_at: null,
 };
 
 describe('Export screen', () => {

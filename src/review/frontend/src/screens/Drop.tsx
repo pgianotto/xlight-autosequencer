@@ -1,17 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import styles from './Drop.module.css';
 import { isTauri, onDrop as onNativeDrop, importByPath } from '../lib/nativeDialog';
-
-interface Song {
-  song_id: string;
-  title: string;
-  status: string;
-  duration_ms: number;
-  folder_id: string;
-  imported_at: string;
-  source_paths: string[];
-  video_path?: string | null;
-}
+import type { Song } from '../store/library';
 
 interface DropProps {
   /**

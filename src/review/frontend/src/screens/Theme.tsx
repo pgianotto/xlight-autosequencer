@@ -8,6 +8,7 @@ import { ParameterSliders, ParameterOverrides } from '../components/ParameterSli
 import { MiniLights } from '../components/MiniLights/MiniLights';
 import { hueShiftHex, hueShiftPalette } from '../lib/hueShift';
 import type { Assignment } from 'src/store/assignments';
+import type { Song } from 'src/store/library';
 
 interface Theme {
   theme_id: string;
@@ -28,13 +29,6 @@ interface Section {
   end_ms: number;
   kind: string;
   label: string;
-}
-
-interface Song {
-  song_id: string;
-  title: string;
-  status: string;
-  duration_ms: number;
 }
 
 interface ThemeScreenProps {
@@ -293,7 +287,7 @@ export function Theme({
       const updated: Assignment[] = body.assignments;
       setLocalAssignments(updated);
       const current = updated.find((a) => a.section_index === selectedSectionIdx);
-      setLiveOverrides(current?.overrides ?? DEFAULT_OVERRIDES);
+      setLiveOverrides({ ...DEFAULT_OVERRIDES, ...current?.overrides });
       updated.forEach((a) => onAssignmentChange(a));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error');
@@ -379,7 +373,7 @@ export function Theme({
 
       setLocalAssignments(updated);
       const current = updated.find((a) => a.section_index === selectedSectionIdx);
-      setLiveOverrides(current?.overrides ?? DEFAULT_OVERRIDES);
+      setLiveOverrides({ ...DEFAULT_OVERRIDES, ...current?.overrides });
       if (applied === 0) {
         setError('No matching sections found in that file for this song.');
       }
@@ -482,11 +476,7 @@ export function Theme({
         onSelect={(idx) => {
           setSelectedSectionIdx(idx);
           const a = localAssignments.find((a) => a.section_index === idx);
-          setLiveOverrides(
-            a?.overrides && Object.keys(a.overrides).length > 0
-              ? a.overrides
-              : DEFAULT_OVERRIDES
-          );
+          setLiveOverrides({ ...DEFAULT_OVERRIDES, ...a?.overrides });
         }}
       />
 
@@ -531,11 +521,7 @@ export function Theme({
               songId={song.song_id}
               sectionIdx={selectedSectionIdx}
               themeId={currentAssignment.theme_id}
-              overrides={
-                currentAssignment.overrides && Object.keys(currentAssignment.overrides).length > 0
-                  ? currentAssignment.overrides
-                  : DEFAULT_OVERRIDES
-              }
+              overrides={{ ...DEFAULT_OVERRIDES, ...currentAssignment.overrides }}
               onOverridesChange={(updated) => {
                 setLiveOverrides(updated);
                 const next = localAssignments.map((a) =>

@@ -50,7 +50,7 @@
  * The test below includes a commented-out skeleton for reference.
  */
 
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import path from 'node:path';
 import fs from 'node:fs';
 
@@ -135,7 +135,6 @@ test.describe('US1 happy path', () => {
     }
 
     // Upload file via the hidden file input (simulates drop)
-    const dropZone = page.locator('[data-testid="drop-zone"], input[type="file"]').first();
     if (await page.locator('input[type="file"]').count() > 0) {
       await page.locator('input[type="file"]').first().setInputFiles(FIXTURE_MP3);
     }

@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './MiniLights.module.css';
 
 interface MiniLightsProps {

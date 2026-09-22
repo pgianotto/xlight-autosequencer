@@ -1,6 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './SectionStrip.module.css';
 import { useSectionsStore, Section } from '../../store/sections';
+import { SectionRenameField } from '../SectionsEditMode/SectionRenameField';
+import type { Assignment } from '../../store/assignments';
 
 // Broader shape accepted from callers (kind is string, not narrow union)
 interface RawSection {
@@ -9,13 +11,6 @@ interface RawSection {
   end_ms: number;
   kind: string;
   label: string;
-}
-
-interface Assignment {
-  section_index: number;
-  theme_id: string | null;
-  overrides: Record<string, number>;
-  user_confirmed: boolean;
 }
 
 interface ThemeSummary {
@@ -51,6 +46,17 @@ const LEGACY_THEME_ACCENTS: Record<string, string> = {
 
 const KIND_CYCLE: Array<Section['kind']> = [
   'intro', 'verse', 'pre_chorus', 'chorus', 'bridge', 'solo', 'outro', 'unknown',
+];
+
+const KIND_OPTIONS: Array<{ value: Section['kind']; label: string }> = [
+  { value: 'intro', label: 'Intro' },
+  { value: 'verse', label: 'Verse' },
+  { value: 'pre_chorus', label: 'Pre-Chorus' },
+  { value: 'chorus', label: 'Chorus' },
+  { value: 'bridge', label: 'Bridge' },
+  { value: 'solo', label: 'Solo' },
+  { value: 'outro', label: 'Outro' },
+  { value: 'unknown', label: 'Unknown' },
 ];
 
 interface ContextMenu {
@@ -131,6 +137,7 @@ export function SectionStrip({
   const stripRef = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<ContextMenu | null>(null);
   const [drag, setDrag] = useState<{ sectionIdx: number } | null>(null);
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
   // Close context menu on outside click or Escape
   useEffect(() => {
@@ -186,8 +193,12 @@ export function SectionStrip({
     const sec = sections[idx];
     const kindIdx = KIND_CYCLE.indexOf(sec.kind as Section['kind']);
     const nextKind = KIND_CYCLE[(kindIdx + 1) % KIND_CYCLE.length];
+    setKind(idx, nextKind);
+  }
+
+  function setKind(idx: number, kind: Section['kind']) {
     const updated = sections.map((s, i) =>
-      i === idx ? { ...s, kind: nextKind as string } : { ...s }
+      i === idx ? { ...s, kind: kind as string } : { ...s }
     );
     setSections(coerceAll(updated));
     persistSections(songId, updated);
@@ -206,6 +217,16 @@ export function SectionStrip({
       ...sections.slice(sectionIdx + 1),
     ].map((s, i) => ({ ...s, index: i }));
 
+    setSections(coerceAll(updated));
+    persistSections(songId, updated);
+    // Prompt to relabel the newly-created second half right away.
+    setEditingIdx(sectionIdx + 1);
+  }
+
+  function renameSection(idx: number, label: string) {
+    const trimmed = label.trim();
+    if (!trimmed) return;
+    const updated = sections.map((s, i) => (i === idx ? { ...s, label: trimmed } : s));
     setSections(coerceAll(updated));
     persistSections(songId, updated);
   }
@@ -276,6 +297,46 @@ export function SectionStrip({
               ?? '#555')
           : '#555';
         const isSelected = selectedIndex === sec.index;
+        const isEditing = editMode && editingIdx === i;
+
+        if (isEditing) {
+          return (
+            <div
+              key={sec.index}
+              data-testid="section-chip"
+              className={`${styles.chip} ${styles.chipEdit} ${isSelected ? styles.selected : ''}`}
+              style={{ position: 'absolute', left: `${leftPct}%`, width: `${widthPct}%`, borderColor: accent }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <span
+                className={styles.kindDot}
+                style={{ background: accent }}
+                title={sec.kind}
+              />
+              <select
+                className={styles.kindSelect}
+                aria-label="Section type"
+                value={sec.kind}
+                onChange={(e) => setKind(i, e.target.value as Section['kind'])}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {KIND_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <SectionRenameField
+                initialLabel={sec.label}
+                onSubmit={(label) => {
+                  renameSection(i, label);
+                  setEditingIdx(null);
+                }}
+                onCancel={() => setEditingIdx(null)}
+              />
+            </div>
+          );
+        }
 
         return (
           <button
@@ -285,6 +346,14 @@ export function SectionStrip({
             className={`${styles.chip} ${isSelected ? styles.selected : ''} ${editMode ? styles.chipEdit : ''}`}
             style={{ position: 'absolute', left: `${leftPct}%`, width: `${widthPct}%`, borderColor: accent }}
             onClick={() => handleChipClick(i)}
+            onDoubleClick={
+              editMode
+                ? (e) => {
+                    e.stopPropagation();
+                    setEditingIdx(i);
+                  }
+                : undefined
+            }
             onContextMenu={
               editMode
                 ? (e) => {
@@ -362,6 +431,15 @@ export function SectionStrip({
             }
           >
             ✂ Split at playhead
+          </button>
+          <button
+            className={styles.menuItem}
+            onClick={() => {
+              setEditingIdx(menu.sectionIdx);
+              setMenu(null);
+            }}
+          >
+            ✎ Rename
           </button>
           <button
             className={styles.menuItem}

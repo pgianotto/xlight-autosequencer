@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { api } from 'src/api/client';
 import type { MappingEntry, DroppedEntry } from 'src/util/overlap';
 import styles from './ReanalysisDialog.module.css';

@@ -1,15 +1,20 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Timeline } from '../../src/screens/Timeline';
 
 const song = {
   song_id: 'abc123',
   title: 'Test Song',
-  status: 'analyzed',
+  artist: null,
+  status: 'analyzed' as const,
   duration_ms: 60000,
+  bpm: null,
+  key: null,
+  time_signature: null,
   folder_id: 'unfiled',
   imported_at: '2026-01-01T00:00:00Z',
   source_paths: ['/tmp/test.mp3'],
+  last_opened_at: null,
 };
 
 const analysis = {
@@ -30,8 +35,8 @@ const analysis = {
 };
 
 const assignments = [
-  { section_index: 0, theme_id: 'shimmer-wash', overrides: {}, user_confirmed: false },
-  { section_index: 1, theme_id: 'driving-pulse', overrides: {}, user_confirmed: false },
+  { section_index: 0, theme_id: 'shimmer-wash', overrides: {} },
+  { section_index: 1, theme_id: 'driving-pulse', overrides: {} },
 ];
 
 describe('Timeline screen', () => {

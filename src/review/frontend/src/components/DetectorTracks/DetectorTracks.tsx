@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './DetectorTracks.module.css';
 
 interface Detector {
