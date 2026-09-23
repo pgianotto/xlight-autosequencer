@@ -476,3 +476,76 @@ caches.
 itself** — this entry qualifies for the log because the orchestrator change
 affects whether any beat/bar/section data reaches the story builder at all,
 not because the classification rules changed.
+
+---
+
+## 2026-09-22 — Segmentino label loss (default-output bug) + merge collapse cap
+
+**OpenSpec change:** `openspec/changes/segmentino-label-extraction/`
+
+**Files:** `src/analyzer/algorithms/vamp_segmentation.py`,
+`src/analyzer/orchestrator.py`, `src/story/builder.py`.
+
+**Problem, diagnosed on a real song in production use** (`e0f7a3435bd3296c`,
+"It's the Most Wonderful Time of the Year" — Andy Williams, 152.6s):
+detected as 3 sections, one spanning 0–126.2s — 83% of the entire song.
+
+Traced through the real hierarchy/story JSON: the raw boundary detector
+found 8 reasonable, evenly-spaced marks (0.2s, 9.6s, 49s, 70s, 77s, 115s,
+126s, 140s) — correct. Every one had `label: null`, even though
+`algorithms_run` confirmed `segmentino` executed. Root cause:
+`SegmentinoAlgorithm._run()` called `vamp.collect(audio, sample_rate,
+self.plugin_key, parameters=self.parameters)` with **no `output=`
+argument**. Every other structural/multi-output Vamp wrapper in this
+codebase explicitly selects an output — `QMSegmenterAlgorithm` (the
+sibling structural segmenter) sets `vamp_output = "segmentation"`;
+`vamp_beats.py`, `vamp_onsets.py`, `vamp_pitch.py`, `vamp_harmony.py`
+(chordino, whose labels *do* work today) all pass `output=`. Segmentino
+was the one wrapper relying on Vamp's default output, which for a
+multi-output plugin is not guaranteed to be the labelled one.
+
+With every mark unlabeled, `builder.py`'s `_dominant_label()` finds no
+candidates for any segment, forcing `section_classifier.py` down the
+weaker energy-percentile-only fallback (top ~25% energy → chorus, rest →
+verse) for **every song this bug affects**, not just the diagnosed one.
+On this song's fairly uniform dynamics, 6 of 8 segments fell below the
+chorus threshold, all labelled `verse`, and Step 4b's consecutive-same-
+role merge (which exists specifically to collapse segmentino's normal
+over-splitting) glued all 6 into one block — the *exact* failure shape
+already logged above under "2026-03-31 — Label-aware classifier +
+consecutive merge" (Ghostbusters, "93-second s09 'verse'... swallowed 6
+sections"), reproducing live on a different song, under a different
+trigger, roughly six months later.
+
+**Fix:**
+1. `vamp_segmentation.py` — added explicit `vamp_output = "segmentation"`
+   (matching `QMSegmenterAlgorithm`'s convention) and `output=self.vamp_output`
+   on the `vamp.collect()` call. **The exact output ID is a best guess
+   pending live confirmation** — `vamp` has no native host library outside
+   the Linux dev container, so this repo's Windows dev environment could
+   not run `vamp.list_outputs_of("segmentino:segmentino")` to verify it
+   directly. If the real ID differs, update `vamp_output` accordingly —
+   do not assume this entry's guess was correct without checking.
+2. `orchestrator.py` — added a warning when segmentino runs but returns
+   zero labelled marks, so a future regression here is visible in
+   `result.warnings` (already surfaced in the UI) instead of silently
+   degrading section quality the way this one did for an unknown length
+   of time.
+3. `builder.py` Step 4b — capped the consecutive-same-role merge at
+   `_MAX_MERGED_SECTION_FRACTION = 0.5` (50%) of song duration, independent
+   of fix #1. Same spirit as the existing `_genius_quality_ok()` gate
+   ("reject if any single section covers >60% of song duration") — now
+   also enforced at the point the collapse actually happens, so a total
+   role-classification failure from *any* future cause can't reproduce
+   this exact shape again.
+
+`SCHEMA_VERSION` bumped 2.7.0 → 2.8.0 (hierarchy) and story schema 1.1.0 →
+1.2.0, per the established bug-265 reasoning — old caches silently keep
+re-serving the unlabeled/uncapped result under `fresh=False` otherwise.
+
+**Deliberately out of scope, follow-ups if this doesn't fully resolve
+label loss:** `section_classifier.py`'s energy-threshold tuning (top-25%
+= chorus) and using `boundary_cluster.py`'s agreement scores to drive
+merge decisions rather than just score them after the fact — both remain
+real, separate candidates once this stops masking whether either is the
+next weakest link.

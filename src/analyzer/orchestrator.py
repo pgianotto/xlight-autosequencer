@@ -58,7 +58,16 @@ if TYPE_CHECKING:
 # all-empty/wrong under the old bug — same bug-265 reasoning: bump so
 # those broken caches re-analyze instead of fresh=False silently
 # re-serving them forever.
-SCHEMA_VERSION = "2.7.0"
+# 2.8.0 (see openspec/changes/segmentino-label-extraction/): segmentino's
+# Vamp wrapper was collecting the plugin's default output instead of an
+# explicit output=, the only structural Vamp wrapper in this codebase not
+# doing so -- every "sections" mark came back with label=None, silently
+# forcing every song through section_classifier.py's weaker energy-only
+# fallback. Field shape unchanged but "sections" mark labels are wrong
+# (missing) under the old bug for every song analyzed since -- same
+# bug-265 reasoning: bump so those caches re-analyze instead of
+# fresh=False silently re-serving the unlabeled marks forever.
+SCHEMA_VERSION = "2.8.0"
 
 
 # ── Cache helpers ──────────────────────────────────────────────────────────────
@@ -493,6 +502,16 @@ def run_orchestrator(
             sections = _merge_qm_boundaries(sections, qm_seg_tracks[0].marks)
         print(f"L1 Structure: {len(sections)} sections "
               f"({_section_summary(sections)})")
+        # Segmentino ran but every mark came back unlabeled -- this silently
+        # forces section_classifier.py's weaker energy-only fallback for the
+        # whole song (see openspec/changes/segmentino-label-extraction/).
+        # Surface it instead of letting it degrade quality invisibly.
+        if sections and not any(getattr(m, "label", None) for m in sections):
+            warnings.append(
+                "L1 Structure: segmentino ran but returned no structural "
+                "group labels — section roles will use the weaker "
+                "energy-only classifier instead of label-aware grouping"
+            )
     else:
         # Fall back to QM segmenter if segmentino unavailable
         qm_seg_tracks = tracks_by_name.get("qm_segments", [])

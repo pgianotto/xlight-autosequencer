@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design: segmentino label extraction fix</title>
+<link rel="stylesheet" href="../_design.css">
+</head>
+<body>
+<div class="layout">
+
+<nav class="toc">
+  <h2>Sections</h2>
+  <ol>
+    <li><a href="#goal">Goal</a></li>
+    <li><a href="#evidence">The evidence trail</a></li>
+    <li><a href="#approach">Approach</a></li>
+    <li><a href="#alternative">Alternative considered</a></li>
+    <li><a href="#files">Files touched</a></li>
+    <li><a href="#regression">Regression surface</a></li>
+    <li><a href="#echoes">Historical echoes</a></li>
+    <li><a href="#scope">Out of scope</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="doc-header">
+  <p class="kicker">OpenSpec design · segmentino-label-extraction</p>
+  <h1>Design: segmentino label extraction fix</h1>
+  <div class="goal" id="goal">
+    Segmentino's Vamp wrapper collects the plugin's <strong>default</strong> output
+    instead of explicitly selecting the labelled-segmentation output every sibling
+    Vamp wrapper in this codebase selects &mdash; silently degrading section-role
+    classification to a weak energy-only fallback on every song it affects. Fix
+    the extraction, add a warning when it happens again, and cap how much a single
+    merge pass can collapse regardless of root cause.
+  </div>
+</header>
+
+<section class="block" id="evidence">
+  <h2>The evidence trail</h2>
+  <p>Diagnosed against a real song already in the user's library, not a synthetic
+    case &mdash; <code>e0f7a3435bd3296c</code>, "It's the Most Wonderful Time of the
+    Year" (Andy Williams, 152.6s), currently showing 3 sections on the Theme
+    screen, one spanning <strong>0&ndash;126.2s &mdash; 83% of the song</strong>.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h4>Raw boundaries are fine</h4>
+      <p><code>hierarchy["sections"]</code> (8 marks): 163ms, 9601ms, 48948ms,
+        70031ms, 77380ms, 114892ms, 126212ms, 140214ms &mdash; evenly spaced,
+        structurally plausible. Not the problem.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h4>Every mark has <code>label: null</code></h4>
+      <p><code>algorithms_run</code> confirms <code>segmentino</code> executed. Its
+        marks carry no group label anyway &mdash; <code>result.py</code>'s
+        <code>_mark_to_dict</code> (line 658) omits any key whose value is
+        <code>None</code>, which is why the JSON shows no <code>"label"</code> key
+        at all rather than <code>"label": null</code> literally.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h4>Root cause: the one Vamp wrapper missing <code>output=</code></h4>
+      <p>Every multi-output-capable Vamp wrapper in <code>src/analyzer/algorithms/</code>
+        explicitly selects an output:</p>
+      <table>
+        <thead><tr><th>Wrapper</th><th><code>vamp.collect(..., output=?)</code></th></tr></thead>
+        <tbody>
+          <tr><td><code>vamp_beats.py</code></td><td class="diff-same">explicit <code>self.vamp_output</code></td></tr>
+          <tr><td><code>vamp_onsets.py</code></td><td class="diff-same">explicit <code>self.vamp_output</code></td></tr>
+          <tr><td><code>vamp_pitch.py</code></td><td class="diff-same">explicit <code>self.vamp_output</code></td></tr>
+          <tr><td><code>vamp_harmony.py</code> (chordino &mdash; labels work today)</td><td class="diff-same">explicit <code>self.vamp_output</code></td></tr>
+          <tr><td><code>vamp_structure.py</code> (QM segmenter, the <em>sibling</em> structural segmenter)</td><td class="diff-same"><code>vamp_output = "segmentation"</code></td></tr>
+          <tr><td><code>vamp_segmentation.py</code> (segmentino)</td><td class="diff-add">&mdash; none. Relies on Vamp's default output.</td></tr>
+        </tbody>
+      </table>
+      <p>A multi-output plugin's default output is not guaranteed to be the
+        semantically useful one. Segmentino, whose entire purpose is producing
+        labelled structural groups, is the one wrapper not asking for it by name.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h4>Downstream: silent fallback to the weak path</h4>
+      <p><code>src/story/builder.py</code>'s <code>_dominant_label()</code> (line
+        229) finds no candidates for any segment when <code>boundary_label</code>
+        is empty, so every <code>section_labels</code> entry passed to
+        <code>classify_section_roles()</code> is <code>None</code> &mdash; this
+        forces the energy-percentile-only heuristic path
+        (<code>section_classifier.py</code>) instead of the label-aware
+        <code>_classify_by_labels()</code> path, for <em>every</em> song this
+        bug affects, not just the diagnosed one.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h4>Collapse: the exact pattern already logged once, on a different song</h4>
+      <p>On this song's fairly uniform dynamics, 6 of 8 segments fell below the
+        chorus energy threshold &rarr; all labelled <code>verse</code> &rarr;
+        <code>builder.py</code>'s consecutive-same-role merge (Step 4b) glued
+        them into one block. <code>docs/segment-classification-changelog.md</code>'s
+        2026-03-31 entry documents this identical failure mode on Ghostbusters
+        ("93-second s09 'verse'... swallowed 6 sections... the consecutive-same-role
+        merger collapsed too aggressively when the heuristic got the base labels
+        wrong"). Same mechanism, different trigger, reproducing live.</p>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="approach">
+  <h2>Approach</h2>
+
+  <article class="card">
+    <div class="card-head">
+      <span class="pill pill-warn">Piece 1 · needs live verification first</span>
+      <h4>Explicit output selection in <code>vamp_segmentation.py</code></h4>
+    </div>
+    <p>Add <code>vamp_output = "segmentation"</code> (matching QM segmenter's
+      convention &mdash; the most likely value, since both are C4DM-family
+      structural segmenters) and pass <code>output=self.vamp_output</code> to
+      <code>vamp.collect()</code>. <strong>Before writing this as final</strong>,
+      confirm the real output ID: <code>vamp.list_outputs_of("segmentino:segmentino")</code>
+      in the Linux dev container (this machine has no <code>vamp</code> host
+      library to check directly). If the real ID differs from
+      <code>"segmentation"</code>, use that instead &mdash; do not ship a guess.</p>
+  </article>
+
+  <article class="card">
+    <div class="card-head">
+      <span class="pill pill-info">Piece 2</span>
+      <h4>Warn when segmentino runs but yields zero labels</h4>
+    </div>
+    <p>In the orchestrator's L1 structure stage (around
+      <code>orchestrator.py:485-501</code>), after building <code>sections</code>,
+      check whether segmentino contributed any labelled marks; if it ran but every
+      mark's <code>label</code> is <code>None</code>, append to
+      <code>result.warnings</code> (the existing mechanism, already surfaced in the
+      UI). Makes a future regression on this exact code path visible immediately
+      instead of silently degrading section quality the way this one did for an
+      unknown length of time.</p>
+  </article>
+
+  <article class="card">
+    <div class="card-head">
+      <span class="pill pill-info">Piece 3 · defense in depth</span>
+      <h4>Cap the consecutive-merge collapse</h4>
+    </div>
+    <p>In <code>builder.py</code> Step 4b, before extending a merged run's
+      <code>end_ms</code>, check whether doing so would push the merged section's
+      duration past a fixed fraction of <code>duration_ms</code> (proposed: 50%).
+      If so, don't merge &mdash; keep the sections separate even though they share
+      a role. Same spirit as the existing <code>_genius_quality_ok()</code> gate
+      ("reject if any single section covers &gt;60% of song duration"), applied at
+      the point the collapse actually happens rather than as an after-the-fact
+      quality gate on a data source (Genius) that no longer exists in this
+      pipeline. This piece ships regardless of whether Piece 1's exact output ID
+      guess is right on the first try &mdash; it's independent insurance against
+      the same collapse from a different trigger in the future.</p>
+  </article>
+</section>
+
+<section class="block" id="alternative">
+  <h2>Alternative considered</h2>
+  <p>Fix only the downstream cap (Piece 3) and skip investigating the Vamp
+    extraction bug, treating segmentino's missing labels as an unfixable upstream
+    fact of life. Rejected: it would cap the damage but leave every affected song
+    permanently on the weaker energy-only classification path, when the actual
+    fix is a one-line wrapper change once the correct output ID is confirmed.
+    Piece 3 stays in scope anyway as genuine defense in depth, but it's not a
+    substitute for Piece 1.</p>
+</section>
+
+<section class="block" id="files">
+  <h2>Files touched</h2>
+  <ul class="tight">
+    <li><strong>Modified</strong>: <code>src/analyzer/algorithms/vamp_segmentation.py</code>
+      (add explicit output selection), <code>src/analyzer/orchestrator.py</code>
+      (label-loss warning), <code>src/story/builder.py</code> (Step 4b merge cap),
+      <code>docs/segment-classification-changelog.md</code> (mandatory entry,
+      appended not edited)</li>
+    <li><strong>Unmodified</strong>: <code>src/analyzer/boundary_cluster.py</code>,
+      <code>src/story/section_classifier.py</code>,
+      <code>src/story/section_merger.py</code>,
+      <code>src/story/boundary_refinement.py</code> &mdash; correctly out of scope
+      per <a href="#alternative">the alternative considered</a> above; each is a
+      real, separate follow-up once this stops masking whether they're the next
+      weakest link.</li>
+  </ul>
+</section>
+
+<section class="block" id="regression">
+  <h2>Regression surface</h2>
+  <p><code>SegmentinoAlgorithm</code> has exactly one caller
+    (<code>orchestrator.py</code>'s algorithm registry, via
+    <code>registry.py:50</code>) &mdash; grepped <code>src/</code> and
+    <code>tests/</code>, no direct instantiation elsewhere. The Step 4b merge cap
+    changes behavior for <em>every</em> song's role-classification merge, not just
+    segmentino-affected ones &mdash; a song that legitimately has 6 genuinely
+    same-role consecutive sections spanning &gt;50% of its length (e.g. a long
+    ambient drone track that's musically almost entirely "verse") would now stay
+    split instead of merging. Existing tests for <code>section_classifier.py</code>
+    / <code>builder.py</code> must be re-run to catch this; a new test fixture
+    specifically exercising the cap (deliberately uniform-energy synthetic audio,
+    matching this repo's existing fixture-generation conventions in
+    <code>tests/conftest.py</code>) is part of this change.</p>
+  <p><strong>Cache invalidation</strong>: per the 2026-07-25 changelog entry's own
+    documented lesson ("bug-265 lesson repeated"), a plain "Reanalyze" passes
+    <code>fresh=False</code> and will keep re-serving cached
+    <code>_hierarchy.json</code>/<code>_story.json</code> results with the old,
+    unlabelled sections unless the hierarchy schema version is bumped to force
+    invalidation. Bumping <code>SCHEMA_VERSION</code> is in scope for this change
+    for exactly that reason.</p>
+</section>
+
+<section class="block" id="echoes">
+  <h2>Historical echoes</h2>
+  <p>Read <code>docs/segment-classification-changelog.md</code> in full (mandatory
+    per <code>CLAUDE.md</code>) before writing this design. Two direct matches:</p>
+  <ul class="tight">
+    <li><strong>2026-03-31, "Label-aware classifier + consecutive merge"</strong> &mdash;
+      the exact collapse mechanism (consecutive same-role sections merging too
+      aggressively when base labels are wrong), on Ghostbusters. That entry's own
+      root cause was different (energy-threshold miscalibration, not missing Vamp
+      labels), but the failure shape is identical &mdash; strong evidence the merge
+      step itself has always been under-guarded against a total-labeling failure,
+      independent of what triggers it.</li>
+    <li><strong>2026-07-25, "demucs/madmom sidecar bug collapsed every song to one
+      flat section"</strong> &mdash; a different root cause (in-process import vs.
+      sidecar subprocess) producing the same symptom class (silent upstream data
+      loss &rarr; degraded/collapsed sections downstream). Confirms this class of
+      bug (upstream analyzer output silently empty/wrong, section builder has no
+      guard against acting on it) has happened at least twice before under
+      different mechanisms &mdash; Piece 2 (the warning) and Piece 3 (the cap) are
+      specifically aimed at making the <em>next</em> instance of this bug class
+      visible and bounded rather than silent and unbounded.</li>
+  </ul>
+  <p>No entry found addressing the Vamp <code>output=</code> selection issue
+    itself &mdash; this appears to be a genuinely new finding, not a repeat of a
+    previously-diagnosed-and-reverted attempt.</p>
+</section>
+
+<section class="block" id="scope">
+  <h2>Out of scope</h2>
+  <ul class="tight">
+    <li><code>section_classifier.py</code>'s energy-threshold tuning
+      (top-25%-energy = chorus) &mdash; a real, separate follow-up once labels are
+      flowing correctly and it's possible to tell whether the thresholds
+      themselves are still the next weakest link.</li>
+    <li>Using <code>boundary_cluster.py</code>'s agreement scores to drive merge
+      decisions instead of just scoring them after the fact &mdash; a distinct,
+      larger change to how two modules interact, proposed separately.</li>
+    <li>Any change to <code>boundary_refinement.py</code>'s three lyric-anchored
+      fixes &mdash; unaffected by this bug (they operate on already-classified
+      sections' text content, not the label-loss issue).</li>
+  </ul>
+</section>
+
+</main>
+</div>
+</body>
+</html>

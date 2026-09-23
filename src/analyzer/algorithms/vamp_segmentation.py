@@ -22,9 +22,30 @@ class SegmentinoAlgorithm(Algorithm):
     preferred_stem = "full_mix"
     depends_on = ["audio_load"]
 
+    # Explicit output selection, matching every other structural/multi-output
+    # Vamp wrapper in this codebase (vamp_structure.py's QMSegmenterAlgorithm,
+    # vamp_beats.py, vamp_onsets.py, vamp_pitch.py, vamp_harmony.py all pass
+    # output=). Segmentino was the one wrapper relying on Vamp's default
+    # output, which for a multi-output plugin is not guaranteed to be the
+    # labelled one — this silently produced unlabeled boundary marks (no
+    # "label" key at all in the exported JSON, since result.py's
+    # _mark_to_dict omits None-valued keys), forcing every song through the
+    # weaker energy-only classification fallback in section_classifier.py.
+    # "segmentation" matches QMSegmenterAlgorithm's own vamp_output value
+    # (the sibling C4DM structural segmenter) — confirm this is correct
+    # against the real plugin (`vamp.list_outputs_of("segmentino:segmentino")`
+    # in the Linux dev container; `vamp` has no native host library outside
+    # it) before relying on labels being present. See
+    # openspec/changes/segmentino-label-extraction/.
+    vamp_output = "segmentation"
+
     def _run(self, audio: np.ndarray, sample_rate: int) -> TimingTrack:
         import vamp
-        outputs = vamp.collect(audio, sample_rate, self.plugin_key, parameters=self.parameters)
+        outputs = vamp.collect(
+            audio, sample_rate, self.plugin_key,
+            output=self.vamp_output,
+            parameters=self.parameters,
+        )
         items = outputs.get("list", [])
         marks = []
         for item in items:
