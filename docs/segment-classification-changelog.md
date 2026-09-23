@@ -549,3 +549,67 @@ label loss:** `section_classifier.py`'s energy-threshold tuning (top-25%
 merge decisions rather than just score them after the fact — both remain
 real, separate candidates once this stops masking whether either is the
 next weakest link.
+
+---
+
+## 2026-09-23 — Correction: the actual root cause was the Docker build, not the vamp `output=` selection
+
+**Files:** `Dockerfile` (repo root, outside `app/` — the container build
+recipe, not version-controlled by this git repo).
+
+The entry directly above concluded segmentino's Vamp wrapper was
+collecting the plugin's default output instead of an explicit one, and
+shipped a fix for that (`vamp_output = "segmentation"` in
+`vamp_segmentation.py`, still a real correctness improvement, matching
+every sibling wrapper's convention — kept). **That was not the actual
+cause of the observed symptom.** Live verification in the real container
+(`vamp.get_outputs_of("segmentino:segmentino")`) raised `TypeError:
+Failed to load plugin: segmentino:segmentino` — the plugin was not
+loading at all, regardless of which output was requested.
+
+Tracing why: `Algorithm.run()` (`src/analyzer/algorithms/base.py`) catches
+every exception from `_run()` and returns `None`, logging a warning to
+stderr rather than propagating — so segmentino's load failure was silently
+swallowed, the orchestrator's L1 structure stage correctly found no
+`segmentino` track and fell through to its QM-segmenter fallback branch,
+and the "8 unlabeled sections" diagnosed in the entry above were actually
+**QM segmenter's boundaries all along** — QM's wrapper has never captured
+labels (no `extract_label=True`), which is by design, not a bug. The
+missing-`output=` fix was chasing a symptom that had a different cause.
+
+**The real bug, found by fetching the actual upstream source**
+(`github.com/c4dm/segmentino`'s `Makefile.inc`/`Makefile.linux`): the
+Dockerfile's segmentino build step passed `CFLAGS="-march=native"` on the
+`make` command line. GNU Make blocks every non-`override` assignment to a
+command-line-set variable *except* `+=` — `Makefile.linux`'s own `CFLAGS
++= -O3 ...` is `+=` so it worked, but `Makefile.inc`'s `CFLAGS :=
+$(CFLAGS) $(INCLUDEFLAGS)` (simple assignment) was silently a no-op,
+so `INCLUDEFLAGS` (the `-I` paths for vamp-plugin-sdk/qm-dsp/nnls-chroma/
+armadillo headers) never reached `CFLAGS`. `CXXFLAGS` wasn't
+command-line-set so it got the includes fine — masking the problem for
+every `.cpp` file — but the plugin's one plain-C source
+(`nnls-chroma/nnls.c`) compiles via Make's implicit `.c.o` rule using
+`CFLAGS` alone, and almost certainly failed with a missing-header error.
+That failure was invisible in the build log because this Dockerfile
+chains each numbered plugin's steps with `; \` before the next plugin's
+`cd /tmp`, so one plugin's `make` failure doesn't fail the overall image
+build — `segmentino.so` was silently never produced.
+
+**Fix:** stopped passing `CFLAGS` on the `make` command line entirely
+(avoids the lock); `-march=native` is now patched directly into
+`Makefile.inc`'s own `CFLAGS`/`CXXFLAGS` lines via `sed` instead (verified
+the exact `sed` command against the real fetched file before applying).
+Only `LDFLAGS` is still passed via the command line — harmless, since
+`Makefile.inc`'s `LDFLAGS := $(LDFLAGS)` is a self-referential passthrough
+and `Makefile.linux`'s `LDFLAGS += -shared ...` still appends via `+=`
+regardless of the lock. See the Dockerfile's own step-6 comment for the
+full mechanics.
+
+**Not yet verified**: this fix needs an actual `docker compose build` run
+to confirm `segmentino.so` now compiles and `vamp.get_outputs_of(
+"segmentino:segmentino")` succeeds — could not be tested from the
+Windows machine this diagnosis was done on (no Linux/Docker toolchain).
+Once confirmed, re-analyze (`force=True`) "It's the Most Wonderful Time
+of the Year" (the song that started this investigation) and check it no
+longer collapses to one 126-second section — that's the real end-to-end
+proof, not just the plugin loading.
