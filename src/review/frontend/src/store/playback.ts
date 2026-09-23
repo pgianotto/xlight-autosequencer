@@ -19,7 +19,7 @@ interface PlaybackState {
 
 const DECAY_RATE = 4.0;
 
-export const usePlaybackStore = create<PlaybackState>((set, get) => ({
+export const usePlaybackStore = create<PlaybackState>((set) => ({
   playing: false,
   timeMs: 0,
   durationMs: 0,

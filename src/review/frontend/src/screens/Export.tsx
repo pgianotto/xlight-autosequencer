@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './Export.module.css';
+import type { Song } from '../store/library';
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && Boolean((window as any).__TAURI_INTERNALS__ || (window as any).__TAURI__);
@@ -42,13 +43,6 @@ async function downloadPackage(url: string, fallbackName: string): Promise<void>
   if (!destPath) return; // user cancelled
 
   await invoke('write_file_bytes', { path: destPath, data: bytes });
-}
-
-interface Song {
-  song_id: string;
-  title: string;
-  status: string;
-  duration_ms: number;
 }
 
 interface ExportProps {

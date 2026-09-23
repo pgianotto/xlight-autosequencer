@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from './Pictures.module.css';
+import type { Song } from '../store/library';
 
 interface ImageSuggestion {
   word: string;
@@ -14,11 +15,6 @@ interface ImageTopic {
   word: string;
   start_ms: number;
   end_ms: number;
-}
-
-interface Song {
-  song_id: string;
-  title: string;
 }
 
 interface VocalWord {

@@ -12,11 +12,16 @@ vi.stubGlobal('fetch', mockFetch);
 const mockSong = {
   song_id: 'abc123',
   title: 'Test Song',
-  status: 'draft',
+  artist: null,
+  status: 'draft' as const,
   duration_ms: 60000,
+  bpm: null,
+  key: null,
+  time_signature: null,
   folder_id: 'unfiled',
   imported_at: '2026-01-01T00:00:00Z',
   source_paths: ['/tmp/test.mp3'],
+  last_opened_at: null,
 };
 
 describe('Analyze screen', () => {

@@ -360,6 +360,52 @@ src/
 
 ---
 
+## Connecting an MCP Client
+
+The same server that runs the web dashboard (`http://localhost:5173` — or
+`http://<your-nas-host>:5173` on a Docker/Synology deployment, see
+`compose.yaml`) also exposes an [MCP](https://modelcontextprotocol.io) tool
+server at `/mcp`, so a Claude client can drive the pipeline directly instead
+of you describing the app's capabilities every session. No separate process
+or port — it's merged into the same Flask server via Streamable HTTP.
+
+**URL:** `http://<host>:5173/mcp`
+
+Point Claude Code at it:
+
+```bash
+claude mcp add --transport http xonset http://localhost:5173/mcp
+```
+
+(swap `localhost` for your NAS's hostname/IP when connecting to a remote
+deployment). See `claude mcp add --help` or the
+[Claude Code MCP docs](https://docs.claude.com/en/docs/claude-code/mcp) if
+the flag syntax has moved on since this was written.
+
+**Tools exposed** (see `src/review/mcp_server.py` — each is a thin wrapper
+around the same functions the dashboard's own `/api/v1/*` routes call, no
+separate logic):
+
+| Tool | What it does |
+|------|--------------|
+| `list_library` | List every song, with folders and staleness info |
+| `import_song(path, folder_id=None)` | Import a local audio/video file by absolute path (must be reachable from inside the container) |
+| `analyze_song(song_id, force=False)` | Run analysis, streaming progress; commits the result |
+| `get_song_story(song_id)` | Section structure + the fuller per-section story when present |
+| `list_themes` / `list_effects` / `list_variants` | Browse the theme/effect/variant catalogs |
+| `generate_sequence(song_id, genre=None, occasion=None, ...)` | Generate a `.xsq` for a fully themed song |
+| `get_layout_info` | Read the fixed committed layout (props, pixel counts) |
+
+A song must be imported → analyzed → themed (via the dashboard's Theme
+screen, or your own logic against `list_themes`) before `generate_sequence`
+will succeed — same requirements as the web UI.
+
+This is a single-user, local-network server with no authentication, matching
+the existing dashboard's trust model (see `server.py`'s CORS policy). Don't
+expose port 5173 past your LAN without adding auth in front of it.
+
+---
+
 ## Known Issues
 
 | Issue | Fix |

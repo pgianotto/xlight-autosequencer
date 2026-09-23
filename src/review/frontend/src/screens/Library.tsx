@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import type { Song, Folder } from 'src/store/library';
 import { isTauri, onDrop as onNativeDrop, importByPath } from '../lib/nativeDialog';
 

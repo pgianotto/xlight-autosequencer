@@ -3,7 +3,7 @@
  * routing by status, SC-007 (<200ms filter), FR-003.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Library } from '../../src/screens/Library';
 
 // Reset store state between tests

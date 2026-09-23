@@ -40,9 +40,9 @@ describe('SC-007: library filter performance', () => {
       for (const filterStatus of statuses) {
         if (filterStatus === 'all') {
           // No-op filter
-          const _ = songs;
+          void songs;
         } else {
-          const _ = songs.filter((s) => s.status === filterStatus);
+          void songs.filter((s) => s.status === filterStatus);
         }
       }
     }

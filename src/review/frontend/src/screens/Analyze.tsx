@@ -2,17 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import styles from './Analyze.module.css';
 import { PasteLyricsDialog, type LyricsCheckResult } from '../components/PasteLyricsDialog/PasteLyricsDialog';
 import { XTimingUploadDialog, type XTimingUploadResult } from '../components/XTimingUploadDialog/XTimingUploadDialog';
-
-interface Song {
-  song_id: string;
-  title: string;
-  artist?: string | null;
-  status: string;
-  duration_ms: number;
-  folder_id: string;
-  imported_at: string;
-  source_paths: string[];
-}
+import type { Song } from '../store/library';
 
 interface DetectorRow {
   detector: string;

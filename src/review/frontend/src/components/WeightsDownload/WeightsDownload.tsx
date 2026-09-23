@@ -1,4 +1,3 @@
-import React from "react";
 import styles from "./WeightsDownload.module.css";
 import { useWeightsDownloadStore } from "../../store/weightsDownload";
 

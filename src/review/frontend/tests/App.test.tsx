@@ -81,16 +81,6 @@ vi.mock('../src/components/Chrome/Chrome', () => ({
 
 import React from 'react';
 
-const song = {
-  song_id: 'abc123',
-  title: 'Test Song',
-  status: 'imported',
-  duration_ms: 60000,
-  folder_id: 'f1',
-  imported_at: '2026-01-01T00:00:00Z',
-  source_paths: ['/tmp/test.mp3'],
-};
-
 const analysis = {
   song_id: 'abc123',
   detected_sections: [{ index: 0, start_ms: 0, end_ms: 60000, kind: 'verse', label: 'Verse 1' }],

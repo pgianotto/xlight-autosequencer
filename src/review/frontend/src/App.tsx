@@ -6,7 +6,7 @@ import { useKeyboardStore } from 'src/store/keyboard';
 import { usePlaybackStore } from 'src/store/playback';
 import { useAppStore, Screen } from 'src/store/app';
 import { useLibraryStore } from 'src/store/library';
-import type { Song, Folder } from 'src/store/library';
+import type { Song } from 'src/store/library';
 import type { Assignment as StoreAssignment } from 'src/store/assignments';
 import { usePreferencesStore } from 'src/store/preferences';
 import { Chrome } from 'src/components/Chrome/Chrome';
@@ -306,7 +306,6 @@ export default function App() {
   const upsertSong = useLibraryStore((s) => s.upsertSong);
 
   const setPreferences = usePreferencesStore((s) => s.setPreferences);
-  const lastSongId = usePreferencesStore((s) => s.last_song_id);
 
   // cross-screen data lives here — screens receive it as props
   const [data, setData] = React.useState<AppData>({
@@ -724,7 +723,6 @@ export default function App() {
 // ── Purge dialog ──────────────────────────────────────────────────────────────
 
 function PurgeDialog({
-  songId,
   cacheSizeBytes,
   onPurge,
   onDismiss,

@@ -37,7 +37,6 @@ describe('useKeyboard integration — FR-041 global shortcuts', () => {
 
   it('Space toggles play/pause via store action', () => {
     const playHandler = vi.fn();
-    const pauseHandler = vi.fn();
     useKeyboardStore.getState().register({ key: 'Space', scope: 'global', handler: playHandler });
 
     const { unmount } = renderHook(() => useKeyboard('global'));
