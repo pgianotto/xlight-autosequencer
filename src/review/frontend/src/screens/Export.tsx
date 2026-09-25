@@ -49,6 +49,9 @@ interface ExportProps {
   song: Song;
   layoutId: string | null;
   layoutXmlPath?: string | null;
+  /** Called after a successful layout upload/delete so the app-level
+   * layoutId/layoutXmlPath (passed back down as props) stay in sync. */
+  onLayoutChanged?: () => void;
   onExportComplete?: (outputPath: string) => void;
 }
 
@@ -69,7 +72,7 @@ interface RenderLogLine {
   kind: 'info' | 'ok' | 'err' | 'progress';
 }
 
-export function Export({ song, layoutId, layoutXmlPath, onExportComplete }: ExportProps) {
+export function Export({ song, layoutId, layoutXmlPath, onLayoutChanged, onExportComplete }: ExportProps) {
   const [exporting, setExporting] = useState(false);
   const [outputPath, setOutputPath] = useState<string | null>(null);
   // Onsets (per-stem) + Chords timing tracks are display-only in the .xsq;
@@ -103,26 +106,76 @@ export function Export({ song, layoutId, layoutXmlPath, onExportComplete }: Expo
     if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
   }, []);
 
-  // Details of the repo-committed layout (layout/xlights_rgbeffects.xml),
-  // shown so the user always sees which rgbeffects file a render targets.
+  // Details of the active layout (an uploaded override, else the
+  // repo-committed layout/xlights_rgbeffects.xml), shown so the user
+  // always sees which rgbeffects file a render targets.
   const [layoutInfo, setLayoutInfo] = useState<{
     display_name?: string;
     props?: unknown[];
     imported_at?: string;
+    source?: 'uploaded' | 'committed';
   } | null>(null);
+  const [layoutBusy, setLayoutBusy] = useState(false);
+  const [layoutError, setLayoutError] = useState<string | null>(null);
+  const layoutFileInputRef = useRef<HTMLInputElement>(null);
 
   const isThemed = song.status === 'themed';
   const hasLayout = layoutId != null && layoutXmlPath != null;
 
-  useEffect(() => {
-    if (layoutId == null) return;
+  function refetchLayoutInfo() {
     fetch('/api/v1/layout')
       .then((r) => (r.ok ? r.json() : null))
-      .then((body) => {
-        if (body) setLayoutInfo(body);
-      })
+      .then((body) => setLayoutInfo(body))
       .catch(() => {});
+  }
+
+  useEffect(() => {
+    if (layoutId == null) {
+      setLayoutInfo(null);
+      return;
+    }
+    refetchLayoutInfo();
   }, [layoutId, layoutXmlPath]);
+
+  async function handleLayoutFileSelected(file: File) {
+    setLayoutBusy(true);
+    setLayoutError(null);
+    try {
+      const form = new FormData();
+      form.append('layout', file);
+      const resp = await fetch('/api/v1/layout', { method: 'POST', body: form });
+      const body = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        setLayoutError(body?.error?.message ?? `Upload failed (HTTP ${resp.status})`);
+        return;
+      }
+      setLayoutInfo(body);
+      onLayoutChanged?.();
+    } catch {
+      setLayoutError('Upload failed — network error');
+    } finally {
+      setLayoutBusy(false);
+      if (layoutFileInputRef.current) layoutFileInputRef.current.value = '';
+    }
+  }
+
+  async function handleRevertToDefaultLayout() {
+    setLayoutBusy(true);
+    setLayoutError(null);
+    try {
+      const resp = await fetch('/api/v1/layout', { method: 'DELETE' });
+      if (!resp.ok) {
+        setLayoutError(`Failed to revert layout (HTTP ${resp.status})`);
+        return;
+      }
+      refetchLayoutInfo();
+      onLayoutChanged?.();
+    } catch {
+      setLayoutError('Failed to revert layout — network error');
+    } finally {
+      setLayoutBusy(false);
+    }
+  }
 
   // Auto-scroll the stream log
   useEffect(() => {
@@ -272,10 +325,22 @@ export function Export({ song, layoutId, layoutXmlPath, onExportComplete }: Expo
       <div data-testid="layout-required" className={styles.block}>
         <h3>Layout Missing</h3>
         <p>
-          <code>layout/xlights_rgbeffects.xml</code> is missing from this
-          checkout. Add it to the repo's <code>layout/</code> directory and
-          restart the server.
+          No xLights layout is configured yet. Upload your{' '}
+          <code>xlights_rgbeffects.xml</code> to get started.
         </p>
+        <input
+          ref={layoutFileInputRef}
+          type="file"
+          accept=".xml"
+          data-testid="layout-file-input"
+          disabled={layoutBusy}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void handleLayoutFileSelected(file);
+          }}
+        />
+        {layoutBusy && <p style={{ marginTop: 8 }}>Uploading…</p>}
+        {layoutError && <p className={styles.error}>{layoutError}</p>}
       </div>
     );
   }
@@ -302,7 +367,35 @@ export function Export({ song, layoutId, layoutXmlPath, onExportComplete }: Expo
           {layoutInfo?.imported_at
             ? ` · as of ${new Date(layoutInfo.imported_at).toLocaleDateString()}`
             : ''}
+          {layoutInfo?.source === 'uploaded' ? ' · custom upload' : ''}
         </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <input
+            ref={layoutFileInputRef}
+            type="file"
+            accept=".xml"
+            data-testid="layout-file-input"
+            disabled={layoutBusy}
+            style={{ fontSize: 12 }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void handleLayoutFileSelected(file);
+            }}
+          />
+          {layoutInfo?.source === 'uploaded' && (
+            <button
+              type="button"
+              data-testid="revert-layout-button"
+              disabled={layoutBusy}
+              onClick={() => void handleRevertToDefaultLayout()}
+              style={{ fontSize: 12, padding: '4px 10px', cursor: layoutBusy ? 'default' : 'pointer' }}
+            >
+              Revert to default
+            </button>
+          )}
+          {layoutBusy && <span style={{ fontSize: 12, color: 'var(--color-text-muted, #888)' }}>Working…</span>}
+        </div>
+        {layoutError && <p className={styles.error} style={{ marginTop: 6 }}>{layoutError}</p>}
       </div>
 
       {error && <p className={styles.error}>{error}</p>}

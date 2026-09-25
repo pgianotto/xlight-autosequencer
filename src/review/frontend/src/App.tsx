@@ -376,20 +376,28 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // load layout preference on mount
-  useEffect(() => {
+  // load layout preference on mount, and expose a refresh function so a
+  // successful upload/delete in the Export screen updates this app-level
+  // state without a full page reload.
+  const refreshLayout = useCallback(() => {
     fetch('/api/v1/layout')
       .then((r) => {
         if (!r.ok) return null;
         return r.json();
       })
       .then((body) => {
-        if (body?.layout_id) {
-          setData((d) => ({ ...d, layoutId: body.layout_id, layoutXmlPath: body.xml_path ?? null }));
-        }
+        setData((d) => ({
+          ...d,
+          layoutId: body?.layout_id ?? null,
+          layoutXmlPath: body?.xml_path ?? null,
+        }));
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    refreshLayout();
+  }, [refreshLayout]);
 
   // debounced assignment persistence (T088 — FR-049a)
   const debouncedSave = useRef(
@@ -676,6 +684,7 @@ export default function App() {
             song={song}
             layoutId={layoutId}
             layoutXmlPath={layoutXmlPath}
+            onLayoutChanged={refreshLayout}
             onExportComplete={(outputPath) => {
               void outputPath;
             }}
