@@ -239,6 +239,54 @@ class TestRealignLyricLines:
         corrected = phoneme_align.realign_lyric_lines(lines, words, fallback_words)
         assert corrected == [{"t_ms": 100, "duration_ms": 500 - 100, "text": "one two"}]
 
+    def test_rejects_correction_that_jumps_backward_past_previous_line(self):
+        # Real bug (2026-09-25, "Magic Mirror"): a short, weakly-sung line
+        # ("Think again...") got a ctc-forced-aligner fallback correction
+        # landing ~9s *before* the previous line's own already-accepted
+        # end, colliding with an unrelated earlier line -- neither matcher
+        # checked whether its match was chronologically plausible next to
+        # already-placed neighbors, only whether some match existed
+        # anywhere in the song.
+        lines = [
+            {"t_ms": 27000, "duration_ms": 3000, "text": "what does thou know"},
+            {"t_ms": 37000, "duration_ms": 2000, "text": "think again"},
+        ]
+        words = [
+            {"label": "WHAT", "start_ms": 27922, "end_ms": 28084},
+            {"label": "DOES", "start_ms": 28145, "end_ms": 28226},
+            {"label": "THOU", "start_ms": 28327, "end_ms": 28469},
+            {"label": "KNOW", "start_ms": 28509, "end_ms": 28692},
+        ]
+        fallback_words = [
+            {"label": "THINK", "start_ms": 27950, "end_ms": 28100},
+            {"label": "AGAIN", "start_ms": 28100, "end_ms": 28300},
+        ]
+        corrected = phoneme_align.realign_lyric_lines(lines, words, fallback_words)
+        assert corrected == [
+            {"t_ms": 27922, "duration_ms": 28692 - 27922, "text": "what does thou know"},
+            {"t_ms": 37000, "duration_ms": 2000, "text": "think again"},
+        ]
+
+    def test_accepts_correction_within_monotonicity_tolerance(self):
+        # A small, legitimate overlap (e.g. a duet/backup-vocal line
+        # starting slightly before the lead line ends) should still be
+        # accepted, not rejected outright.
+        lines = [
+            {"t_ms": 0, "duration_ms": 1000, "text": "lead line"},
+            {"t_ms": 1000, "duration_ms": 1000, "text": "backup line"},
+        ]
+        words = [
+            {"label": "LEAD", "start_ms": 0, "end_ms": 1000},
+        ]
+        fallback_words = [
+            {"label": "BACKUP", "start_ms": 900, "end_ms": 1200},
+        ]
+        corrected = phoneme_align.realign_lyric_lines(lines, words, fallback_words)
+        assert corrected == [
+            {"t_ms": 0, "duration_ms": 1000, "text": "lead line"},
+            {"t_ms": 900, "duration_ms": 300, "text": "backup line"},
+        ]
+
     def test_primary_wins_when_it_covers_more_than_fallback(self):
         lines = [{"t_ms": 0, "duration_ms": 5000, "text": "one two three four"}]
         words = [

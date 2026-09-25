@@ -92,6 +92,13 @@ def _match_lines_to_words(
     return line_start, line_end, line_matches
 
 
+# Tolerance below which a correction landing slightly before the previous
+# line's accepted end is still trusted (legitimate overlap, e.g. a
+# duet/backup-vocal line) rather than rejected as a mismatch. See
+# realign_lyric_lines.
+_MONOTONICITY_TOLERANCE_MS = 250
+
+
 def realign_lyric_lines(
     lyric_lines: list[dict], words: list[dict], fallback_words: Optional[list[dict]] = None,
 ) -> list[dict]:
@@ -119,6 +126,15 @@ def realign_lyric_lines(
     the old rule only checked for a completely unmatched line). A line with
     zero matches from both sources keeps its original (provider) timing
     rather than guessing.
+
+    A candidate correction that would place a line before the previous
+    line's own accepted end (beyond ``_MONOTONICITY_TOLERANCE_MS``) is
+    rejected in favor of the next candidate, or the line's original
+    timing if none qualify -- a match text-similar enough to win but
+    chronologically implausible next to its neighbors is a mismatch, not
+    a real correction (found 2026-09-25, "Magic Mirror": a short,
+    weakly-sung line landed ~9s before its predecessor, on top of an
+    unrelated earlier line).
     """
     if not lyric_lines or not words:
         return lyric_lines
@@ -130,6 +146,7 @@ def realign_lyric_lines(
     )
 
     corrected: list[dict] = []
+    prev_end_ms: Optional[int] = None
     for li, line in enumerate(lyric_lines):
         n = token_counts.get(li, 0) or 1
         primary_coverage = line_matches.get(li, 0) / n
@@ -137,20 +154,43 @@ def realign_lyric_lines(
         # Ties (including both zero) favor primary: WhisperX is
         # singing-adapted and already used for the Words/Phonemes tracks, so
         # prefer it whenever the fallback isn't a clear improvement.
-        if li in line_start and (li not in fb_start or primary_coverage >= fallback_coverage):
+        candidates: list[tuple[int, int]] = []
+        primary_first = li in line_start and (li not in fb_start or primary_coverage >= fallback_coverage)
+        first_source = (line_start, line_end) if primary_first else (fb_start, fb_end)
+        second_source = (fb_start, fb_end) if primary_first else (line_start, line_end)
+        for starts, ends in (first_source, second_source):
+            if li in starts:
+                candidates.append((starts[li], ends[li]))
+
+        # A correction that would place this line before a neighbor
+        # already placed earlier in the song is a mismatched word, not a
+        # legitimate timing fix -- reject it and try the next candidate
+        # (found 2026-09-25, "Magic Mirror": a short, weakly-sung line
+        # ("Think again...") got a ctc-forced-aligner fallback correction
+        # landing ~9s *before* the previous line's own accepted end,
+        # colliding with an unrelated earlier line, because neither
+        # matcher checks whether its match is chronologically plausible
+        # next to already-placed neighbors -- only whether SOME match
+        # exists anywhere in the song).
+        accepted = next(
+            (
+                (start, end) for start, end in candidates
+                if prev_end_ms is None or start >= prev_end_ms - _MONOTONICITY_TOLERANCE_MS
+            ),
+            None,
+        )
+
+        if accepted is not None:
+            start, end = accepted
             corrected.append({
-                "t_ms": line_start[li],
-                "duration_ms": max(line_end[li] - line_start[li], 1),
+                "t_ms": start,
+                "duration_ms": max(end - start, 1),
                 "text": line.get("text", ""),
             })
-        elif li in fb_start:
-            corrected.append({
-                "t_ms": fb_start[li],
-                "duration_ms": max(fb_end[li] - fb_start[li], 1),
-                "text": line.get("text", ""),
-            })
+            prev_end_ms = end
         else:
             corrected.append(dict(line))
+            prev_end_ms = line.get("t_ms", 0) + line.get("duration_ms", 0)
     return corrected
 
 _SUBPROCESS_TIMEOUT_S = 600

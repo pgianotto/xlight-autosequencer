@@ -468,13 +468,6 @@ class PhonemeAnalyzer:
 
         log.info("WhisperX aligned %d words, time range %dms–%dms",
                  len(word_marks), word_marks[0].start_ms, word_marks[-1].end_ms)
-        # Log words in the 2:00–2:30 range to debug guitar solo hallucination
-        solo_words = [wm for wm in word_marks if 120_000 <= wm.start_ms <= 150_000]
-        if solo_words:
-            log.warning(
-                "Words in 2:00-2:30 range (potential guitar solo): %s",
-                [(wm.label, wm.start_ms, wm.end_ms) for wm in solo_words],
-            )
 
         # Decompose words into phonemes
         phoneme_marks: list[PhonemeMark] = []
