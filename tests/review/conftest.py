@@ -24,6 +24,15 @@ def app(tmp_path, monkeypatch):
     with _analysis_module._runs_lock:
         _analysis_module._runs.clear()
 
+    # Clear the layout module's cache too. It was already a module-level
+    # global before the upload feature existed, but harmlessly so — every
+    # test read the same repo-committed file regardless of XLIGHT_STATE_HOME.
+    # Now that an uploaded override lives under XLIGHT_STATE_HOME (which
+    # *does* vary per test via tmp_path above), a stale cached value from a
+    # previous test's upload would leak into this one without this reset.
+    from src.review.api.v1 import layout as _layout_module
+    _layout_module._active_layout_cache = None
+
     application = create_app(testing=True)
     application.config["TESTING"] = True
     yield application
