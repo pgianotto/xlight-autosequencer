@@ -59,6 +59,27 @@ class TestRefineBoundaryWithVad:
         assert _refine_boundary_with_vad(2.0, 3.5, 0.0, 4.75, [0.0]) == 0.0
         assert _refine_boundary_with_vad(2.0, 3.5, 0.0, 4.75, [4.75]) == 4.75
 
+    def test_prefer_earliest_picks_earliest_in_range_candidate(self):
+        # Real bug (2026-09-28, "Magic Mirror"): the lyrics provider's
+        # timestamp for the first line was ~10s too late. "Closest to the
+        # provider's guess" picked a spurious VAD blip near that wrong
+        # value (8.9) over the true, earlier vocal onset (2.1) -- since
+        # there's no previous line for a too-late first-line guess to have
+        # already been caught against, prefer_earliest picks the earliest
+        # candidate instead.
+        got = _refine_boundary_with_vad(
+            estimate=8.75, raw_value=9.25, floor=0.0, ceiling=11.0,
+            candidates=[2.1, 8.9], prefer_earliest=True,
+        )
+        assert got == 2.1
+
+    def test_prefer_earliest_still_respects_floor_ceiling_range(self):
+        got = _refine_boundary_with_vad(
+            estimate=8.75, raw_value=9.25, floor=5.0, ceiling=11.0,
+            candidates=[2.1, 8.9], prefer_earliest=True,
+        )
+        assert got == 8.9
+
 
 # ── _parse_timed_lyrics: per-line WhisperX alignment segment hints ───────────
 

@@ -347,7 +347,7 @@ def _parse_timed_lyrics(raw: str) -> Optional[list[tuple[int, str]]]:
 
 def _refine_boundary_with_vad(
     estimate: float, raw_value: float, floor: float, ceiling: float,
-    candidates: list[float],
+    candidates: list[float], *, prefer_earliest: bool = False,
 ) -> float:
     """Snap a padding-based segment boundary ``estimate`` to real VAD
     evidence (a speech onset/offset timestamp) when one exists nearby.
@@ -361,10 +361,23 @@ def _refine_boundary_with_vad(
     than just the first/last, since a gap can contain more than one VAD
     region (e.g. a brief non-vocal break within the same line's span).
     Returns ``estimate`` unchanged when no candidate qualifies.
+
+    ``prefer_earliest`` picks the earliest in-range candidate instead —
+    used only for the very first line's start, which (unlike every other
+    line) has no previous line to have already anchored ``raw_value``
+    against reality. A crowd-sourced lyrics provider's timestamp for a
+    song's very first line is typically its least reliable, and always in
+    the same direction: too late (found 2026-09-28, "Magic Mirror" — the
+    provider placed the first line at 20.25s; the song's own independently-
+    detected section boundary put the vocal entrance at 8.4s; "closest to
+    the provider's guess" picked a spurious VAD blip near the provider's
+    wrong value over the true, earlier one).
     """
     in_range = [c for c in candidates if floor <= c <= ceiling]
     if not in_range:
         return estimate
+    if prefer_earliest:
+        return min(in_range)
     return min(in_range, key=lambda c: abs(c - raw_value))
 
 
@@ -603,9 +616,13 @@ class PhonemeAnalyzer:
                 # VAD refinement: if real speech onset/offset evidence
                 # exists within this segment's non-overlapping half, snap
                 # to whichever one sits closest to the provider's own
-                # timestamp instead of the blind padding estimate.
+                # timestamp instead of the blind padding estimate -- except
+                # for the very first line's start, where "closest to the
+                # provider's guess" can't correct a late guess (see
+                # _refine_boundary_with_vad's prefer_earliest docs).
                 start_s = _refine_boundary_with_vad(
                     start_s, raw_start_s, left_boundary, right_boundary, vad_starts,
+                    prefer_earliest=(i == 0),
                 )
                 end_s = _refine_boundary_with_vad(
                     end_s, raw_end_s, left_boundary, right_boundary, vad_ends,
